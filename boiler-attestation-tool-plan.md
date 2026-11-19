@@ -33,13 +33,15 @@ One shared stepped form + one config object per region that swaps fields, rules,
 /output.js                          (region-aware output dispatcher)
 /regions/wallonia.js                 (fields, rules, PDF overlay)
 /regions/flanders.js                 (fields, rules, PDF overlay, VEKA gate)
-/regions/brussels.js                 (fields, rules, payload/import builder, solid-fuel PDF)
+/regions/brussels.js                 (fields, rules, payload/summary builder, solid-fuel PDF)
 /vendor/pdf-lib.esm.js
 /assets/awac-attestation.pdf        (official background, Wallonia)
 /assets/fl-model-combustion.pdf     (official background, Flanders)
 /assets/fl-model-cleaning.pdf       (official background, Flanders)
 /assets/br-solid-fuel-model.pdf     (official background, Brussels solid fuel)
 /assets/br-1mw-annex.pdf            (>=1000 kW solid-fuel combustion table)
+/manifest.webmanifest               (PWA manifest)
+/sw.js                              (service worker for offline)
 /assets/logo.png                    (optional)
 ```
 
@@ -68,10 +70,10 @@ Verified rules to encode:
 | | Flanders | Wallonia | Brussels |
 |---|---|---|---|
 | Mazout/liquid | 1 yr, from 20 kW | 1 yr | 1 yr |
-| Gas ≤100 kW | 2 yrs (from 20 kW) | **3 yrs** (exactly 100 kW = 3 yrs) | 2 yrs |
+| Gas ≤100 kW | 2 yrs (from 20 kW) | **3 yrs (≤100 kW incl.)** — ⚠️ CONFLICT: AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law (3 yrs) governs. Tool must flag this at exactly 100 kW with a UI warning. | 2 yrs |
 | Gas >100 kW | 2 yrs | 2 yrs | 2 yrs |
 | Solid | Not in scope of the 2006 besluit — skilled tradesman, cleaning attestation only | 1 yr | 1 yr |
-| Trigger events | After combustion intervention; first-commissioning keuring | After combustion intervention | After combustion intervention, appliance move, replacement |
+| Trigger events | After combustion intervention; first-commissioning keuring | After combustion intervention | After combustion intervention, appliance move, replacement, **1st CP of a gas water heater** |
 | Window / deadline | Register within 1 month | Control within 3 months of anniversary; non-conformity 5 months (residential exception 3 months, 1 Sept–30 Apr, once) | Non-conformity 5 months |
 | Retention | Last 2 attestations | Last 2 attestations + 4-year chronological register; produce within 5 working days | 5 years in logbook |
 | Recognition | `GV#####` / `TV#####` / `VA+#####` | L / GI / GII / solid-fuel specialist | GI / GII / L; biomass = RESCERT or trained |
@@ -96,6 +98,31 @@ Single dispatcher: `buildAttestation(state, region) → { bytes, mime, filename,
 - Legal basis: [AGW 29/01/2009 consolidated](https://awac.wallonie.be/files/Files/chauffagistes/informations/agw_chauffage_central_29_01_2009_consolide.pdf), art. 13–15, Annex IV.
 - Output: attestation + attached tickets. No authority submission. Admin-only extras: register, 4-year retention, produce within 5 working days on request.
 - Field guide: [hoteo](https://hoteo.be/guides/attestation-controle-chaudiere-wallonie/).
+
+#### Wallonia attestation — full field scope (must cover all blocks)
+
+The official model has 14 sections. The tool must cover all of them:
+
+1. **Date & attestation number:** control date, attestation number (optional, company-internal).
+2. **Technician:** agrément (L / GI / GII / solid-fuel specialist), name, company, BCE, phone/email.
+3. **Demandeur:** enum (propriétaire / locataire / autre), name, company (if applicable), address, contact, appliance location (if different).
+4. **Combustibles:** solid (pellets / bûches / plaquettes / céréales / charbon / autre), liquid (gasoil / gasoil extra / fuel lourd / autre), gas (G20 / G25 / propane / butane / biogaz / autre). Multi-fuel: mention all.
+5. **Générateur & brûleur:** nb of generators in the room, identification (if multiple), raccordement type (B / C with NBN codes e.g. B11BS, C33), condensation (OUI/NON), plaque signalétique (present/absent), year of construction, make, type, serial no., Pnom (kW), allures (1 / multiple [count] / modulant), unit vs air pulsé, premix vs non-premix, separate burner make/type/year/serial (if air pulsé).
+6. **Installation:** fluide caloporteur (eau / vapeur basse pression / huile thermique), production (chauffage / ECS / both).
+7. **Local:** 3 conformités (ventilation / amenée d'air comburant / évacuation gaz combustion), permis d'urbanisme date (avant/après 29/05/2009 — selects applicable norms NBN B61-001/002, D51-003/004/006).
+8. **Orifices de mesure:** dispensé (OUI/NON), if not dispensé: present & conforme / present & non conforme / absent & non réalisable + remark.
+9. **Critères de bon fonctionnement (tableau seuils):** O2, CO2, CO (mg/kWh), température nette, rendement, indice de noircissement (mazout only). Pression cheminée (Pa) for type B atmospheric.
+10. **Informations techniques complémentaires:** pression pompe (bar), gicleur (marque/type/débit/angle) — non-obligatoire si combustible liquide.
+11. **Solid-fuel block (if applicable):** 3 OUI/NON questions (fumée visible, évacuation gaz, résultat global OK/non OK).
+12. **Diagnostic approfondi (>20 kW) decision tree:** A) prior report? → B) modification since? → C) modification after 30/04/2015? → D) ≥2 yrs? → E) already deferred once? Each branch leads to: effectuer le diagnostic / installation en ordre jusqu'au prochain contrôle / attendre le prochain contrôle.
+13. **Régulation & pompes:** AUTO/MAN mode, thermostat OUI/NON, horloge OUI/NON, nightly reduction OUI/NON, pump dysfunction OUI/NON + remark.
+14. **Prochaines interventions:** 5 checkbox variants with date windows — (a) prochaine inspection périodique (date range), (b) non-conformité sans mise à l'arrêt (deadline), (c) remise en fonctionnement après mise à l'arrêt, (d) entretien constructeur (deadline), (e) diagnostic approfondi (date range).
+15. **Signatures:** technicien signature, recipient signature (name + qualité).
+16. **Danger procedure:** immediate danger (emergency numbers, written warning to user/owner), potential danger (registered letter with acknowledgment of receipt for absent parties).
+
+> **⚠️ 100 kW boundary conflict:** AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law (3 yrs) governs. The tool must flag this at exactly 100 kW with a UI warning and a documented decision.
+
+> **Model cleanup needed:** The DOCX contains an instruction page ("cadre à supprimer après l'avoir lu"), emergency-number pages, and embedded measurement table images (5 media files). The PDF background must be a cleaned version with these removed, and coordinates must account for image-based sections.
 
 ### Flanders (PDF + gated registration handoff)
 - Models: `model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest` — [Vlaanderen.be technicus page](https://www.vlaanderen.be/natuur-milieu-en-klimaat/informatie-voor-de-technicus-vloeibare-en-technicus-gasvormige-brandstof-cv-ketel). **Dutch-language output required.**
@@ -132,7 +159,8 @@ The official form has ~8 blocks. The payload must cover all of them, not just ap
 
 ## Phases
 
-- **Phase 0 (complete):** Downloaded all official models; recorded x/y coordinates; investigated Brussels `.attest` import format — **resolved: no-go** (proprietary, requires vendor convention). Deliverable: field matrix + region adapter spec.
+- **Phase 0 (partially complete):** Wallonia model downloaded (`attestation_controle_generateur_chaleur_rw.docx`). Flanders models and Brussels solid-fuel model + 1 MW annex NOT yet downloaded. Brussels `.attest` import format investigated — **resolved: no-go** (proprietary, requires vendor convention). Deliverable: field matrix + region adapter spec (incomplete).
+- **Phase 0b (remaining):** Download Flanders models (`model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest`); download Brussels solid-fuel model (media/19677) + 1 MW annex (media/19676); record x/y coordinates for all models; create cleaned background PDFs (remove instruction pages, "cadre à supprimer" pages, emergency-number pages from Wallonia DOCX).
 - **Phase 1 (2 weeks):** Shared wizard + 3 region configs + local draft + region-aware output dispatcher. Wallonia fully working, Flanders with gate + handoff, Brussels with data-prep + manual re-key + solid-fuel PDF. Deploy free.
 - **Validation (2 weeks):** One real technician uses it on real jobs daily; collect field/UX gaps.
 - **Phase 2 (later, only if needed):** VEKA API onboarding; Brussels connected-vendor path; accounts, cloud archive, region-specific reminders, admin seat.
@@ -146,7 +174,7 @@ Backend, database, user accounts, VEKA API integration, automatic authority subm
 - **Legality of self-rendered PDF:** reproduce official models exactly (never shorten); get a legal review per region before real use.
 - **Brussels `.attest` import format:** proprietary and undocumented — third-party generation requires a convention agreement with Bruxelles Environnement (vendor onboarding). The tool uses a data-prep + manual re-key approach for Brussels gas/liquid. Phase 0 is complete: no-go on import file generation.
 - **VEKA API:** vendor onboarding required, not self-serve.
-- **Verified edge cases (do not re-flag):** Flanders gas/liquid obligation starts at 20 kW; Wallonia gas exactly 100 kW → 3 years ("inférieure ou égale à 100 kW"). Both confirmed in official texts.
+- **Verified edge cases (do not re-flag):** Flanders gas/liquid obligation starts at 20 kW; Wallonia gas exactly 100 kW → 3 years per AGW art. 13 ("inférieure ou égale à 100 kW"), but model footnote 14 says ≥100 kW = 2 yrs — **conflict at exactly 100 kW; law governs (3 yrs), tool must flag with UI warning.**
 - **Flemish "3-month remediation" / "last 5 interventions" claims:** unverified in official sources; do not encode until confirmed. The 3-month residential exception belongs to Wallonia (5-month rule), not Flanders.
 - **Coordinates drift** if official models change — keep models versioned in repo.
 

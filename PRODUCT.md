@@ -24,7 +24,7 @@ The tool asks a short series of questions (wizard steps, ~6 fields max per step)
 - **Region-aware from a single wizard** — one tool handles Wallonia, Flanders, and Brussels, swapping fields/rules per region config. Competing tools are typically single-region.
 - **Reproduces official models exactly** — PDF overlay on the official government background; never shortened, never simplified. This is the only way a self-generated PDF stays legal.
 - **Draft-safe** — auto-saved to localStorage; technician can finish later on the same device.
-- **Honest about handoffs** — Brussels gas/liquid does not produce a PDF (that is legally impossible); it prepares the data set and import file for the BE encoder. The tool never pretends to do something it cannot.
+- **Honest about handoffs** — Brussels gas/liquid does not produce a PDF (that is legally impossible); it prepares the data set and provides a read-only summary + checklist for manual re-key into the BE encoder. The tool never pretends to do something it cannot.
 
 ## Operating Context
 
@@ -59,19 +59,21 @@ The tool asks a short series of questions (wizard steps, ~6 fields max per step)
 - **Brussels `.attest` import format is proprietary and undocumented.** Third-party generation requires a convention agreement with Bruxelles Environnement (vendor onboarding). The tool uses a data-prep + manual re-key approach for Brussels gas/liquid.
 
 ### Undecided
-- (none — all decisions resolved)
+- **100 kW boundary conflict:** AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law (3 yrs) governs. Tool must flag this with a UI warning.
+- **Brand name:** "Attesta" appears in the HTML reference artifact; PRODUCT.md says "greenfield." Decide before Phase 1.
+- **Phase 0 completion:** Flanders models and Brussels solid-fuel model + 1 MW annex not yet downloaded; x/y coordinates not yet recorded; Wallonia DOCX needs cleanup (remove instruction/emergency pages).
 
 ## Brand Commitments
 
-None. No existing name, logo, voice, or visual identity is established. The tool is greenfield in terms of brand.
+The HTML reference artifact (`Qwen_html_20261119_jnh6lrwlp.html`) uses the name "Attesta." PRODUCT.md previously stated "greenfield." **Decision needed:** confirm "Attesta" as the product name or choose a new one before Phase 1 implementation.
 
 ## Evidence on Hand
 
-- Wallonia official model: `attestation_controle_generateur_chaleur_rw.docx` (AWAC model, FR).
-- Brussels official models referenced: media/19677 (solid fuel), media/19676 (1 MW annex).
-- Flanders official models: `model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest` (downloadable from Vlaanderen.be).
-- Product spec: `boiler-attestation-tool-plan.md` (verified requirements, 157 lines).
-- Initial plan: `boiler-attestation-tool-plan.md` (pre-verification).
+- Wallonia official model: `attestation_controle_generateur_chaleur_rw.docx` (AWAC model, FR). **Needs cleanup:** remove instruction page, emergency-number pages, and embedded images before using as PDF background.
+- Flanders official models: `model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest` — **NOT yet downloaded.**
+- Brussels official models: media/19677 (solid fuel), media/19676 (1 MW annex) — **NOT yet downloaded.**
+- Product spec: `boiler-attestation-tool-plan.md` (verified requirements, 160 lines).
+- HTML reference artifact: `Qwen_html_20261119_jnh6lrwlp.html` — **design reference only, not the tool UI.** Uses jsPDF and Google Fonts from CDNs (contradicts offline/vendored decision). Scrolling layout is the opposite of the required no-scroll wizard.
 
 ## Product Principles
 
