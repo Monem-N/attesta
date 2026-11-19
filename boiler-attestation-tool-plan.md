@@ -70,12 +70,12 @@ Verified rules to encode:
 | | Flanders | Wallonia | Brussels |
 |---|---|---|---|
 | Mazout/liquid | 1 yr, from 20 kW | 1 yr | 1 yr |
-| Gas ≤100 kW | 2 yrs (from 20 kW) | **3 yrs (≤100 kW incl.)** — ⚠️ CONFLICT: AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law (3 yrs) governs. Tool must flag this at exactly 100 kW with a UI warning. | 2 yrs |
+| Gas ≤100 kW | 2 yrs (from 20 kW) | **3 yrs (≤100 kW incl.)** — ⚠️ CONFLICT: AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. **Decision (confirmed):** use 3 yrs (law governs) and show a UI warning at exactly 100 kW. | 2 yrs |
 | Gas >100 kW | 2 yrs | 2 yrs | 2 yrs |
 | Solid | Not in scope of the 2006 besluit — skilled tradesman, cleaning attestation only | 1 yr | 1 yr |
 | Trigger events | After combustion intervention; first-commissioning keuring | After combustion intervention | After combustion intervention, appliance move, replacement, **1st CP of a gas water heater** |
-| Window / deadline | Register within 1 month | Control within 3 months of anniversary; non-conformity 5 months (residential exception 3 months, 1 Sept–30 Apr, once) | Non-conformity 5 months |
-| Retention | Last 2 attestations | Last 2 attestations + 4-year chronological register; produce within 5 working days | 5 years in logbook |
+| Window / deadline | Register within 1 month; remedy combustion-value defects within 3 months (new verbrandingsattest) | Control within 3 months of anniversary; non-conformity 5 months (residential exception 3 months, 1 Sept–30 Apr, once) | Non-conformity 5 months |
+| Retention | Last 2 attestations; govt may request last 5 interventions | Last 2 attestations + 4-year chronological register; produce within 5 working days | 5 years in logbook |
 | Recognition | `GV#####` / `TV#####` / `VA+#####` | L / GI / GII / solid-fuel specialist | GI / GII / L; biomass = RESCERT or trained |
 
 All regions: next control also required after any intervention on the combustion part; attestation number is optional / company-internal.
@@ -120,9 +120,9 @@ The official model has 16 sections (the model numbers them 1–14, with two sub-
 15. **Signatures:** technicien signature, recipient signature (name + qualité).
 16. **Danger procedure:** immediate danger (emergency numbers, written warning to user/owner), potential danger (registered letter with acknowledgment of receipt for absent parties).
 
-> **⚠️ 100 kW boundary conflict:** AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law (3 yrs) governs. The tool must flag this at exactly 100 kW with a UI warning and a documented decision.
+> **⚠️ 100 kW boundary conflict — DECIDED:** AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law governs → **use 3 yrs and show a UI warning** explaining the conflict. No further decision needed.
 
-> **Model cleanup needed:** The DOCX contains an instruction page ("cadre à supprimer après l'avoir lu"), emergency-number pages, and embedded measurement table images (5 media files). The PDF background must be a cleaned version with these removed, and coordinates must account for image-based sections.
+> **Model cleanup — DONE (corrected):** Only the instruction page ("A quoi sert ce modèle?" / "cadre à supprimer après l'avoir lu") was removed from the Wallonia DOCX. **Embedded images must be kept** — `image1.emf` is the mandatory measurement-criteria table and `image5.emf` the mandatory category/performance table; removing them would shorten the official form. Cleaned background: `assets/wa-attestation-bg.pdf`.
 
 ### Flanders (PDF + gated registration handoff)
 - Models: `model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest` — [Vlaanderen.be technicus page](https://www.vlaanderen.be/natuur-milieu-en-klimaat/informatie-voor-de-technicus-vloeibare-en-technicus-gasvormige-brandstof-cv-ketel). **Dutch-language output required.**
@@ -159,8 +159,8 @@ The official form has ~8 blocks. The payload must cover all of them, not just ap
 
 ## Phases
 
-- **Phase 0 (partially complete):** Wallonia model downloaded (`attestation_controle_generateur_chaleur_rw.docx`). Flanders models and Brussels solid-fuel model + 1 MW annex NOT yet downloaded. Brussels `.attest` import format investigated — **resolved: no-go** (proprietary, requires vendor convention). Deliverable: field matrix + region adapter spec (incomplete).
-- **Phase 0b (remaining):** Download Flanders models (`model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest`); download Brussels solid-fuel model (media/19677) + 1 MW annex (media/19676); record x/y coordinates for all models; create cleaned background PDFs (remove instruction pages, "cadre à supprimer" pages, emergency-number pages from Wallonia DOCX).
+- **Phase 0 (complete):** All official models downloaded and converted to PDF in `/assets`. Wallonia instruction page removed (mandatory tables kept). Label anchors recorded in `docs/field-matrix.md`. Brussels `.attest` import format investigated — **resolved: no-go** (proprietary, requires vendor convention).
+- **Phase 0b (remaining):** Tune overlay coordinates against rendered pages during Phase 1; legal review per region before real use.
 - **Phase 1 (2 weeks):** Shared wizard + 3 region configs + local draft + region-aware output dispatcher. Wallonia fully working, Flanders with gate + handoff, Brussels with data-prep + manual re-key + solid-fuel PDF. Deploy free.
 - **Validation (2 weeks):** One real technician uses it on real jobs daily; collect field/UX gaps.
 - **Phase 2 (later, only if needed):** VEKA API onboarding; Brussels connected-vendor path; accounts, cloud archive, region-specific reminders, admin seat.
@@ -174,8 +174,8 @@ Backend, database, user accounts, VEKA API integration, automatic authority subm
 - **Legality of self-rendered PDF:** reproduce official models exactly (never shorten); get a legal review per region before real use.
 - **Brussels `.attest` import format:** proprietary and undocumented — third-party generation requires a convention agreement with Bruxelles Environnement (vendor onboarding). The tool uses a data-prep + manual re-key approach for Brussels gas/liquid. Phase 0 is complete: no-go on import file generation.
 - **VEKA API:** vendor onboarding required, not self-serve.
-- **Verified edge cases (do not re-flag):** Flanders gas/liquid obligation starts at 20 kW; Wallonia gas exactly 100 kW → 3 years per AGW art. 13 ("inférieure ou égale à 100 kW"), but model footnote 14 says ≥100 kW = 2 yrs — **conflict at exactly 100 kW; law governs (3 yrs), tool must flag with UI warning.**
-- **Flemish "3-month remediation" / "last 5 interventions" claims:** unverified in official sources; do not encode until confirmed. The 3-month residential exception belongs to Wallonia (5-month rule), not Flanders.
+- **Resolved edge cases (do not re-flag):** Flanders gas/liquid obligation starts at 20 kW. Wallonia gas exactly 100 kW → **3 years** per AGW art. 13 ("inférieure ou égale à 100 kW"), despite model footnote 14 (≥100 kW = 2 yrs). Decision: 3 yrs + UI warning.
+- **Flemish claims — NOW VERIFIED:** (1) 3 months to remedy combustion-value defects with a new verbrandingsattest ([Eisen verbrandingsrendement](https://www.vlaanderen.be/bouwen-wonen-en-energie/verwarming-koeling-en-ventilatie/keuring-en-onderhoud-van-uw-verwarming/eisen-verbrandingsrendement-van-cv-ketel)); (2) government may request data of the last 5 keuringen/onderhouden/audits ([technicus page](https://www.vlaanderen.be/natuur-milieu-en-klimaat/informatie-voor-de-technicus-vloeibare-en-technicus-gasvormige-brandstof-cv-ketel)). Encode both. Wallonia's 3-month residential exception is a separate rule (5-month baseline).
 - **Coordinates drift** if official models change — keep models versioned in repo.
 
 ## Sources

@@ -59,19 +59,22 @@ The tool asks a short series of questions (wizard steps, ~6 fields max per step)
 - **Brussels `.attest` import format is proprietary and undocumented.** Third-party generation requires a convention agreement with Bruxelles Environnement (vendor onboarding). The tool uses a data-prep + manual re-key approach for Brussels gas/liquid.
 
 ### Undecided
-- **100 kW boundary conflict:** AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law (3 yrs) governs. Tool must flag this with a UI warning.
-- **Brand name:** No name established. Confirm or choose one before Phase 1 implementation.
-- **Phase 0 completion:** Flanders models and Brussels solid-fuel model + 1 MW annex not yet downloaded; x/y coordinates not yet recorded; Wallonia DOCX needs cleanup (remove instruction/emergency pages).
+- **Phase 0b (in progress):** models downloaded and coordinates recorded in `docs/field-matrix.md`; remaining = tune overlay coordinates against rendered pages (Phase 1) and legal review per region.
+
+### Resolved decisions
+- **100 kW boundary conflict:** At exactly 100 kW the law (AGW art. 13, ≤100 kW = 3 yrs) governs over model footnote 14 (≥100 kW = 2 yrs). **Decision:** use 3 years and show a UI warning to the technician explaining the footnote conflict.
+- **Brand name:** **Attesta.** No logo, voice, or visual identity established yet — greenfield beyond the name.
 
 ## Brand Commitments
 
-No existing name, logo, voice, or visual identity is established. The tool is greenfield in terms of brand. **Decision needed:** choose a product name before Phase 1 implementation.
+Product name: **Attesta**. No logo, voice, or visual identity is established yet; the visual world is greenfield and will be defined during Phase 1.
 
 ## Evidence on Hand
 
-- Wallonia official model: `attestation_controle_generateur_chaleur_rw.docx` (AWAC model, FR). **Needs cleanup:** remove instruction page, emergency-number pages, and embedded images before using as PDF background.
-- Flanders official models: `model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest` — **NOT yet downloaded.**
-- Brussels official models: media/19677 (solid fuel), media/19676 (1 MW annex) — **NOT yet downloaded.**
+- Wallonia official model: `assets/wa-attestation-bg.pdf` (cleaned: instruction page removed; **all embedded images kept** — they are mandatory measurement/category tables).
+- Flanders official models: `assets/fl-model-keuringsrapport.pdf`, `fl-model-verbrandingsattest.pdf`, `fl-model-reinigingsattest.pdf` (Dutch, downloaded + converted).
+- Brussels official models: `assets/br-solid-fuel-model.pdf` (media/19677), `assets/br-1mw-annex.pdf` (media/19676) — downloaded.
+- Field/coordinate matrix: `docs/field-matrix.md`.
 - Product spec: `boiler-attestation-tool-plan.md` (verified requirements, 160 lines).
 
 ## Product Principles
