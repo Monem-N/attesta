@@ -1,0 +1,107 @@
+// Wallonia — Attestation de contrôle d'un générateur de chaleur (AWAC model)
+const F = (key, label, type='text', extra={}) => ({key,label,type,...extra});
+const req = f => ({...f,required:true});
+
+export const wallonia = {
+  id: 'wallonia',
+  label: 'Wallonie',
+  rule: '#b23a2b',
+  lang: 'fr',
+  output: 'pdf',
+  background: 'assets/wa-attestation-bg.pdf',
+  recognition: [/^[LGI]{1,2}\d*$/i, /^GI\d*$/i, /^GII\d*$/i, /^L\d*$/i, /^.+$/],
+
+  rules: {
+    nextDue(date, data) {
+      const d = new Date(date);
+      const kw = Number(data.powerKw) || 0;
+      const gas = /gaz/i.test(data.fuel||'');
+      const solid = /solide|bois|pellet|bûche/i.test(data.fuel||'');
+      let years = 1;
+      if (gas && kw <= 100) years = 3;      // AGW art.13 (law governs at exactly 100 kW)
+      else if (gas && kw > 100) years = 2;
+      d.setFullYear(d.getFullYear() + years);
+      const from = new Date(d);
+      const to = new Date(d); to.setMonth(to.getMonth()+3);
+      return { date: d, from, to, years,
+        conflict: gas && kw === 100,
+        note: `Contrôle à réaliser entre le ${fmt(from)} et le ${fmt(to)}` };
+    },
+    nonConformity(date){ const d=new Date(date); d.setMonth(d.getMonth()+5); return d; },
+    residentialException(data){ return /habitation|résidentiel/i.test(data.building||''); }
+  },
+
+  steps: [
+    { title:'Intervention', hint:'Nature et date du contrôle.', fields:[
+      req(F('intervention','Type d’intervention','select',{options:['Contrôle périodique','Contrôle après intervention combustion','Mise en conformité','Première mise en service']})),
+      req(F('controlDate','Date du contrôle','date')),
+      F('attestNumber','N° attestation (facultatif)'),
+      F('building','Type de bâtiment','select',{options:['Habitation','Collectif / autre']}),
+    ]},
+    { title:'Technicien', hint:'Qui a réalisé le contrôle ?', fields:[
+      req(F('techCategory','Agrément','select',{options:['Technicien agréé L','Technicien agréé GI','Technicien agréé GII','Technicien spécialisé combustibles solides']})),
+      req(F('techName','Nom et prénom')),
+      F('techAgrement','N° d’agrément'),
+      req(F('company','Nom entreprise')),
+      req(F('bce','N° entreprise (BCE)')),
+      F('techPhone','Tél / courriel'),
+    ]},
+    { title:'Demandeur', hint:'Le demandeur et le lieu du générateur.', fields:[
+      req(F('requester','Demandeur','select',{options:['Propriétaire','Locataire','Autre']})),
+      req(F('clientName','Nom et prénom')),
+      F('clientCompany','Entreprise (si pertinent)'),
+      req(F('clientStreet','Rue et numéro')),
+      req(F('clientCity','Code postal et localité')),
+      F('clientPhone','Tél / courriel'),
+      F('applianceLocation','Localisation du générateur si différente'),
+    ]},
+    { title:'Générateur', hint:'Identification de l’appareil et du brûleur.', fields:[
+      req(F('fuel','Combustible','select',{options:['Liquide','Gazeux','Solide']})),
+      F('fuelDetail','Détail combustible','select',{options:['Gasoil','Gasoil extra','Fuel lourd','Gaz nat. G20','Gaz nat. G25','Propane','Butane','Biogaz','Pellets bois','Bûches','Plaquettes','Céréales','Charbon']}),
+      req(F('powerKw','Puissance nominale utile (kW)','number')),
+      F('genCount','Nb de générateurs','number'),
+      F('raccordement','Raccordement','select',{options:['B','C']}),
+      F('condensation','À condensation','select',{options:['oui','non']}),
+      F('year','Année de construction','number'),
+      F('make','Marque'), F('model','Type'), F('serial','N° série'),
+      F('burnerType','Brûleur','select',{options:['1 allure','plusieurs allures','modulant']}),
+      F('unitOrPulsed','Type','select',{options:['unit','air pulsé']}),
+      F('premix','Prémix','select',{options:['prémix','non-premix']}),
+      F('fluid','Fluide caloporteur','select',{options:['Eau','Vapeur basse pression','Huile thermique']}),
+      F('production','Production','select',{options:['Chauffage','ECS','Chauffage + ECS']}),
+    ]},
+    { title:'Mesures & critères', hint:'Valeurs relevées. Le résultat se résout en OK / non OK.', measure:true, fields:[
+      F('permisDate','Permis d’urbanisme','select',{options:['Avant le 29/05/2009','Après le 29/05/2009']}),
+      F('ventLocal','Ventilation local','select',{options:['OUI','NON']}),
+      F('airSupply','Amenée d’air comburant','select',{options:['OUI','NON']}),
+      F('flue','Évacuation gaz de combustion','select',{options:['OUI','NON']}),
+      F('orifices','Orifices de mesure','select',{options:['Dispensé','Présent et conforme','Présent et non conforme','Absent et techniquement non réalisable']}),
+      {key:'smoke',label:'Indice de fumée (Bacharach)',type:'measure',unit:'',max:2,lower:true},
+      {key:'o2',label:'Teneur en O₂',type:'measure',unit:'%',max:4.4,lower:true},
+      {key:'co2',label:'Teneur en CO₂',type:'measure',unit:'%',min:12},
+      {key:'co',label:'Teneur en CO',type:'measure',unit:'mg/kWh',max:155,lower:true},
+      {key:'efficiency',label:'Rendement combustion',type:'measure',unit:'%',min:90},
+      F('chimneyPressure','Pression cheminée (type B)','number'),
+      F('pumpPressure','Pression pompe (bar)','number'),
+    ]},
+    { title:'Déclaration', hint:'Diagnostic, conformité et prochaines interventions.', fields:[
+      F('diagReport','Diagnostic approfondi présent ?','select',{options:['OUI','NON']}),
+      F('diagModified','Modification depuis ?','select',{options:['OUI','NON']}),
+      F('diagAfter2015','Modification après 30/04/2015 ?','select',{options:['OUI','NON']}),
+      F('diagTwoYears','Au moins 2 ans ?','select',{options:['OUI','NON']}),
+      F('diagDeferred','Déjà reporté ?','select',{options:['OUI','NON']}),
+      req(F('conformity','Déclaration de conformité','select',{options:['CONFORME','NON CONFORME']})),
+      F('defects','Causes / actions','textarea'),
+      F('regulationMode','Régulation','select',{options:['AUTO','MAN']}),
+      F('thermostat','Thermostat','select',{options:['OUI','NON']}),
+      F('clock','Horloge','select',{options:['OUI','NON']}),
+      F('night','Mode réduit nuit','select',{options:['OUI','NON']}),
+      F('pumpIssue','Indices dysfonctionnement pompe','select',{options:['OUI','NON']}),
+    ]},
+  ]
+};
+
+export function fmt(d){
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()}`;
+}

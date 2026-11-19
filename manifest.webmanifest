@@ -1,0 +1,12 @@
+{
+  "name": "Attesta",
+  "short_name": "Attesta",
+  "description": "Attestations de contrôle conformes — Wallonie, Vlaanderen, Bruxelles.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f3ee",
+  "theme_color": "#b23a2b",
+  "icons": []
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b23a2b">
+<meta name="description" content="Attesta — attestation de contrôle conforme pour la Wallonie, la Flandre et Bruxelles.">
+<title>Attesta</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <div class="rule" id="rule"></div>
+    <div class="head-row">
+      <div class="brand">ATTESTA</div>
+      <div class="region" id="regionLabel">—</div>
+    </div>
+    <div class="progress" id="progress" aria-label="Progress"></div>
+    <div class="step-count" id="stepCount"></div>
+  </header>
+
+  <main class="stage">
+    <div class="step-head">
+      <h1 id="stepTitle"></h1>
+      <p id="stepHint"></p>
+    </div>
+    <div class="warning" id="warning" hidden></div>
+    <form id="form" class="fields" autocomplete="off"></form>
+  </main>
+
+  <footer class="foot">
+    <button type="button" class="btn back" id="back">Back</button>
+    <div class="due" id="due" hidden>
+      <span class="due-label">NEXT CONTROL</span>
+      <strong id="dueDate">—</strong>
+    </div>
+    <button type="button" class="btn next" id="next">Continue</button>
+  </footer>
+</div>
+<script src="vendor/pdf-lib.min.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
