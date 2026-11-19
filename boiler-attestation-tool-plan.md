@@ -101,7 +101,7 @@ Single dispatcher: `buildAttestation(state, region) → { bytes, mime, filename,
 
 #### Wallonia attestation — full field scope (must cover all blocks)
 
-The official model has 14 sections. The tool must cover all of them:
+The official model has 16 sections (the model numbers them 1–14, with two sub-sections split out). The tool must cover all of them:
 
 1. **Date & attestation number:** control date, attestation number (optional, company-internal).
 2. **Technician:** agrément (L / GI / GII / solid-fuel specialist), name, company, BCE, phone/email.
