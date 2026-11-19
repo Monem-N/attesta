@@ -60,12 +60,12 @@ The tool asks a short series of questions (wizard steps, ~6 fields max per step)
 
 ### Undecided
 - **100 kW boundary conflict:** AGW art. 13 says ≤100 kW = 3 yrs, but model footnote 14 says ≥100 kW = 2 yrs. At exactly 100 kW the law (3 yrs) governs. Tool must flag this with a UI warning.
-- **Brand name:** "Attesta" appears in the HTML reference artifact; PRODUCT.md says "greenfield." Decide before Phase 1.
+- **Brand name:** No name established. Confirm or choose one before Phase 1 implementation.
 - **Phase 0 completion:** Flanders models and Brussels solid-fuel model + 1 MW annex not yet downloaded; x/y coordinates not yet recorded; Wallonia DOCX needs cleanup (remove instruction/emergency pages).
 
 ## Brand Commitments
 
-The HTML reference artifact (`Qwen_html_20261119_jnh6lrwlp.html`) uses the name "Attesta." PRODUCT.md previously stated "greenfield." **Decision needed:** confirm "Attesta" as the product name or choose a new one before Phase 1 implementation.
+No existing name, logo, voice, or visual identity is established. The tool is greenfield in terms of brand. **Decision needed:** choose a product name before Phase 1 implementation.
 
 ## Evidence on Hand
 
@@ -73,7 +73,6 @@ The HTML reference artifact (`Qwen_html_20261119_jnh6lrwlp.html`) uses the name 
 - Flanders official models: `model-keuringsrapport`, `model-verbrandingsattest`, `model-reinigingsattest` — **NOT yet downloaded.**
 - Brussels official models: media/19677 (solid fuel), media/19676 (1 MW annex) — **NOT yet downloaded.**
 - Product spec: `boiler-attestation-tool-plan.md` (verified requirements, 160 lines).
-- HTML reference artifact: `Qwen_html_20261119_jnh6lrwlp.html` — **design reference only, not the tool UI.** Uses jsPDF and Google Fonts from CDNs (contradicts offline/vendored decision). Scrolling layout is the opposite of the required no-scroll wizard.
 
 ## Product Principles
 
