@@ -1,4 +1,4 @@
-const CACHE='attesta-v2';
+const CACHE='attesta-v3';
 const ASSETS=[
   './','./index.html','./styles.css','./app.js','./output.js','./manifest.webmanifest',
   './regions/wallonia.js','./regions/flanders.js','./regions/brussels.js',
