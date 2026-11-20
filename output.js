@@ -1,4 +1,17 @@
-const {PDFDocument,StandardFonts,rgb}=window.PDFLib;
+const {PDFDocument,rgb}=window.PDFLib;
+
+// Custom Unicode font so FR/NL accents (é/è/à/ï/ç/œ/ĳ) render correctly.
+// StandardFonts.Helvetica (WinAnsi) corrupts several of these.
+const FONT_URL='vendor/DejaVuSans.ttf';
+let FONT_BYTES=null;
+async function loadFontBytes(){
+  if(!FONT_BYTES){
+    const r=await fetch(FONT_URL);
+    if(!r.ok) throw new Error('Unicode font not found: '+FONT_URL);
+    FONT_BYTES=new Uint8Array(await r.arrayBuffer());
+  }
+  return FONT_BYTES;
+}
 
 const WAL={background:'assets/wa-attestation-bg.pdf'};
 const FLA={background:'assets/fl-model-verbrandingsattest.pdf'};
@@ -56,18 +69,18 @@ const MAPS = {
   }
 };
 
-// WinAnsi-safe text: standard fonts cannot encode a few Unicode characters
-// (e.g. Dutch ĳ). Transliterate those, then never let one field abort the PDF.
-const SUBST = {'\u0133':'ij','\u0132':'IJ','\u0153':'oe','\u0152':'OE','\u2019':"'",'\u2013':'-','\u2014':'-'};
+// Normalize typographic characters to plain equivalents. The Unicode font can
+// render these, but ASCII forms keep the attestation fields clean and portable.
+const SUBST = {'\u2019':"'",'\u2018':"'",'\u2013':'-','\u2014':'-','\u00a0':' '};
 const EXTRA_LABEL={intervention:'Intervention',building:'Bâtiment',techCategory:'Agrément',
   requester:'Demandeur',fuel:'Combustible',clientCompany:'Entreprise'};
 function safeText(s){
-  return String(s).replace(/[\u0133\u0132\u0153\u0152\u2019\u2013\u2014]/g,ch=>SUBST[ch]||'?');
+  return String(s).replace(/[\u2018\u2019\u2013\u2014\u00a0]/g,ch=>SUBST[ch]||'?');
 }
 function draw(page,text,x,y,size,font){
   try{ page.drawText(safeText(text).slice(0,90),{x,y:H-y,size,font,color:ink}); }
   catch(e){
-    try{ page.drawText(safeText(text).replace(/[^\x20-\x7E]/g,'?').slice(0,90),{x,y:H-y,size,font,color:ink}); }
+    try{ page.drawText(String(text).replace(/[^\x20-\x7E]/g,'?').slice(0,90),{x,y:H-y,size,font,color:ink}); }
     catch(e2){ /* never abort the whole document for one field */ }
   }
 }
@@ -124,9 +137,14 @@ async function markBoxes(doc,map,data,region,keys,model){
     if(pages[pi]) tick(pages[pi],pair[idx]);
   }
 }
-async function overlay(bytes, map, data, fontName, region, model){
+async function overlay(bytes, map, data, region, model){
   const doc = await PDFDocument.load(bytes);
-  const font = await doc.embedFont(fontName);
+  // Register fontkit (UMD global) and embed the Unicode TTF with subsetting.
+  if(!doc['__fk'] && (typeof window!=='undefined') && window.fontkit){
+    doc.registerFontkit(window.fontkit);
+  }
+  const fontBytes = await loadFontBytes();
+  const font = await doc.embedFont(fontBytes,{subset:true});
   const pages = doc.getPages();
   const marked = new Set(Object.keys(map).filter(k=>binaryIndex(data[k])!==null));
   for(const [key,val] of Object.entries(map)){
@@ -170,6 +188,6 @@ export async function buildAttestation(state){
   const res = await fetch(src);
   if(!res.ok) throw new Error('Model PDF not found: '+src);
   const bytes = await res.arrayBuffer();
-  const out = await overlay(bytes, MAPS[state.region], d, StandardFonts.Helvetica, state.region, model);
+  const out = await overlay(bytes, MAPS[state.region], d, state.region, model);
   return new Blob([out],{type:'application/pdf'});
 }

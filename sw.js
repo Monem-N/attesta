@@ -1,8 +1,8 @@
-const CACHE='attesta-v1';
+const CACHE='attesta-v2';
 const ASSETS=[
   './','./index.html','./styles.css','./app.js','./output.js','./manifest.webmanifest',
   './regions/wallonia.js','./regions/flanders.js','./regions/brussels.js',
-  './vendor/pdf-lib.min.js',
+  './vendor/pdf-lib.min.js','./vendor/fontkit.umd.min.js','./vendor/DejaVuSans.ttf',
   './assets/wa-attestation-bg.pdf','./assets/fl-model-verbrandingsattest.pdf',
   './assets/fl-model-keuringsrapport.pdf','./assets/fl-model-reinigingsattest.pdf',
   './assets/br-solid-fuel-model.pdf','./assets/br-1mw-annex.pdf','./assets/checkbox-rects.json'
