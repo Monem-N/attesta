@@ -149,6 +149,12 @@ All output text in **Dutch**. Recognition patterns: `GV#####`, `TV#####`, `VA+##
 
 **Only page 1 of the Wallonia source (the "A quoi sert ce modèle?" instruction page with the "cadre à supprimer après l'avoir lu" and emergency notices) was removed.** Do **not** remove embedded images: `image1.emf` is the mandatory measurement-criteria table and `image5.emf` is the mandatory category/performance table. Removing either would shorten the official model and void its legal validity. Regional logos (image2/3/4) are retained as part of the official document.
 
+## Overlay implementation notes
+
+- **Checkbox model:** `assets/checkbox-rects.json` holds the real printed checkbox rectangles extracted from the Wallonia background (vector rects + Wingdings `U+F097` glyph boxes). `output.js` ticks the correct OUI/NON box by finding the nearest same-row pair to each field anchor. Text for ticked binary fields is suppressed (the printed OUI/NON labels remain).
+- **Previously unmapped fields:** `intervention`, `building`, `techCategory`, `requester`, `fuel`, `clientCompany` now render as labelled lines in the blank strip below the orifice section on Wallonia page 1.
+- **Text encoding:** standard-font WinAnsi renders French accents correctly (verified: Élise, François, Béland, Église). Non-WinAnsi characters (e.g. Dutch `ĳ`) are transliterated (`ij`) and each field draw is guarded so one bad character can never abort the PDF. Full Unicode via a vendored TTF + fontkit was rejected: it would add ~2 MB to a deliberately lightweight static app.
+
 ## Status
 
 - [x] All 6 model files downloaded and converted
