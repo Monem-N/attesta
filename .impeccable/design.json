@@ -4,30 +4,127 @@
   "title": "Design System: Attesta",
   "extensions": {
     "colorMeta": {
-      "signal-red": { "role": "primary", "displayName": "Signal Red", "canonical": "#b23a2b", "tonalRamp": ["#2a0e0a", "#4d1710", "#6f2318", "#8f2e20", "#b23a2b", "#c85f52", "#dd9289", "#f0c6c1"] },
-      "ink-black": { "role": "primary", "displayName": "Ink Black", "canonical": "#16181d", "tonalRamp": ["#0a0b0d", "#16181d", "#2b2f36", "#454a52", "#61666e", "#8a8f96", "#b9bcc0", "#e4e5e6"] },
-      "verdict-green": { "role": "tertiary", "displayName": "Verdict Green", "canonical": "#2f6b4f", "tonalRamp": ["#0c1f17", "#143526", "#1f4d37", "#286046", "#2f6b4f", "#4a8768", "#7bab8f", "#b3d0c0"] },
-      "archival-paper": { "role": "neutral", "displayName": "Archival Paper", "canonical": "#f4f3ee", "tonalRamp": ["#2a2a27", "#4a4945", "#6e6c66", "#94918a", "#b8b5ad", "#d4d2cb", "#e7e5df", "#f4f3ee"] },
-      "header-band": { "role": "neutral", "displayName": "Header Band", "canonical": "#eceae3" },
-      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#c9c7bf" },
-      "soft-grey": { "role": "neutral", "displayName": "Soft Grey", "canonical": "#61666e" }
+      "signal-red": {
+        "role": "primary",
+        "displayName": "Signal Red",
+        "canonical": "#b23a2b",
+        "tonalRamp": [
+          "#2a0e0a",
+          "#4d1710",
+          "#6f2318",
+          "#8f2e20",
+          "#b23a2b",
+          "#c85f52",
+          "#dd9289",
+          "#f0c6c1"
+        ]
+      },
+      "ink-black": {
+        "role": "primary",
+        "displayName": "Ink Black",
+        "canonical": "#16181d",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#16181d",
+          "#2b2f36",
+          "#454a52",
+          "#61666e",
+          "#8a8f96",
+          "#b9bcc0",
+          "#e4e5e6"
+        ]
+      },
+      "verdict-green": {
+        "role": "tertiary",
+        "displayName": "Verdict Green",
+        "canonical": "#2f6b4f",
+        "tonalRamp": [
+          "#0c1f17",
+          "#143526",
+          "#1f4d37",
+          "#286046",
+          "#2f6b4f",
+          "#4a8768",
+          "#7bab8f",
+          "#b3d0c0"
+        ]
+      },
+      "archival-paper": {
+        "role": "neutral",
+        "displayName": "Archival Paper",
+        "canonical": "#f4f3ee",
+        "tonalRamp": [
+          "#2a2a27",
+          "#4a4945",
+          "#6e6c66",
+          "#94918a",
+          "#b8b5ad",
+          "#d4d2cb",
+          "#e7e5df",
+          "#f4f3ee"
+        ]
+      },
+      "header-band": {
+        "role": "neutral",
+        "displayName": "Header Band",
+        "canonical": "#eceae3"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#c9c7bf"
+      },
+      "soft-grey": {
+        "role": "neutral",
+        "displayName": "Soft Grey",
+        "canonical": "#61666e"
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Step headings only (clamp 22-30px). Tight, confident, never scrolls." },
-      "body": { "displayName": "Body", "purpose": "Hints and prose in Inter; one line, then out of the way." },
-      "label": { "displayName": "Label", "purpose": "IBM Plex Mono uppercase field labels, wordmark, region, step count." },
-      "value": { "displayName": "Value / Data", "purpose": "All measured/entered data and verdicts in IBM Plex Mono." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Step headings only (clamp 22-30px). Tight, confident, never scrolls."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Hints and prose in Inter; one line, then out of the way."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "IBM Plex Mono uppercase field labels, wordmark, region, step count."
+      },
+      "value": {
+        "displayName": "Value / Data",
+        "purpose": "All measured/entered data and verdicts in IBM Plex Mono."
+      }
     },
     "shadows": [
-      { "name": "lit-edge-warning", "value": "inset 3px 0 0 #b23a2b", "purpose": "The only non-hairline emphasis: a measurement row's warning state, a margin annotation not a drop shadow." }
+      {
+        "name": "lit-edge-warning",
+        "value": "inset 3px 0 0 #b23a2b",
+        "purpose": "The only non-hairline emphasis: a measurement row's warning state, a margin annotation not a drop shadow."
+      }
     ],
     "motion": [
-      { "name": "reduced-motion", "value": "transition:none; animation:none", "purpose": "prefers-reduced-motion:reduce disables all transitions/animations." }
+      {
+        "name": "reduced-motion",
+        "value": "transition:none; animation:none",
+        "purpose": "prefers-reduced-motion:reduce disables all transitions/animations."
+      }
     ],
     "breakpoints": [
-      { "name": "phone-collapse", "value": "520px" },
-      { "name": "tablet-two-col", "value": "560px" },
-      { "name": "content-max", "value": "780px" }
+      {
+        "name": "phone-collapse",
+        "value": "520px"
+      },
+      {
+        "name": "tablet-two-col",
+        "value": "560px"
+      },
+      {
+        "name": "content-max",
+        "value": "780px"
+      }
     ]
   },
   "components": [
@@ -82,21 +179,45 @@
   ],
   "narrative": {
     "northStar": "The Registry Ledger",
-    "overview": "Attesta reads like an official registry document, not a consumer app. Every screen is a ruled ledger: a label in the left margin, a measured value entered on the line, and a verdict resolved at the right. The technician is not filling a form \u2014 they are reading an installation against a published standard and recording the result, one row at a time. Type is a compact grotesque for prose paired with a tabular monospace for every label, value, and verdict, so columns of numbers align and a measured value reads as data. The system refuses the soft rounded SaaS wizard with a floating purple button; it is flat, ruled, and square because the document it produces is.",
+    "overview": "Attesta reads like an official registry document, not a consumer app. Every screen is a ruled ledger: a label in the left margin, a measured value entered on the line, and a verdict resolved at the right. The technician is not filling a form — they are reading an installation against a published standard and recording the result, one row at a time. Type is a compact grotesque for prose paired with a tabular monospace for every label, value, and verdict, so columns of numbers align and a measured value reads as data. The system refuses the soft rounded SaaS wizard with a floating purple button; it is flat, ruled, and square because the document it produces is.",
     "keyCharacteristics": [
       "Archival-paper ground with near-black ink; one signal red for control/warning.",
       "Tabular monospace for all labels, values, and verdicts; grotesque for prose.",
-      "Square corners, zero radius, no drop shadows \u2014 depth via hairlines and tonal bands.",
-      "The measurement row as the recurring signature: value \u2192 verdict (OK / NON OK).",
+      "Square corners, zero radius, no drop shadows — depth via hairlines and tonal bands.",
+      "The measurement row as the recurring signature: value → verdict (OK / NON OK).",
       "Fixed progress rail and fixed footer; the working area alone scrolls."
     ],
     "rules": [
-      { "name": "The One Signal Rule", "body": "Signal red appears on \u226410% of any screen. It marks only control, focus, warning, or a NON OK verdict. If everything is red, nothing is.", "section": "colors" },
-      { "name": "The Green-Only-Verdict Rule", "body": "Verdict green is never used for branding, success toasts, or decoration \u2014 only a measurement row resolving to OK.", "section": "colors" },
-      { "name": "The Tabular Data Rule", "body": "Anything the technician measures, enters, or reads back as a value is set in IBM Plex Mono \u2014 never the proportional face.", "section": "typography" },
-      { "name": "The Quiet Prose Rule", "body": "Hints and explanatory text stay in Inter and stay short.", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "Surfaces sit flush on the paper. Nothing floats. Separation is a hairline, never a shadow.", "section": "elevation" },
-      { "name": "The Lit-Edge Exception", "body": "The only non-hairline emphasis is the measurement row's warning state, marked by an inset 3px signal-red left edge \u2014 a margin annotation, not a drop shadow.", "section": "elevation" }
+      {
+        "name": "The One Signal Rule",
+        "body": "Signal red appears on ≤10% of any screen. It marks only control, focus, warning, or a NON OK verdict. If everything is red, nothing is.",
+        "section": "colors"
+      },
+      {
+        "name": "The Green-Only-Verdict Rule",
+        "body": "Verdict green is never used for branding, success toasts, or decoration — only a measurement row resolving to OK.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Data Rule",
+        "body": "Anything the technician measures, enters, or reads back as a value is set in IBM Plex Mono — never the proportional face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Quiet Prose Rule",
+        "body": "Hints and explanatory text stay in Inter and stay short.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces sit flush on the paper. Nothing floats. Separation is a hairline, never a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Lit-Edge Exception",
+        "body": "The only non-hairline emphasis is the measurement row's warning state, marked by an inset 3px signal-red left edge — a margin annotation, not a drop shadow.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do set every label, value, and verdict in IBM Plex Mono; reserve Inter for headings and one-line hints.",
@@ -111,6 +232,21 @@
       "Don't use verdict green for anything except a resolved OK row.",
       "Don't let the working area scroll the whole page or move the footer Continue button.",
       "Don't invent a soft SaaS look (floating rounded buttons, card shadows, purple accents)."
-    ]
+    ],
+    "documentedAdditions": {
+      ".typeRamp": [
+        "10px",
+        "11px",
+        "12px",
+        "12.5px",
+        "13px",
+        "15px",
+        "20px",
+        "27px"
+      ],
+      ".extraColors": [
+        "rgba(255,255,255,.35)"
+      ]
+    }
   }
 }

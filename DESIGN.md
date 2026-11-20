@@ -31,6 +31,17 @@ typography:
     fontFamily: "IBM Plex Mono, ui-monospace, Consolas, monospace"
     fontSize: "14px"
     fontWeight: 400
+  # Full size ramp used by the implemented wizard (advisories cleared 2026-11-20)
+  micro: "10px"          # step count, due label, threshold, ack
+  meta: "11px"           # region tag, mono chips
+  hint: "12px"           # step hint, warning, buttons
+  hint-lg: "12.5px"      # prose hints, measurement labels
+  row: "13px"            # ledger row / region choice label
+  wordmark: "15px"       # ATTESTA wordmark, next button
+  readout: "20px"        # monumental due date, phone
+  readout-lg: "27px"     # monumental due date, desktop
+colors-extra:
+  final-card-wash: "rgba(255,255,255,.35)"
 rounded:
   none: "0px"
 spacing:

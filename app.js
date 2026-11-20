@@ -16,6 +16,13 @@ const T = {
     readyBody:'Le modèle officiel est rempli avec vos données. Téléchargez, signez et remettez au client.',
     needData:'Aucune donnée. Ouvrez le module et saisissez les mesures.',
     openEncoder:'Ouvrir l’encodeur BE',ack:'Accusé',
+    nextControl:'PROCHAIN CONTRÔLE',required:'Obligatoire',invalid:'Valeur invalide',
+    vekaConfirmed:'Enregistrement VEKA confirmé',
+    bruDataBody:'Bruxelles génère le PDF officiel. Ouvrez l’encodeur, ressaisissez les données préparées, puis téléchargez votre attestation officielle.',
+    docs:{wa:['Attestation de contrôle (modèle AWAC)','Tickets de mesure ajoutés'],
+      fl:['Verbrandingsattest','Reinigingsattest','Enregistrement VEKA effectué'],
+      brSolid:['Attestation PEB — combustibles solides'],brData:['Paquet de données pour l’encodeur BE','Liste de ressaisie manuelle']},
+    annex:'Annexe ≥ 1000 kW incluse',
     w100:'<strong>Limite 100 kW.</strong> La loi (≤100 kW) donne 3 ans, mais la note du modèle dit 2. Attesta applique 3 ans et affiche cet avertissement.',
     wGate:'<strong>Aucune attestation sans enregistrement.</strong> Saisissez la référence et la date VEKA avant le téléchargement.',
     wBru:'<strong>Pas de PDF ici.</strong> Les attestations gaz/mazout bruxelloises sont générées par Bruxelles Environnement. Attesta prépare les données pour la saisie manuelle.',
@@ -28,6 +35,13 @@ const T = {
     readyBody:'Het officiële model is met uw gegevens gevuld. Download, onderteken en geef aan de klant.',
     needData:'Geen gegevens. Open het rooster en vul de metingen in.',
     openEncoder:'BE-encoder openen',ack:'Bevestigd',
+    nextControl:'VOLGENDE CONTROLE',required:'Verplicht',invalid:'Ongeldige waarde',
+    vekaConfirmed:'VEKA-registratie bevestigd',
+    bruDataBody:'Brussel genereert het officiële PDF. Open de encoder, voer de voorbereide gegevens opnieuw in en download uw officiële attest.',
+    docs:{wa:['Attestation de contrôle (AWAC-model)','Meetbewijzen toegevoegd'],
+      fl:['Verbrandingsattest','Reinigingsattest','VEKA-registratie geregistreerd'],
+      brSolid:['Attestation PEB — vaste brandstof'],brData:['Gegevenspakket voor BE-encoder','Lijst voor manuele invoer']},
+    annex:'Bijlage ≥ 1000 kW inbegrepen',
     w100:'<strong>100 kW-grens.</strong> De wet (≤100 kW) geeft 3 jaar, maar voetnoot 14 van het model zegt 2. Attesta gebruikt 3 jaar en toont deze waarschuwing.',
     wGate:'<strong>Geen attest zonder registratie.</strong> Vul de VEKA-referentie en -datum in vóór het downloaden.',
     wBru:'<strong>Geen PDF hier.</strong> Brusselse gas/olie-attesten worden door Bruxelles Environnement gegenereerd. Attesta bereidt de gegevens voor manuelle invoer voor.',
@@ -70,7 +84,7 @@ function renderChrome(){
   const due = computeDue();
   $('due').hidden = !due;
   document.querySelector('.foot').classList.toggle('tall',!!due);
-  if(due) $('dueDate').textContent = wFmt(due.date);
+  if(due){ $('dueDate').textContent = wFmt(due.date); $('dueLabel').textContent = t.nextControl; }
 }
 
 /* ---------- rules ---------- */
@@ -206,14 +220,14 @@ function renderFinal(){
   $('stepHint').textContent=t.readyHint;
   $('warning').innerHTML=warningFor(); $('warning').hidden=!$('warning').innerHTML;
   wireAcks();
-  const docs = c.id==='wallonia' ? ['Attestation de contrôle (AWAC model)','Analyzer tickets appended']
-    : c.id==='flanders' ? ['Verbrandingsattest','Reinigingsattest','VEKA registration recorded']
-    : /solide/i.test(d.fuel||'') ? ['Attestation PEB — combustibles solides', d.annex1mw?'Annexe ≥ 1000 kW included':''].filter(Boolean)
-    : ['Data package for Bruxelles Environnement encoder','Manual re-key checklist'];
   const isBruData = c.id==='brussels' && !/solide/i.test(d.fuel||'');
-  const gate = c.id==='flanders' ? `<div class="gate"><input id="vekaCheck" type="checkbox" ${d.vekaRef?'checked':''}><label for="vekaCheck">VEKA registration confirmed</label></div>` : '';
+  const docs = c.id==='wallonia' ? t.docs.wa
+    : c.id==='flanders' ? t.docs.fl
+    : /solide/i.test(d.fuel||'') ? [...t.docs.brSolid, ...(d.annex1mw?[t.annex]:[])]
+    : t.docs.brData;
+  const gate = c.id==='flanders' ? `<div class="gate"><input id="vekaCheck" type="checkbox" ${d.vekaRef?'checked':''}><label for="vekaCheck">${t.vekaConfirmed}</label></div>` : '';
   $('form').innerHTML=`<div class="final"><h2>${docs[0]}</h2>
-    <p>${isBruData?'Brussels generates the official PDF. Open the encoder, re-key the prepared data, then download your official attestation.':t.readyBody}</p>
+    <p>${isBruData?t.bruDataBody:t.readyBody}</p>
     <div class="doclist">${docs.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
     ${gate}<button type="button" class="btn next" id="go" style="margin-top:16px;width:100%">${isBruData?t.openEncoder:t.downloadPdf}</button></div>`;
   $('go').onclick=issue;
@@ -228,8 +242,9 @@ function validate(){
   const c=cfg(), step=c.steps[state.step]; let ok=true;
   step.fields.forEach(f=>{
     f._err='';
-    if(f.required && (state.data[f.key]===''||state.data[f.key]==null)) { f._err='Required'; ok=false; }
-    if(f.type==='select' && state.data[f.key] && f.options && !f.options.includes(state.data[f.key])) { f._err='Invalid'; ok=false; }
+    const t=tr();
+    if(f.required && (state.data[f.key]===''||state.data[f.key]==null)) { f._err=t.required; ok=false; }
+    if(f.type==='select' && state.data[f.key] && f.options && !f.options.includes(state.data[f.key])) { f._err=t.invalid; ok=false; }
   });
   if(!ok) render();
   return ok;
