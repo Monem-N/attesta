@@ -45,7 +45,7 @@ const MAPS = {
     clientName:[0,260,130], clientStreet:[0,260,145], clientCity:[0,260,160],
     powerKw:[0,430,230], year:[0,300,240], make:[0,180,240], model:[0,300,240], serial:[0,420,240],
     o2:[0,460,473], co2:[0,460,487], co:[0,460,502], flueTemp:[0,460,517], efficiency:[0,460,560],
-    conformity:[0,400,680], defects:[0,120,720],
+    conformity:[0,170,687], defects:[0,120,720],
   },
   brussels: {
     controlDate:[0,180,94], attestNumber:[0,470,94],
@@ -73,12 +73,12 @@ function draw(page,text,x,y,size,font){
 }
 
 let BOXES=null;
-async function checkboxMap(){
+async function checkboxMap(model){
   if(!BOXES){
     try{ const r=await fetch('assets/checkbox-rects.json'); BOXES=r.ok?await r.json():{}; }
     catch(e){ BOXES={}; }
   }
-  return BOXES;
+  return BOXES[model]||{};
 }
 function tick(page,box){
   const [x0,y0,x1,y1]=box;
@@ -88,19 +88,18 @@ function tick(page,box){
 function binaryIndex(v){
   if(v==null) return null;
   const s=String(v);
-  return /^(oui|yes|ja|conforme)$/i.test(s)?0
-    : /^(non|no|nee|non conforme)$/i.test(s)?1 : null;
+  return /^(oui|yes|ja|conforme|goed)/i.test(s)?0
+    : /^(non|no|nee|non conforme|niet)/i.test(s)?1 : null;
 }
 // Tick printed OUI/NON boxes for binary fields, using the field's anchor to
 // find the adjacent box pair. Boxes sorted top-to-bottom or left-to-right.
-async function markBoxes(doc,map,data,region,keys){
-  if(region!=='wallonia') return; // maps for other regions not extracted yet
-  const boxes=await checkboxMap(); const pages=doc.getPages();
+async function markBoxes(doc,map,data,region,keys,model){
+  const boxes=await checkboxMap(model); const pages=doc.getPages();
   for(const [key,val] of Object.entries(map)){
     if(!keys.has(key)) continue;
     const idx=binaryIndex(data[key]); if(idx===null) continue;
     const [pi,x,y]=val; const list=(boxes[String(pi)]||[]);
-    // Prefer a same-row horizontal OUI/NON pair closest to the anchor row.
+    // Prefer a same-row pair; fall back to two nearest boxes.
     const groups=[];
     for(const b of list){
       const cy=(b[1]+b[3])/2;
@@ -125,11 +124,11 @@ async function markBoxes(doc,map,data,region,keys){
     if(pages[pi]) tick(pages[pi],pair[idx]);
   }
 }
-async function overlay(bytes, map, data, fontName, region){
+async function overlay(bytes, map, data, fontName, region, model){
   const doc = await PDFDocument.load(bytes);
   const font = await doc.embedFont(fontName);
   const pages = doc.getPages();
-  const marked = new Set(Object.keys(map).filter(k=>binaryIndex(data[k])!==null && region==='wallonia'));
+  const marked = new Set(Object.keys(map).filter(k=>binaryIndex(data[k])!==null));
   for(const [key,val] of Object.entries(map)){
     const v = data[key];
     if(v===''||v==null||v===false || marked.has(key)) continue;
@@ -138,7 +137,7 @@ async function overlay(bytes, map, data, fontName, region){
     const text = EXTRA_LABEL[key]?`${EXTRA_LABEL[key]} : ${raw}`:raw;
     draw(page,text,x,y,9,font);
   }
-  await markBoxes(doc,map,data,region,marked);
+  await markBoxes(doc,map,data,region,marked,model);
   return doc.save();
 }
 
@@ -161,15 +160,16 @@ export async function buildAttestation(state){
     return new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   }
 
-  let src = c.background;
+  let src = c.background, model = state.region;
   if(state.region==='flanders' && d.document && d.document.includes('Keuringsrapport'))
-    src='assets/fl-model-keuringsrapport.pdf';
+    { src='assets/fl-model-keuringsrapport.pdf'; model='fl-keuring'; }
   if(state.region==='flanders' && d.document && d.document.includes('reinigingsattest'))
-    src='assets/fl-model-reinigingsattest.pdf';
+    { src='assets/fl-model-reinigingsattest.pdf'; model='fl-reiniging'; }
+  if(state.region==='flanders') model = model==='flanders'?'fl-verbranding':model;
 
   const res = await fetch(src);
   if(!res.ok) throw new Error('Model PDF not found: '+src);
   const bytes = await res.arrayBuffer();
-  const out = await overlay(bytes, MAPS[state.region], d, StandardFonts.Helvetica, state.region);
+  const out = await overlay(bytes, MAPS[state.region], d, StandardFonts.Helvetica, state.region, model);
   return new Blob([out],{type:'application/pdf'});
 }
