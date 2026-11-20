@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<a class="skip-link" href="#form">Aller au formulaire</a>
 <div class="app">
   <header class="head">
     <div class="rule" id="rule"></div>
@@ -30,7 +31,7 @@
       <h1 id="stepTitle"></h1>
       <p id="stepHint"></p>
     </div>
-    <div id="warning" hidden></div>
+    <div id="warning" role="status" aria-live="polite" hidden></div>
     <form id="form" class="fields" autocomplete="off"></form>
     <noscript>Attesta requires JavaScript to complete the wizard and generate documents.</noscript>
   </main>

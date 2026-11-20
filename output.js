@@ -174,7 +174,7 @@ async function appendFiles(doc, attachments){
     if(!files) continue;
     for(const file of files){
       const bytes=await file.arrayBuffer();
-      if(file.type==='application/pdf'||file.name.toLower?.endsWith('.pdf')){
+      if(file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf')){
         const attached=await PDFDocument.load(bytes);
         const pages=await doc.copyPages(attached,attached.getPageIndices());
         pages.forEach(page=>doc.addPage(page));

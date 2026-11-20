@@ -169,18 +169,20 @@ function warningFor(){
 function fieldHTML(f){
   const v=state.data[f.key]??''; const bad=f._err?' bad':'';
   const id=`field-${f.key}`;
+  const name=` name="${f.key}"`;
   let input='';
   if(f.type==='select'){
-    input=`<select id="${id}" data-k="${f.key}" ${f.required?'required':''}><option value=""></option>${f.options.map(o=>
+    input=`<select id="${id}"${name} data-k="${f.key}" ${f.required?'required':''}><option value=""></option>${f.options.map(o=>
       `<option ${v===o?'selected':''}>${o}</option>`).join('')}</select>`;
   } else if(f.type==='textarea'){
-    input=`<textarea id="${id}" data-k="${f.key}" rows="2" ${f.required?'required':''}>${esc(v)}</textarea>`;
+    input=`<textarea id="${id}"${name} data-k="${f.key}" rows="2" ${f.required?'required':''}>${esc(v)}</textarea>`;
   } else if(f.type==='file'){
-    input=`<input id="${id}" type="file" data-k="${f.key}" accept="image/*,application/pdf" multiple>`;
+    input=`<input id="${id}"${name} type="file" data-k="${f.key}" accept="image/*,application/pdf" multiple>`;
   } else if(f.type==='checkbox'){
-    input=`<input id="${id}" type="checkbox" data-k="${f.key}" ${v?'checked':''}>`;
+    input=`<input id="${id}"${name} type="checkbox" data-k="${f.key}" ${v?'checked':''}>`;
   } else {
-    input=`<input id="${id}" type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.key}" value="${esc(v)}" ${f.required?'required':''}>`;
+    const isCode=f.key==='techAgrement'||f.key==='bce';
+    input=`<input id="${id}"${name} type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.key}" value="${esc(v)}" ${f.required?'required':''} spellcheck="false" autocomplete="off">`;
   }
   return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}<div class="err" id="${id}-error">${f._err||''}</div></div>`;
 }
@@ -196,7 +198,7 @@ function measureHTML(f){
   const lim = f.max!=null?`≤ ${f.max}`:(f.min!=null?`≥ ${f.min}`:'');
   return `<div class="mrow ${v===''||v==null?'pending':''} ${verdict==='bad'?'warn':''}">
     <label class="ml" for="${id}">${f.label}<span class="thresh">${lim} ${f.unit||''}</span></label>
-    <input id="${id}" data-k="${f.key}" value="${esc(v??'')}" inputmode="decimal" ${f.required?'required':''}>
+    <input id="${id}" name="${f.key}" data-k="${f.key}" value="${esc(v??'')}" inputmode="decimal" ${f.required?'required':''}>
     <span class="verdict ${verdict}">${text}</span></div>`;
 }
 function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -208,12 +210,14 @@ function wireAcks(){
 }
 
 /* ---------- render ---------- */
+let lastFocusKey=null;
 function render(){
   renderChrome();
   const c=cfg();
-  if(!c){ renderRegionChoice(); return; }
+  if(!c){ lastFocusKey=null; renderRegionChoice(); return; }
   const isFinal=state.step>=c.steps.length;
-  if(isFinal){ renderFinal(); return; }
+  const focusKey=`${state.region}:${state.step}`;
+  if(isFinal){ renderFinal(); maybeFocusHeading(focusKey); return; }
   const step=c.steps[state.step];
   $('stepTitle').textContent=step.title;
   $('stepHint').textContent=step.hint;
@@ -247,8 +251,16 @@ function render(){
       if(el.classList.contains('ml')||el.closest('.mrow')) updateMeasure(el);
     });
   });
+  maybeFocusHeading(focusKey);
+}
+// Move focus to the step heading only when the step/region changes — not on
+// in-place re-renders (warning ack, measure recalc) which would steal focus.
+function maybeFocusHeading(key){
+  if(key===lastFocusKey) return;
+  lastFocusKey=key;
   requestAnimationFrame(()=>{
     const heading=$('stepTitle');
+    if(!heading) return;
     heading.setAttribute('tabindex','-1');
     heading.focus({preventScroll:true});
   });
@@ -285,11 +297,11 @@ function renderRegionChoice(){
         if(!window.confirm(tr().confirmReplace(label,kind))) return;
       }
     state={region:b.dataset.region,step:0,data:{},status:'Draft'};
-    save(); render();
+    lastFocusKey=null; save(); syncURL(); render();
   });
   $('form').querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>{
     state=readRegionDraft(b.dataset.resume)||{region:b.dataset.resume,step:0,data:{},status:'Draft'};
-    save(); render();
+    lastFocusKey=null; save(); syncURL(); render();
   });
 }
 function renderFinal(){
@@ -451,7 +463,7 @@ function validateDraft(){
   }
   return !invalid;
 }
-$('back').onclick=()=>{ if(state.step>0){state.step--;save();render();} };
+$('back').onclick=()=>{ if(state.step>0){state.step--;save();syncURL();render();} };
 $('changeRegion').onclick=()=>{
   const t=tr();
   const prompt=state.status==='Done'?t.confirmChangeSaved:t.confirmChangeDraft;
@@ -459,18 +471,45 @@ $('changeRegion').onclick=()=>{
   save();
   state={region:null,step:0,data:{},status:'Draft'};
   save();
-  const url=new URL(location.href);
-  url.searchParams.delete('region');
-  url.searchParams.delete('step');
-  history.replaceState(null,'',url);
+  syncURL();
   render();
 };
 $('next').onclick=()=>{
   const c=cfg(); if(!c) return;
   if(state.step>=c.steps.length) return;
   if(!validate()) return;
-  state.step++; save(); render();
+  state.step++; save(); syncURL(); render();
 };
+// Keep the URL query params in sync with the active region/step so the wizard
+// is deep-linkable and the browser Back button moves between steps.
+function syncURL(){
+  try{
+    const url=new URL(location.href);
+    if(state.region){
+      url.searchParams.set('region',state.region);
+      url.searchParams.set('step',String(state.step));
+    }else{
+      url.searchParams.delete('region');
+      url.searchParams.delete('step');
+    }
+    history.replaceState(null,'',url);
+  }catch(e){ /* non-fatal: URL sync is a convenience */ }
+}
+window.addEventListener('popstate',()=>{
+  const q=new URLSearchParams(location.search);
+  const region=q.get('region');
+  if(region&&REGIONS[region]){
+    const step=Math.max(0,Math.min(Number(q.get('step'))||0,REGIONS[region].steps.length));
+    state={region,step,data:state.region===region?state.data:{},status:state.region===region?state.status:'Draft'};
+    lastFocusKey=null;
+    save(); render();
+  }else if(!region && state.region){
+    save();
+    state={region:null,step:0,data:{},status:'Draft'};
+    lastFocusKey=null;
+    render();
+  }
+});
 window.addEventListener('keydown',e=>{
   if(e.key==='Enter' && e.target.matches('input:not([type="checkbox"]), select') && !e.target.closest('.final')){
     e.preventDefault();
