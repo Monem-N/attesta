@@ -51,14 +51,42 @@ async function overlay(bytes, map, data, fontName){
   return doc.save();
 }
 
-export async function buildAttestation(state){
+async function appendFiles(doc, attachments){
+  for(const [key,files] of attachments?.entries?.()||[]){
+    if(!files) continue;
+    for(const file of files){
+      const bytes=await file.arrayBuffer();
+      if(file.type==='application/pdf'||file.name.toLower?.endsWith('.pdf')){
+        const attached=await PDFDocument.load(bytes);
+        const pages=await doc.copyPages(attached,attached.getPageIndices());
+        pages.forEach(page=>doc.addPage(page));
+      }else if(file.type==='image/png'||file.type==='image/jpeg'||/\.(png|jpe?g)$/i.test(file.name)){
+        const image=file.type==='image/png'||/\.png$/i.test(file.name)
+          ? await doc.embedPng(bytes)
+          : await doc.embedJpg(bytes);
+        const page=doc.addPage([595,842]);
+        const scale=Math.min(535/image.width,760/image.height);
+        page.drawImage(image,{x:30,y:51,width:image.width*scale,height:image.height*scale});
+      }
+    }
+  }
+  return doc;
+}
+
+export async function buildAttestation(state,attachments){
   const c = state.region==='wallonia'?WAL:state.region==='flanders'?FLA:BRU;
   const d = state.data;
 
   if(state.region==='brussels' && !/solide/i.test(d.fuel||'')){
+    const attachmentList=[];
+    for(const [key,files] of attachments?.entries?.()||[]){
+      for(const file of files){
+        attachmentList.push({field:key,name:file.name,type:file.type||'application/octet-stream',size:file.size});
+      }
+    }
     const payload = { product:'Attesta', region:'brussels', mode:'manual-rekey',
       encoder:'https://peb-epb.brussels/att-frontoffice/pwa/index.html',
-      generatedAt:new Date().toISOString(), data:d,
+      generatedAt:new Date().toISOString(), data:d, attachments:attachmentList,
       checklist:[
         'Open the BE encoder and create a new attestation',
         'Re-key the professional, owner and PEB-unit data',
@@ -71,14 +99,25 @@ export async function buildAttestation(state){
   }
 
   let src = c.background;
-  if(state.region==='flanders' && d.document && d.document.includes('Keuringsrapport'))
-    src='assets/fl-model-keuringsrapport.pdf';
-  if(state.region==='flanders' && d.document && d.document.includes('reinigingsattest'))
-    src='assets/fl-model-reinigingsattest.pdf';
+  if(state.region==='flanders'){
+    if(d.document?.includes('Keuringsrapport')) src='assets/fl-model-keuringsrapport.pdf';
+    else if(d.document?.includes('reinigingsattest')||d.document?.includes('Reinigingsattest')) src='assets/fl-model-reinigingsattest.pdf';
+  }
 
   const res = await fetch(src);
   if(!res.ok) throw new Error('Model PDF not found: '+src);
   const bytes = await res.arrayBuffer();
-  const out = await overlay(bytes, MAPS[state.region], d, StandardFonts.Helvetica);
+  let out=await overlay(bytes, MAPS[state.region], d, StandardFonts.Helvetica);
+  let doc=await PDFDocument.load(out);
+
+  if(state.region==='brussels'&&d.annex1mw===true){
+    const annexRes=await fetch('assets/br-1mw-annex.pdf');
+    if(!annexRes.ok) throw new Error('Brussels annex PDF not found');
+    const annex=await PDFDocument.load(await annexRes.arrayBuffer());
+    const pages=await doc.copyPages(annex,annex.getPageIndices());
+    pages.forEach(page=>doc.addPage(page));
+  }
+  doc=await appendFiles(doc,attachments);
+  out=await doc.save();
   return new Blob([out],{type:'application/pdf'});
 }
