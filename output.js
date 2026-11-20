@@ -93,10 +93,17 @@ async function checkboxMap(model){
   }
   return BOXES[model]||{};
 }
+const RED=rgb(0.698,0.227,0.169);
+// Per-model anchor corrections where the same field is printed elsewhere.
+const ANCHOR_OVERRIDES={'fl-keuring':{conformity:[0,268,606]}};
 function tick(page,box){
-  const [x0,y0,x1,y1]=box;
-  page.drawRectangle({x:x0+0.8,y:H-y1+0.8,width:(x1-x0)-1.6,height:(y1-y0)-1.6,
-    color:rgb(0.698,0.227,0.169)}); // solid red mark inside the printed box
+  const [x0,y0,x1,y1]=box, type=box[4];
+  if(type==='word'){
+    // Brussels has no drawn boxes; underline the selected printed OUI/NON word.
+    page.drawRectangle({x:x0,y:H-y1-1.5,width:x1-x0,height:2,color:RED});
+  } else {
+    page.drawRectangle({x:x0+0.8,y:H-y1+0.8,width:(x1-x0)-1.6,height:(y1-y0)-1.6,color:RED});
+  }
 }
 function binaryIndex(v){
   if(v==null) return null;
@@ -108,10 +115,12 @@ function binaryIndex(v){
 // find the adjacent box pair. Boxes sorted top-to-bottom or left-to-right.
 async function markBoxes(doc,map,data,region,keys,model){
   const boxes=await checkboxMap(model); const pages=doc.getPages();
+  const overrides=(ANCHOR_OVERRIDES[model]||{});
+  const ticked=new Set();
   for(const [key,val] of Object.entries(map)){
     if(!keys.has(key)) continue;
     const idx=binaryIndex(data[key]); if(idx===null) continue;
-    const [pi,x,y]=val; const list=(boxes[String(pi)]||[]);
+    const [pi,x,y]=overrides[key]||val; const list=(boxes[String(pi)]||[]);
     // Prefer a same-row pair; fall back to two nearest boxes.
     const groups=[];
     for(const b of list){
@@ -134,8 +143,9 @@ async function markBoxes(doc,map,data,region,keys,model){
     }
     if(!pair||pair.length<2) continue;
     pair.sort((a,b)=>horizontal?a[0]-b[0]:a[1]-b[1]);
-    if(pages[pi]) tick(pages[pi],pair[idx]);
+    if(pages[pi]){ tick(pages[pi],pair[idx]); ticked.add(key); }
   }
+  return ticked;
 }
 async function overlay(bytes, map, data, region, model){
   const doc = await PDFDocument.load(bytes);
@@ -146,16 +156,16 @@ async function overlay(bytes, map, data, region, model){
   const fontBytes = await loadFontBytes();
   const font = await doc.embedFont(fontBytes,{subset:true});
   const pages = doc.getPages();
-  const marked = new Set(Object.keys(map).filter(k=>binaryIndex(data[k])!==null));
+  const binaryKeys=new Set(Object.keys(map).filter(k=>binaryIndex(data[k])!==null));
+  const ticked=await markBoxes(doc,map,data,region,binaryKeys,model);
   for(const [key,val] of Object.entries(map)){
     const v = data[key];
-    if(v===''||v==null||v===false || marked.has(key)) continue;
+    if(v===''||v==null||v===false || ticked.has(key)) continue;
     const [pi,x,y]=val; const page=pages[pi]; if(!page) continue;
     const raw = Array.isArray(v)?v.join(', '):String(v);
     const text = EXTRA_LABEL[key]?`${EXTRA_LABEL[key]} : ${raw}`:raw;
     draw(page,text,x,y,9,font);
   }
-  await markBoxes(doc,map,data,region,marked,model);
   return doc.save();
 }
 
@@ -184,6 +194,7 @@ export async function buildAttestation(state){
   if(state.region==='flanders' && d.document && d.document.includes('reinigingsattest'))
     { src='assets/fl-model-reinigingsattest.pdf'; model='fl-reiniging'; }
   if(state.region==='flanders') model = model==='flanders'?'fl-verbranding':model;
+  if(state.region==='brussels') model='br-solid';
 
   const res = await fetch(src);
   if(!res.ok) throw new Error('Model PDF not found: '+src);

@@ -152,7 +152,9 @@ All output text in **Dutch**. Recognition patterns: `GV#####`, `TV#####`, `VA+##
 ## Overlay implementation notes
 
 - **Checkbox model:** `assets/checkbox-rects.json` holds printed checkbox rectangles for five models: `wallonia` (vector + Wingdings `U+F097` glyph boxes), `fl-verbranding` (43 boxes), `fl-reiniging` (32), `fl-keuring` (99), and `br-solid` (0 — the Brussels solid-fuel form uses plain OUI/NON text with no boxes, so nothing is ticked there). `output.js` selects the map by model and ticks the correct box by finding the nearest same-row pair to each field anchor. Text for ticked binary fields is suppressed (the printed labels remain).
-- **Verified ticks:** Wallonia — room conformities, declaration, all five diagnostic branches, regulation rows. Flanders combustion — conformity only (other Flanders anchors still need per-document tuning).
+- **Verified ticks:** Wallonia — room conformities, declaration, all five diagnostic branches, regulation rows. Flanders combustion — conformity. Flanders keuring — conformity via a per-model anchor override (`ANCHOR_OVERRIDES`). Brussels solid fuel — the printed OUI/NON words (no drawn boxes) are marked with a red underline.
+- **Flanders cleaning:** no OUI/NON box pair exists near the shared conformity anchor (only a vertical checklist column), so the value is written as text instead of ticking.
+- **Fallback rule:** text for a binary field is suppressed only when a mark was actually drawn; otherwise the value is still written as text, so no answer is ever lost.
 - **Previously unmapped fields:** `intervention`, `building`, `techCategory`, `requester`, `fuel`, `clientCompany` now render as labelled lines in the blank strip below the orifice section on Wallonia page 1.
 - **Text encoding:** standard-font WinAnsi renders French accents correctly (verified: Élise, François, Béland, Église). Non-WinAnsi characters (e.g. Dutch `ĳ`) are transliterated (`ij`) and each field draw is guarded so one bad character can never abort the PDF. Full Unicode via a vendored TTF + fontkit was rejected: it would add ~2 MB to a deliberately lightweight static app.
 
