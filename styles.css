@@ -39,11 +39,18 @@ input::placeholder{color:var(--soft);opacity:1}
 .warning[hidden]{display:none}
 .warning::before{content:'!';font-family:var(--mono);font-weight:600;color:var(--red)}
 .warning.doubled{border-bottom-width:3px}
+.warning .ack{margin-left:auto;flex:none;border:1px solid var(--red);background:transparent;color:var(--red);
+  font-family:var(--mono);font-size:10px;padding:3px 8px;cursor:pointer}
+.warning .ack:hover{background:var(--red);color:var(--paper)}
 .fields{display:grid;gap:11px;align-content:start}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .f label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-bottom:3px}
 .f input,.f select{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);
   padding:5px 0;font-size:14px;font-family:var(--mono);border-radius:0}
+.f select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:22px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2361666e' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 2px center}
+.f select option{background:var(--paper);color:var(--ink)}
 .f input:focus,.f select:focus{outline:none;border-bottom-color:var(--red)}
 .f input[type=date]{font-family:var(--mono)}
 .f .err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:3px;min-height:12px}
@@ -63,14 +70,18 @@ input::placeholder{color:var(--soft);opacity:1}
 .thresh{font-family:var(--mono);font-size:10px;color:var(--soft)}
 
 /* choices */
-.choices{display:flex;flex-wrap:wrap;gap:6px}
-.choice{border:1px solid var(--line);padding:7px 10px;font-family:var(--mono);font-size:11px;cursor:pointer;background:transparent}
-.choice[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.choices{display:grid;gap:0}
+.choice{display:flex;justify-content:space-between;align-items:center;width:100%;border:none;border-bottom:1px solid var(--line);
+  padding:12px 2px;font-family:var(--mono);font-size:13px;cursor:pointer;background:transparent;text-align:left}
+.choice:first-child{border-top:1px solid var(--line)}
+.choice .pick{color:var(--red);font-size:15px}
+.choice:hover{background:rgba(178,58,43,.06)}
 .choice.red[aria-pressed=true]{background:var(--red);border-color:var(--red)}
 
 /* footer */
 .foot{height:var(--f);flex:none;border-top:1px solid var(--line);background:var(--bg-head);
-  display:flex;align-items:center;gap:10px;padding:0 20px}
+  display:flex;align-items:center;gap:10px;padding:0 20px;transition:height .18s ease-out}
+.foot.tall{height:88px}
 .btn{border:1px solid var(--ink);background:transparent;padding:10px 16px;cursor:pointer;
   font-family:var(--mono);font-size:12px;letter-spacing:.06em}
 .btn.back{border-color:var(--line);color:var(--soft)}
@@ -78,7 +89,7 @@ input::placeholder{color:var(--soft);opacity:1}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .due{text-align:right;margin-left:auto;line-height:1.15}
 .due-label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--soft)}
-.due strong{font-family:var(--mono);font-size:17px;font-weight:600;color:var(--ink)}
+.due strong{font-family:var(--mono);font-size:27px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
 .foot .next + .due{margin-left:0}
 
 /* final screen */
@@ -90,6 +101,6 @@ input::placeholder{color:var(--soft);opacity:1}
 .gate{display:flex;gap:8px;align-items:center;margin-top:12px}
 .gate input{flex:1}
 
-@media(max-width:520px){ .row{grid-template-columns:1fr;gap:11px} .due strong{font-size:14px} }
+@media(max-width:520px){ .row{grid-template-columns:1fr;gap:11px} .due strong{font-size:20px} .foot.tall{height:82px} }
 @media(min-width:560px){ .fields{grid-template-columns:1fr 1fr;column-gap:26px} .row,.measure,.final,.warning{grid-column:1/-1} }
 @media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }

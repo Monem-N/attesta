@@ -10,15 +10,30 @@ const ink = rgb(0.086,0.094,0.114);
 // field key -> [pageIndex, x, pdfTopY]  (anchors from docs/field-matrix.md)
 const MAPS = {
   wallonia: {
-    controlDate:[0,150,34], attestNumber:[0,350,34],
-    techName:[0,165,108], techAgrement:[0,175,120], company:[0,215,120], bce:[0,215,167],
-    clientName:[0,470,92], clientStreet:[0,430,140], clientCity:[0,430,152],
-    applianceLocation:[0,180,198],
-    powerKw:[0,430,322], year:[0,310,330], make:[0,180,340], model:[0,260,340], serial:[0,400,340],
-    ventLocal:[0,470,493], airSupply:[0,470,505], flue:[0,470,517],
-    chimneyPressure:[1,300,420], smoke:[1,430,455], o2:[1,430,470], co2:[1,430,485], co:[1,430,500], efficiency:[1,430,515],
-    conformity:[2,300,120], defects:[2,120,180],
-    regulationMode:[3,200,80], thermostat:[3,200,95], clock:[3,200,110], night:[3,200,125], pumpIssue:[3,470,110],
+    // bg page 1 — header / technician / demandeur
+    controlDate:[0,140,53], attestNumber:[0,470,53],
+    techName:[0,165,106], techAgrement:[0,180,131], company:[0,205,148],
+    techPhone:[0,275,164], bce:[0,205,180],
+    clientName:[0,470,106], clientStreet:[0,455,172], clientCity:[0,455,186], clientPhone:[0,455,200],
+    applianceLocation:[0,180,196],
+    // bg page 1 — fuels / generator / burner
+    fuelDetail:[0,250,262],
+    genCount:[0,230,289], raccordement:[0,230,331], condensation:[0,330,344],
+    year:[0,200,369], make:[0,150,381], model:[0,300,381], serial:[0,200,394], powerKw:[0,230,409],
+    burnerType:[0,430,309], unitOrPulsed:[0,420,322], premix:[0,420,334],
+    fluid:[0,470,384], production:[0,470,406],
+    // bg page 1 — room / orifices
+    permisDate:[0,250,469], ventLocal:[0,470,492], airSupply:[0,470,506], flue:[0,470,519],
+    orifices:[0,120,622],
+    // bg page 2 — measurement table / complementary / declaration
+    smoke:[1,185,166], o2:[1,330,166], co2:[1,285,166], co:[1,372,166], efficiency:[1,403,166],
+    chimneyPressure:[1,281,400], pumpPressure:[1,437,416],
+    conformity:[1,200,569], defects:[1,300,603],
+    // bg page 3 — diagnostic tree (A–E) / regulation & pumps
+    diagReport:[2,500,56], diagModified:[2,500,129], diagAfter2015:[2,500,228],
+    diagTwoYears:[2,500,292], diagDeferred:[2,500,423],
+    regulationMode:[2,188,638], thermostat:[2,206,666], clock:[2,206,691],
+    night:[2,206,716], pumpIssue:[2,494,656],
   },
   flanders: {
     controlDate:[0,300,100], attestNumber:[0,470,8],
