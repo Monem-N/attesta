@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-20T07:30:00Z",
+  "title": "Design System: Attesta",
+  "extensions": {
+    "colorMeta": {
+      "signal-red": { "role": "primary", "displayName": "Signal Red", "canonical": "#b23a2b", "tonalRamp": ["#2a0e0a", "#4d1710", "#6f2318", "#8f2e20", "#b23a2b", "#c85f52", "#dd9289", "#f0c6c1"] },
+      "ink-black": { "role": "primary", "displayName": "Ink Black", "canonical": "#16181d", "tonalRamp": ["#0a0b0d", "#16181d", "#2b2f36", "#454a52", "#61666e", "#8a8f96", "#b9bcc0", "#e4e5e6"] },
+      "verdict-green": { "role": "tertiary", "displayName": "Verdict Green", "canonical": "#2f6b4f", "tonalRamp": ["#0c1f17", "#143526", "#1f4d37", "#286046", "#2f6b4f", "#4a8768", "#7bab8f", "#b3d0c0"] },
+      "archival-paper": { "role": "neutral", "displayName": "Archival Paper", "canonical": "#f4f3ee", "tonalRamp": ["#2a2a27", "#4a4945", "#6e6c66", "#94918a", "#b8b5ad", "#d4d2cb", "#e7e5df", "#f4f3ee"] },
+      "header-band": { "role": "neutral", "displayName": "Header Band", "canonical": "#eceae3" },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#c9c7bf" },
+      "soft-grey": { "role": "neutral", "displayName": "Soft Grey", "canonical": "#61666e" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Step headings only (clamp 22-30px). Tight, confident, never scrolls." },
+      "body": { "displayName": "Body", "purpose": "Hints and prose in Inter; one line, then out of the way." },
+      "label": { "displayName": "Label", "purpose": "IBM Plex Mono uppercase field labels, wordmark, region, step count." },
+      "value": { "displayName": "Value / Data", "purpose": "All measured/entered data and verdicts in IBM Plex Mono." }
+    },
+    "shadows": [
+      { "name": "lit-edge-warning", "value": "inset 3px 0 0 #b23a2b", "purpose": "The only non-hairline emphasis: a measurement row's warning state, a margin annotation not a drop shadow." }
+    ],
+    "motion": [
+      { "name": "reduced-motion", "value": "transition:none; animation:none", "purpose": "prefers-reduced-motion:reduce disables all transitions/animations." }
+    ],
+    "breakpoints": [
+      { "name": "phone-collapse", "value": "520px" },
+      { "name": "tablet-two-col", "value": "560px" },
+      { "name": "content-max", "value": "780px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Continue Button",
+      "kind": "button",
+      "refersTo": "button-next",
+      "description": "Primary forward action, pinned right in the fixed footer.",
+      "html": "<button class=\"ds-btn-next\">CONTINUE</button>",
+      "css": ".ds-btn-next{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.06em;background:#b23a2b;color:#f4f3ee;border:1px solid #b23a2b;padding:10px 16px;border-radius:0;cursor:pointer}.ds-btn-next:hover{background:#8f2e20}.ds-btn-next:focus-visible{outline:2px solid #b23a2b;outline-offset:2px}.ds-btn-next:disabled{opacity:.4;cursor:not-allowed}"
+    },
+    {
+      "name": "Back Button",
+      "kind": "button",
+      "refersTo": "button-back",
+      "description": "Secondary back action, quiet, left in footer.",
+      "html": "<button class=\"ds-btn-back\">BACK</button>",
+      "css": ".ds-btn-back{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.06em;background:transparent;color:#61666e;border:1px solid #c9c7bf;padding:10px 16px;border-radius:0;cursor:pointer}.ds-btn-back:hover{border-color:#61666e;color:#16181d}.ds-btn-back:focus-visible{outline:2px solid #b23a2b;outline-offset:2px}"
+    },
+    {
+      "name": "Ledger Field",
+      "kind": "input",
+      "refersTo": "field-input",
+      "description": "Borderless input with a single underline that turns red on focus; uppercase mono label with required asterisk.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">N째 D'AGRATION</span><input class=\"ds-field-input\" value=\"GI 12345\"></label>",
+      "css": ".ds-field{display:block}.ds-field-label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#61666e;margin-bottom:3px}.ds-field-input{width:100%;background:transparent;border:none;border-bottom:1px solid #c9c7bf;padding:5px 0;font-size:14px;font-family:'IBM Plex Mono',monospace;color:#16181d;border-radius:0}.ds-field-input:focus{outline:none;border-bottom-color:#b23a2b}"
+    },
+    {
+      "name": "Choice Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Square outlined toggle that inverts to solid ink when pressed.",
+      "html": "<button class=\"ds-chip\" aria-pressed=\"false\">GAZ</button>",
+      "css": ".ds-chip{border:1px solid #c9c7bf;padding:7px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;background:transparent;color:#16181d;border-radius:0}.ds-chip[aria-pressed=true]{background:#16181d;color:#f4f3ee;border-color:#16181d}.ds-chip.red[aria-pressed=true]{background:#b23a2b;border-color:#b23a2b}.ds-chip:focus-visible{outline:2px solid #b23a2b;outline-offset:2px}"
+    },
+    {
+      "name": "Measurement Row",
+      "kind": "custom",
+      "refersTo": "measure",
+      "description": "Signature component: label, right-aligned mono value, and a resolved OK/NON OK verdict, ruled top and bottom.",
+      "html": "<div class=\"ds-mrow\"><div class=\"ds-ml\">CO à 0% O2<span class=\"ds-thresh\">≤ 150 mg/kWh</span></div><input class=\"ds-mval\" value=\"120\"><span class=\"ds-verdict ok\">OK</span></div>",
+      "css": ".ds-mrow{display:grid;grid-template-columns:1fr 78px 54px;gap:10px;align-items:center;padding:7px 0;border-top:1px solid #c9c7bf;border-bottom:1px solid #c9c7bf}.ds-ml{font-size:12.5px;display:flex;flex-direction:column;gap:2px}.ds-thresh{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#61666e}.ds-mval{text-align:right;font-family:'IBM Plex Mono',monospace;background:transparent;border:none;border-bottom:1px solid #c9c7bf;padding:5px 0}.ds-mval:focus{outline:none;border-bottom-color:#b23a2b}.ds-verdict{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.06em}.ds-verdict.ok{color:#2f6b4f}.ds-verdict.bad{color:#b23a2b}.ds-mrow.pending .ds-mval{border-bottom-style:dashed}.ds-mrow.warn{box-shadow:inset 3px 0 0 #b23a2b}"
+    },
+    {
+      "name": "Progress Rail",
+      "kind": "nav",
+      "refersTo": "progress",
+      "description": "Segmented 3px rail under the header; hairline pending, ink done, red current.",
+      "html": "<div class=\"ds-progress\"><i class=\"done\"></i><i class=\"on\"></i><i></i><i></i></div>",
+      "css": ".ds-progress{display:flex;gap:3px;padding:0 20px 8px}.ds-progress i{height:3px;flex:1;background:#c9c7bf}.ds-progress i.done{background:#16181d}.ds-progress i.on{background:#b23a2b}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Registry Ledger",
+    "overview": "Attesta reads like an official registry document, not a consumer app. Every screen is a ruled ledger: a label in the left margin, a measured value entered on the line, and a verdict resolved at the right. The technician is not filling a form \u2014 they are reading an installation against a published standard and recording the result, one row at a time. Type is a compact grotesque for prose paired with a tabular monospace for every label, value, and verdict, so columns of numbers align and a measured value reads as data. The system refuses the soft rounded SaaS wizard with a floating purple button; it is flat, ruled, and square because the document it produces is.",
+    "keyCharacteristics": [
+      "Archival-paper ground with near-black ink; one signal red for control/warning.",
+      "Tabular monospace for all labels, values, and verdicts; grotesque for prose.",
+      "Square corners, zero radius, no drop shadows \u2014 depth via hairlines and tonal bands.",
+      "The measurement row as the recurring signature: value \u2192 verdict (OK / NON OK).",
+      "Fixed progress rail and fixed footer; the working area alone scrolls."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Signal red appears on \u226410% of any screen. It marks only control, focus, warning, or a NON OK verdict. If everything is red, nothing is.", "section": "colors" },
+      { "name": "The Green-Only-Verdict Rule", "body": "Verdict green is never used for branding, success toasts, or decoration \u2014 only a measurement row resolving to OK.", "section": "colors" },
+      { "name": "The Tabular Data Rule", "body": "Anything the technician measures, enters, or reads back as a value is set in IBM Plex Mono \u2014 never the proportional face.", "section": "typography" },
+      { "name": "The Quiet Prose Rule", "body": "Hints and explanatory text stay in Inter and stay short.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces sit flush on the paper. Nothing floats. Separation is a hairline, never a shadow.", "section": "elevation" },
+      { "name": "The Lit-Edge Exception", "body": "The only non-hairline emphasis is the measurement row's warning state, marked by an inset 3px signal-red left edge \u2014 a margin annotation, not a drop shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do set every label, value, and verdict in IBM Plex Mono; reserve Inter for headings and one-line hints.",
+      "Do keep corners square (0px) and rely on 1px hairlines and the two tonal bands for all structure.",
+      "Do resolve each measurement row to an explicit OK / NON OK verdict.",
+      "Do hold the fixed header, footer, and progress rail steady while only the stage scrolls.",
+      "Do reserve signal red for control, focus, warning, or NON OK."
+    ],
+    "donts": [
+      "Don't introduce drop shadows, border-radius, gradients, or pill shapes.",
+      "Don't set measured data in the proportional (Inter) face.",
+      "Don't use verdict green for anything except a resolved OK row.",
+      "Don't let the working area scroll the whole page or move the footer Continue button.",
+      "Don't invent a soft SaaS look (floating rounded buttons, card shadows, purple accents)."
+    ]
+  }
+}
