@@ -26,7 +26,20 @@ const T = {
     w100:'<strong>Limite 100 kW.</strong> La loi (≤100 kW) donne 3 ans, mais la note du modèle dit 2. Attesta applique 3 ans et affiche cet avertissement.',
     wGate:'<strong>Aucune attestation sans enregistrement.</strong> Saisissez la référence et la date VEKA avant le téléchargement.',
     wBru:'<strong>Pas de PDF ici.</strong> Les attestations gaz/mazout bruxelloises sont générées par Bruxelles Environnement. Attesta prépare les données pour la saisie manuelle.',
-    wNon:'<strong>Non conforme.</strong> 5 mois pour remédier ; une exception résidentielle de 3 mois (1 sept.–30 avr.) peut s’appliquer.'},
+    wNon:'<strong>Non conforme.</strong> 5 mois pour remédier ; une exception résidentielle de 3 mois (1 sept.–30 avr.) peut s’appliquer.',
+    gen:'Génération…', startAnother:'Nouvelle attestation', statusLabel:'Statut du document',
+    statusBody:'Modèle et calques en attente de revue finale des coordonnées et de conformité légale. Vérifiez chaque champ avant un usage professionnel.',
+    previewBody:'Attesta crée un aperçu PDF à partir des données saisies. Ses positions de champs et sa conformité légale ne sont pas vérifiées ; comparez-le au modèle officiel en vigueur avant tout usage professionnel.',
+    bruHandoff:'Attesta ne peut pas émettre le PDF officiel Bruxelles gaz/mazout. Utilisez le JSON téléchargé comme aide, ressaisissez les données dans l’encodeur Bruxelles Environnement, puis téléchargez le document officiel.',
+    vekaTitle:'Enregistrement VEKA', vekaRecorded:'Référence et date enregistrées', vekaRequired:'Référence et date requises',
+    newIn:l=>`Nouvelle attestation — ${l}`, resume:l=>`Reprendre le brouillon ${l}`, record:l=>`Ouvrir l’enregistrement ${l}`,
+    confirmReplace:(l,k)=>`Un enregistrement (${k}) pour ${l} existe. Démarrer un nouveau le remplacera. Continuer ?`,
+    confirmChangeSaved:'Votre enregistrement complété restera sauvegardé. Changer de région ?',
+    confirmChangeDraft:'Votre brouillon sera sauvegardé pour le reprendre plus tard. Changer de région ?',
+    confirmNewJob:'Cette attestation non terminée sera sauvegardée pour la reprendre. En démarrer une autre ?',
+    vekaDownloadError:'Saisissez une référence et une date VEKA avant de télécharger.',
+    pdfGenError:'La génération du PDF a échoué. Vérifiez la connexion et les fichiers de modèle officiels, puis réessayez.',
+    saved:'Brouillon enregistré'},
   nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'PDF downloaden',
     chooseTitle:'Attesta',chooseHint:'Kies de regio van deze interventie.',
     chooseHead:'Eén wizard. Drie regio’s.',
@@ -45,7 +58,20 @@ const T = {
     w100:'<strong>100 kW-grens.</strong> De wet (≤100 kW) geeft 3 jaar, maar voetnoot 14 van het model zegt 2. Attesta gebruikt 3 jaar en toont deze waarschuwing.',
     wGate:'<strong>Geen attest zonder registratie.</strong> Vul de VEKA-referentie en -datum in vóór het downloaden.',
     wBru:'<strong>Geen PDF hier.</strong> Brusselse gas/olie-attesten worden door Bruxelles Environnement gegenereerd. Attesta bereidt de gegevens voor manuelle invoer voor.',
-    wNon:'<strong>Niet conform.</strong> 5 maanden om te herstellen ; één uitzondering van 3 maanden (1 sept.–30 apr.) kan gelden.'}
+    wNon:'<strong>Niet conform.</strong> 5 maanden om te herstellen ; één uitzondering van 3 maanden (1 sept.–30 apr.) kan gelden.',
+    gen:'Genereren…', startAnother:'Nieuwe attestatie', statusLabel:'Documentstatus',
+    statusBody:'Model en overlays wachten op de finale coördinaat- en wettelijke controle. Controleer elk veld vóór professioneel gebruik.',
+    previewBody:'Attesta maakt een PDF-voorbeeld van de ingevoerde gegevens. De veldposities en wettelijke naleving zijn niet geverifieerd; vergelijk dit met het huidige officiële model vóór professioneel gebruik.',
+    bruHandoff:'Attesta kan de officiële Brusselse gas/olie-PDF niet afgeven. Gebruik het gedownloade JSON als hulpmiddel, voer de gegevens opnieuw in in de BE-encoder en download daar het officiële document.',
+    vekaTitle:'VEKA-registratie', vekaRecorded:'Referentie en datum geregistreerd', vekaRequired:'Referentie en datum vereist',
+    newIn:l=>`Nieuwe attestatie — ${l}`, resume:l=>`Concept hervatten ${l}`, record:l=>`Opgeslagen ${l} openen`,
+    confirmReplace:(l,k)=>`Er bestaat een opgeslagen record (${k}) voor ${l}. Een nieuwe starten vervangt het. Doorgaan?`,
+    confirmChangeSaved:'Uw voltooide record blijft opgeslagen. Regio wijzigen?',
+    confirmChangeDraft:'Uw concept wordt opgeslagen om later verder te gaan. Regio wijzigen?',
+    confirmNewJob:'Deze onvoltooide attestatie wordt opgeslagen om later verder te gaan. Een nieuwe starten?',
+    vekaDownloadError:'Voer een VEKA-referentie en -datum in vóór het downloaden.',
+    pdfGenError:'PDF-generatie mislukt. Controleer de verbinding en de officiële modellen en probeer opnieuw.',
+    saved:'Concept opgeslagen'}
 };
 function tr(){ return T[cfg()?.lang||'fr']||T.fr; }
 const ACK_KEY='attesta.acks.v1';
@@ -101,10 +127,10 @@ function renderChrome(){
   const c=cfg();
   $('rule').style.background = c?c.rule:'#b23a2b';
   $('regionLabel').textContent = c?c.label:'—';
-  const n=7;
-  $('progress').innerHTML = Array.from({length:n},(_,i)=>
-    `<i class="${i<state.step?'done':i===state.step?'on':''}"></i>`).join('');
-  $('stepCount').textContent = `STEP ${c?Math.min(state.step+1,n):1} / ${n}`;
+  const n=c?c.steps.length:0;
+  $('progress').innerHTML = c ? Array.from({length:n},(_,i)=>
+    `<i class="${i<state.step?'done':i===state.step?'on':''}"></i>`).join('') : '';
+  $('stepCount').textContent = c ? `${Math.min(state.step+1,n)} / ${n}` : '';
   document.documentElement.lang = c?c.lang:'fr';
   const t=tr();
   $('changeRegion').hidden=!c;
@@ -247,16 +273,16 @@ function renderRegionChoice(){
     <p>${t.chooseHint}</p>
     <div class="choices">${Object.values(REGIONS).map(r=>{
       const saved=readRegionDraft(r.id);
-      const savedLabel=saved?.status==='Done'?`Open saved ${r.label} record`:`Resume ${r.label} draft`;
-      return `<button type="button" class="choice red" data-region="${r.id}">Start new in ${r.label}</button>
+      const savedLabel=saved?.status==='Done'?t.record(r.label):t.resume(r.label);
+      return `<button type="button" class="choice red" data-region="${r.id}">${t.newIn(r.label)}</button>
         ${saved?`<button type="button" class="choice" data-resume="${r.id}">${savedLabel}</button>`:''}`;
     }).join('')}</div></div>`;
   $('form').querySelectorAll('[data-region]').forEach(b=>b.onclick=()=>{
       const saved=readRegionDraft(b.dataset.region);
       if(saved){
         const label=REGIONS[b.dataset.region].label;
-        const kind=saved.status==='Done'?'completed record':'unfinished draft';
-        if(!window.confirm(`A saved ${label} ${kind} exists. Starting new will replace it. Continue?`)) return;
+        const kind=saved.status==='Done'?'record':'draft';
+        if(!window.confirm(tr().confirmReplace(label,kind))) return;
       }
     state={region:b.dataset.region,step:0,data:{},status:'Draft'};
     save(); render();
@@ -273,30 +299,26 @@ function renderFinal(){
   $('warning').innerHTML=warningFor(); $('warning').hidden=!$('warning').innerHTML;
   wireAcks();
   const isBruData = c.id==='brussels' && !/solide/i.test(d.fuel||'');
-  $('stepTitle').textContent=t.ready;
-  $('stepHint').textContent=t.readyHint;
-  $('warning').innerHTML=warningFor(); $('warning').hidden=!$('warning').innerHTML;
-  wireAcks();
-  const docs = c.id==='wallonia' ? ['Attestation de contrôle (AWAC model)','Analyzer tickets appended']
-    : c.id==='flanders' ? ['Verbrandingsattest','Reinigingsattest','VEKA registration recorded']
-    : /solide/i.test(d.fuel||'') ? ['Attestation PEB — combustibles solides', d.annex1mw?'Annexe ≥ 1000 kW included':''].filter(Boolean)
-    : ['Data package for Bruxelles Environnement encoder','Manual re-key checklist'];
-  if(c.id==='flanders' && d.document?.includes('Keuringsrapport'))
-    docs.splice(1,1,'Keuringsrapport');
+  const docs = c.id==='wallonia' ? t.docs.wa
+    : c.id==='flanders' ? t.docs.fl
+    : /solide/i.test(d.fuel||'') ? [...t.docs.brSolid, ...(d.annex1mw?[t.annex]:[])]
+    : t.docs.brData;
+  const flDocs = c.id==='flanders' && d.document?.includes('Keuringsrapport')
+    ? [d.document, ...t.docs.fl.slice(1)] : docs;
   const gate = c.id==='flanders'
-    ? `<div class="gate"><strong>VEKA registration:</strong> ${d.vekaRef&&d.vekaDate?'Reference and date recorded':'Reference and date required'}</div>`
+    ? `<div class="gate"><strong>${t.vekaTitle} :</strong> ${d.vekaRef&&d.vekaDate?t.vekaRecorded:t.vekaRequired}</div>`
     : '';
   const manualHandoff=isBruData;
-  $('form').innerHTML=`<div class="final"><h2>${docs[0]}</h2>
-    <p>${manualHandoff
-      ? 'Attesta cannot issue the official Brussels gas/liquid PDF. Use the downloaded JSON as a preparation aid, re-enter the data in the Bruxelles Environnement encoder, then download the official document there.'
-      : 'Attesta will create a PDF preview from the entered data. Its field positions and legal compliance have not been verified; compare it with the current official model before professional use.'}</p>
-    <div class="doclist">${docs.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
-    ${gate}<p class="output-warning"><strong>Output status:</strong> The model and overlays are pending final coordinate and legal review. Verify every field against the source model before using it professionally.</p>
-    <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%">${manualHandoff?'Download prep JSON & open encoder':'Download preview PDF'}</button>
-    <button type="button" class="btn back" id="newJob" style="margin-top:10px;width:100%">Start another attestation</button></div>`;
+  const body = manualHandoff?t.bruHandoff:t.previewBody;
+  const goLabel = manualHandoff?t.openEncoder:t.downloadPdf;
+  $('form').innerHTML=`<div class="final"><h2>${esc(flDocs[0])}</h2>
+    <p>${esc(body)}</p>
+    <div class="doclist">${flDocs.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
+    ${gate}<p class="output-warning"><strong>${t.statusLabel} :</strong> ${t.statusBody}</p>
+    <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%">${goLabel}</button>
+    <button type="button" class="btn back" id="newJob" style="margin-top:10px;width:100%">${t.startAnother}</button></div>`;
   $('newJob').onclick=()=>{
-    if(state.status!=='Done'&&!window.confirm('This unfinished attestation will be saved so you can resume it later. Start another one?')) return;
+    if(state.status!=='Done'&&!window.confirm(t.confirmNewJob)) return;
     state={region:null,step:0,data:{},status:'Draft'};
     attachmentFiles.clear();
     save();
@@ -307,11 +329,11 @@ function renderFinal(){
     generating=true;
     const button=$('go');
     button.disabled=true;
-    button.textContent='Generating…';
+    button.textContent=t.gen;
     try{
       if(!validateDraft()){ render(); return; }
       if(c.id==='flanders' && (!d.vekaRef||!d.vekaDate)){
-        showOutputError('Enter a VEKA reference and registration date before downloading.');
+        showOutputError(t.vekaDownloadError);
         return;
       }
       if(c.id==='brussels' && !/solide/i.test(d.fuel||'')){
@@ -337,11 +359,11 @@ function renderFinal(){
       state.status='Done'; save();
     }catch(e){
       console.error('Could not generate attestation',e);
-      showOutputError('PDF generation failed. Check the connection and official model files, then retry.');
+      showOutputError(t.pdfGenError);
     }finally{
       generating=false;
       button.disabled=false;
-      button.textContent=manualHandoff?'Download prep JSON & open encoder':'Download preview PDF';
+      button.textContent=goLabel;
     }
   };
 }
@@ -375,7 +397,7 @@ function validate(){
     const pattern=recognitionPattern();
     const field=step.fields.find(f=>f.key==='techAgrement');
     if(pattern&&state.data.techAgrement&&!pattern.test(state.data.techAgrement)){
-      field._err='Invalid recognition number';
+      field._err=tr().invalid;
     }
   }
   if(step.fields.find(f=>f.key==='techAgrement')?._err) ok=false;
@@ -407,19 +429,20 @@ function recognitionPattern(){
 function validateDraft(){
   const c=cfg();
   if(!c) return false;
+  const t=tr();
   for(let index=0;index<c.steps.length;index++){
     const step=c.steps[index];
     for(const f of step.fields){
       f._err='';
-      if(f.required && (state.data[f.key]===''||state.data[f.key]==null)){ f._err='Required'; }
-      if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err='Required'; }
-      if(f.type==='select' && state.data[f.key] && f.options&&!f.options.includes(state.data[f.key])){ f._err='Invalid'; }
+      if(f.required && (state.data[f.key]===''||state.data[f.key]==null)){ f._err=t.required; }
+      if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err=t.required; }
+      if(f.type==='select' && state.data[f.key] && f.options&&!f.options.includes(state.data[f.key])){ f._err=t.invalid; }
     }
   }
   const pattern=recognitionPattern();
   const field=cfg()?.steps.flatMap(step=>step.fields).find(f=>f.key==='techAgrement');
   if(pattern&&state.data.techAgrement&&!pattern.test(state.data.techAgrement)){
-    if(field) field._err='Invalid recognition number';
+    if(field) field._err=t.invalid;
   }
   const invalid=cfg().steps.flatMap(step=>step.fields).some(f=>f._err);
   if(invalid){
@@ -430,9 +453,8 @@ function validateDraft(){
 }
 $('back').onclick=()=>{ if(state.step>0){state.step--;save();render();} };
 $('changeRegion').onclick=()=>{
-  const prompt=state.status==='Done'
-    ? 'Your completed record will remain saved. Change region?'
-    : 'Your current draft will be saved so you can resume it later. Change region?';
+  const t=tr();
+  const prompt=state.status==='Done'?t.confirmChangeSaved:t.confirmChangeDraft;
   if(!window.confirm(prompt)) return;
   save();
   state={region:null,step:0,data:{},status:'Draft'};
