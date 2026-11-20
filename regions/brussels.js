@@ -2,6 +2,18 @@
 import {fmt} from './wallonia.js';
 const F = (key,label,type='text',extra={}) => ({key,label,type,...extra});
 const req = f => ({...f,required:true});
+const addMonths=(date,months)=>{
+  const d=new Date(date); const day=d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth()+months);
+  d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+  return d;
+};
+const addYears=(date,years)=>{
+  const d=new Date(date); const month=d.getMonth(); const day=d.getDate();
+  d.setMonth(0); d.setDate(1); d.setFullYear(d.getFullYear()+years); d.setMonth(month);
+  d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+  return d;
+};
 
 export const brussels = {
   id: 'brussels',
@@ -16,10 +28,10 @@ export const brussels = {
   rules: {
     nextDue(date,data){
       const d=new Date(date); const gas=/gaz/i.test(data.fuel||'');
-      d.setFullYear(d.getFullYear()+(gas?2:1));
-      return {date:d,from:d,to:d,years:gas?2:1,note:gas?'2 ans':'1 an',conflict:false};
+      const due=addYears(d,gas?2:1);
+      return {date:due,from:due,to:due,years:gas?2:1,note:gas?'2 ans':'1 an',conflict:false};
     },
-    nonConformity(date){ const d=new Date(date); d.setMonth(d.getMonth()+5); return d; }
+    nonConformity(date){ return addMonths(date,5); }
   },
 
   steps: [
@@ -64,18 +76,18 @@ export const brussels = {
       F('gasConversion','Conversion gaz','select',{options:['I2E+','I2N','I2E(S)','I2E(R)','Inconnue']}),
     ]},
     {title:'Exigences & mesures',hint:'Huit exigences de bon fonctionnement et mesures.',measure:true,fields:[
-      F('coAmbient','CO dans l’air ambiant (ppm)','number'),
-      {key:'o2',label:'O₂',type:'measure',unit:'%',max:4.4,lower:true},
-      {key:'co2',label:'CO₂',type:'measure',unit:'%',min:8.5},
-      {key:'co',label:'CO',type:'measure',unit:'mg/kWh',max:150,lower:true},
-      {key:'flueTemp',label:'Température gaz',type:'measure',unit:'°C',max:200,lower:true},
-      F('safety','Dispositifs de sécurité','select',{options:['OUI','NON']}),
-      F('flueState','État des conduits','select',{options:['OUI','NON']}),
-      F('orifices','Orifices de mesure','select',{options:['OUI','NON']}),
-      F('ventilation','Ventilation du local','select',{options:['OUI','NON']}),
-      F('draught','Dépression','select',{options:['OUI','NON']}),
-      F('emissions','Émissions','select',{options:['OUI','NON']}),
-      F('collectiveFlue','Cheminée collective B1','select',{options:['OUI','NON']}),
+      req(F('coAmbient','CO dans l’air ambiant (ppm)','number')),
+      req({key:'o2',label:'O₂',type:'measure',unit:'%',max:4.4,lower:true}),
+      req({key:'co2',label:'CO₂',type:'measure',unit:'%',min:8.5}),
+      req({key:'co',label:'CO',type:'measure',unit:'mg/kWh',max:150,lower:true}),
+      req({key:'flueTemp',label:'Température gaz',type:'measure',unit:'°C',max:200,lower:true}),
+      req(F('safety','Dispositifs de sécurité','select',{options:['OUI','NON']})),
+      req(F('flueState','État des conduits','select',{options:['OUI','NON']})),
+      req(F('orifices','Orifices de mesure','select',{options:['OUI','NON']})),
+      req(F('ventilation','Ventilation du local','select',{options:['OUI','NON']})),
+      req(F('draught','Dépression','select',{options:['OUI','NON']})),
+      req(F('emissions','Émissions','select',{options:['OUI','NON']})),
+      req(F('collectiveFlue','Cheminée collective B1','select',{options:['OUI','NON']})),
       F('annualConsumption','Consommation annuelle','number'),
       F('operatingHours','Temps de fonctionnement (h/an)','number'),
     ]},

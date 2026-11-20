@@ -54,17 +54,46 @@ function loadAcks(){ try{return JSON.parse(sessionStorage.getItem(ACK_KEY))||{};
 function saveAcks(){ sessionStorage.setItem(ACK_KEY,JSON.stringify(acks)); }
 
 let state = load();
+let generating = false;
+const attachmentFiles = new Map();
 
 function load(){
   let s=null;
-  try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){}
-  if(!s||!REGIONS[s.region]) s={region:null,step:0,data:{},status:'Draft'};
+  try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){ console.warn('Could not restore draft',e); }
+  if(!isDraft(s)) s={region:null,step:0,data:{},status:'Draft'};
   const q=new URLSearchParams(location.search);
-  if(q.get('region')&&REGIONS[q.get('region')]) s.region=q.get('region');
-  if(q.get('step')) s.step=Math.max(0,Number(q.get('step'))||0);
+  if(q.get('region')&&REGIONS[q.get('region')] && s.region!==q.get('region')){
+    s=readRegionDraft(q.get('region'))||{region:q.get('region'),step:0,data:{},status:'Draft'};
+  }
+  if(s.region) s.step=Math.max(0,Math.min(Number.isInteger(s.step)?s.step:0,REGIONS[s.region].steps.length));
+  if(q.get('step')){
+    const region=REGIONS[s.region];
+    s.step=Math.max(0,Math.min(Number(q.get('step'))||0,region?.steps.length||0));
+  }
   return s;
 }
-function save(){ localStorage.setItem(KEY,JSON.stringify(state)); }
+function isDraft(value,region){
+  return !!value && typeof value==='object' && !Array.isArray(value) &&
+    typeof value.data==='object' && value.data!==null && !Array.isArray(value.data) &&
+    Object.hasOwn(REGIONS,value.region) && (!region||value.region===region);
+}
+function readRegionDraft(region){
+  try{
+    const saved=JSON.parse(localStorage.getItem(`${KEY}.${region}`));
+    if(isDraft(saved,region)){
+      saved.step=Math.max(0,Math.min(Number.isInteger(saved.step)?saved.step:0,REGIONS[region].steps.length));
+      return saved;
+    }
+  }catch(e){ console.warn(`Could not restore ${region} draft`,e); }
+  return null;
+}
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify(state));
+    if(state.region) localStorage.setItem(`${KEY}.${state.region}`,JSON.stringify(state));
+  }
+  catch(e){ console.warn('Could not save draft',e); }
+}
 function cfg(){ return REGIONS[state.region]; }
 
 /* ---------- header + footer ---------- */
@@ -78,8 +107,11 @@ function renderChrome(){
   $('stepCount').textContent = `STEP ${c?Math.min(state.step+1,n):1} / ${n}`;
   document.documentElement.lang = c?c.lang:'fr';
   const t=tr();
-  $('back').disabled = state.step===0;
-  $('next').textContent = c && state.step>=c.steps.length ? t.download : t.next;
+  $('changeRegion').hidden=!c;
+  $('back').hidden=!c||state.step===0;
+  $('back').disabled = !c||state.step===0;
+  $('next').hidden=!c||state.step>=c.steps.length;
+  $('next').textContent = t.next;
 
   const due = computeDue();
   $('due').hidden = !due;
@@ -110,21 +142,25 @@ function warningFor(){
 /* ---------- field rendering ---------- */
 function fieldHTML(f){
   const v=state.data[f.key]??''; const bad=f._err?' bad':'';
+  const id=`field-${f.key}`;
   let input='';
   if(f.type==='select'){
-    input=`<select data-k="${f.key}"><option value=""></option>${f.options.map(o=>
+    input=`<select id="${id}" data-k="${f.key}" ${f.required?'required':''}><option value=""></option>${f.options.map(o=>
       `<option ${v===o?'selected':''}>${o}</option>`).join('')}</select>`;
   } else if(f.type==='textarea'){
-    input=`<textarea data-k="${f.key}" rows="2">${esc(v)}</textarea>`;
+    input=`<textarea id="${id}" data-k="${f.key}" rows="2" ${f.required?'required':''}>${esc(v)}</textarea>`;
   } else if(f.type==='file'){
-    input=`<input type="file" data-k="${f.key}" accept="image/*,application/pdf" multiple>`;
+    input=`<input id="${id}" type="file" data-k="${f.key}" accept="image/*,application/pdf" multiple>`;
+  } else if(f.type==='checkbox'){
+    input=`<input id="${id}" type="checkbox" data-k="${f.key}" ${v?'checked':''}>`;
   } else {
-    input=`<input type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.key}" value="${esc(v)}">`;
+    input=`<input id="${id}" type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.key}" value="${esc(v)}" ${f.required?'required':''}>`;
   }
-  return `<div class="f ${bad} ${f.required?'req':''}"><label>${f.label}</label>${input}<div class="err">${f._err||''}</div></div>`;
+  return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}<div class="err" id="${id}-error">${f._err||''}</div></div>`;
 }
 function measureHTML(f){
   const v=state.data[f.key];
+  const id=`field-${f.key}`;
   let verdict='idle', text='—';
   if(v!==''&&v!=null){
     const n=Number(v);
@@ -133,8 +169,8 @@ function measureHTML(f){
   }
   const lim = f.max!=null?`≤ ${f.max}`:(f.min!=null?`≥ ${f.min}`:'');
   return `<div class="mrow ${v===''||v==null?'pending':''} ${verdict==='bad'?'warn':''}">
-    <span class="ml">${f.label}<span class="thresh">${lim} ${f.unit||''}</span></span>
-    <input data-k="${f.key}" value="${esc(v??'')}" inputmode="decimal">
+    <label class="ml" for="${id}">${f.label}<span class="thresh">${lim} ${f.unit||''}</span></label>
+    <input id="${id}" data-k="${f.key}" value="${esc(v??'')}" inputmode="decimal" ${f.required?'required':''}>
     <span class="verdict ${verdict}">${text}</span></div>`;
 }
 function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -168,15 +204,27 @@ function render(){
 
   $('form').querySelectorAll('[data-k]').forEach(el=>{
     const k=el.dataset.k;
-    const ev=el.type==='file'?'change':(el.tagName==='SELECT'?'change':'input');
+    const ev=el.type==='file'||el.type==='checkbox'||el.tagName==='SELECT'?'change':'input';
     el.addEventListener(ev,()=>{
-      state.data[k]= el.type==='file' ? [...el.files].map(f=>f.name) : el.value;
+      if(el.type==='file'){
+        attachmentFiles.set(k,[...el.files]);
+        state.data[k]=[...el.files].map(f=>f.name);
+      }else if(el.type==='checkbox'){
+        state.data[k]=el.checked;
+      }else{
+        state.data[k]=el.value;
+      }
       save();
-      if(['powerKw','fuel','controlDate','conformity','building'].includes(k)){
-        if(el.tagName==='SELECT' || k!=='fuel'){ render(); }
+      if(k==='controlDate'||k==='powerKw'||k==='conformity'||k==='building'||k==='fuel'){
+        renderChrome();
       }
       if(el.classList.contains('ml')||el.closest('.mrow')) updateMeasure(el);
     });
+  });
+  requestAnimationFrame(()=>{
+    const heading=$('stepTitle');
+    heading.setAttribute('tabindex','-1');
+    heading.focus({preventScroll:true});
   });
 }
 function updateMeasure(input){
@@ -196,23 +244,27 @@ function renderRegionChoice(){
   $('stepHint').textContent=t.chooseHint;
   $('warning').hidden=true;
   $('form').innerHTML=`<div class="final"><h2>${t.chooseHead}</h2>
-    <div class="choices">${Object.values(REGIONS).map(r=>
-      `<button type="button" class="choice red" data-region="${r.id}"><span>${r.label}</span><span class="pick">→</span></button>`).join('')}</div></div>`;
+    <p>${t.chooseHint}</p>
+    <div class="choices">${Object.values(REGIONS).map(r=>{
+      const saved=readRegionDraft(r.id);
+      const savedLabel=saved?.status==='Done'?`Open saved ${r.label} record`:`Resume ${r.label} draft`;
+      return `<button type="button" class="choice red" data-region="${r.id}">Start new in ${r.label}</button>
+        ${saved?`<button type="button" class="choice" data-resume="${r.id}">${savedLabel}</button>`:''}`;
+    }).join('')}</div></div>`;
   $('form').querySelectorAll('[data-region]').forEach(b=>b.onclick=()=>{
-    state.region=b.dataset.region; state.step=0; save(); render();
+      const saved=readRegionDraft(b.dataset.region);
+      if(saved){
+        const label=REGIONS[b.dataset.region].label;
+        const kind=saved.status==='Done'?'completed record':'unfinished draft';
+        if(!window.confirm(`A saved ${label} ${kind} exists. Starting new will replace it. Continue?`)) return;
+      }
+    state={region:b.dataset.region,step:0,data:{},status:'Draft'};
+    save(); render();
   });
-}
-async function issue(){
-  const c=cfg(), d=state.data;
-  if(c.id==='flanders' && !d.vekaRef){ render(); return; }
-  const blob=await buildAttestation(state);
-  if(c.id==='brussels' && !/solide/i.test(d.fuel||'')){
-    download(blob,'attesta-brussels-data.json');
-    window.open(c.encoder,'_blank','noopener');
-  } else {
-    download(blob,`attesta-${c.id}.pdf`);
-  }
-  state.status='Done'; save();
+  $('form').querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>{
+    state=readRegionDraft(b.dataset.resume)||{region:b.dataset.resume,step:0,data:{},status:'Draft'};
+    save(); render();
+  });
 }
 function renderFinal(){
   const c=cfg(), d=state.data, t=tr();
@@ -221,16 +273,88 @@ function renderFinal(){
   $('warning').innerHTML=warningFor(); $('warning').hidden=!$('warning').innerHTML;
   wireAcks();
   const isBruData = c.id==='brussels' && !/solide/i.test(d.fuel||'');
-  const docs = c.id==='wallonia' ? t.docs.wa
-    : c.id==='flanders' ? t.docs.fl
-    : /solide/i.test(d.fuel||'') ? [...t.docs.brSolid, ...(d.annex1mw?[t.annex]:[])]
-    : t.docs.brData;
-  const gate = c.id==='flanders' ? `<div class="gate"><input id="vekaCheck" type="checkbox" ${d.vekaRef?'checked':''}><label for="vekaCheck">${t.vekaConfirmed}</label></div>` : '';
+  $('stepTitle').textContent=t.ready;
+  $('stepHint').textContent=t.readyHint;
+  $('warning').innerHTML=warningFor(); $('warning').hidden=!$('warning').innerHTML;
+  wireAcks();
+  const docs = c.id==='wallonia' ? ['Attestation de contrôle (AWAC model)','Analyzer tickets appended']
+    : c.id==='flanders' ? ['Verbrandingsattest','Reinigingsattest','VEKA registration recorded']
+    : /solide/i.test(d.fuel||'') ? ['Attestation PEB — combustibles solides', d.annex1mw?'Annexe ≥ 1000 kW included':''].filter(Boolean)
+    : ['Data package for Bruxelles Environnement encoder','Manual re-key checklist'];
+  if(c.id==='flanders' && d.document?.includes('Keuringsrapport'))
+    docs.splice(1,1,'Keuringsrapport');
+  const gate = c.id==='flanders'
+    ? `<div class="gate"><strong>VEKA registration:</strong> ${d.vekaRef&&d.vekaDate?'Reference and date recorded':'Reference and date required'}</div>`
+    : '';
+  const manualHandoff=isBruData;
   $('form').innerHTML=`<div class="final"><h2>${docs[0]}</h2>
-    <p>${isBruData?t.bruDataBody:t.readyBody}</p>
+    <p>${manualHandoff
+      ? 'Attesta cannot issue the official Brussels gas/liquid PDF. Use the downloaded JSON as a preparation aid, re-enter the data in the Bruxelles Environnement encoder, then download the official document there.'
+      : 'Attesta will create a PDF preview from the entered data. Its field positions and legal compliance have not been verified; compare it with the current official model before professional use.'}</p>
     <div class="doclist">${docs.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
-    ${gate}<button type="button" class="btn next" id="go" style="margin-top:16px;width:100%">${isBruData?t.openEncoder:t.downloadPdf}</button></div>`;
-  $('go').onclick=issue;
+    ${gate}<p class="output-warning"><strong>Output status:</strong> The model and overlays are pending final coordinate and legal review. Verify every field against the source model before using it professionally.</p>
+    <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%">${manualHandoff?'Download prep JSON & open encoder':'Download preview PDF'}</button>
+    <button type="button" class="btn back" id="newJob" style="margin-top:10px;width:100%">Start another attestation</button></div>`;
+  $('newJob').onclick=()=>{
+    if(state.status!=='Done'&&!window.confirm('This unfinished attestation will be saved so you can resume it later. Start another one?')) return;
+    state={region:null,step:0,data:{},status:'Draft'};
+    attachmentFiles.clear();
+    save();
+    render();
+  };
+  $('go').onclick=async()=>{
+    if(generating) return;
+    generating=true;
+    const button=$('go');
+    button.disabled=true;
+    button.textContent='Generating…';
+    try{
+      if(!validateDraft()){ render(); return; }
+      if(c.id==='flanders' && (!d.vekaRef||!d.vekaDate)){
+        showOutputError('Enter a VEKA reference and registration date before downloading.');
+        return;
+      }
+      if(c.id==='brussels' && !/solide/i.test(d.fuel||'')){
+        const blob=await buildAttestation(state,attachmentFiles);
+        download(blob,'attesta-brussels-data.json');
+        window.open(c.encoder,'_blank','noopener');
+        state.status='Done'; save();
+        return;
+      }
+      if(c.id==='flanders'){
+        const documents=d.document?.includes('Keuringsrapport')
+          ? ['Keuringsrapport','Verbrandingsattest']
+          : ['Verbrandingsattest','Reinigingsattest'];
+        for(const document of documents){
+          const documentState={...state,data:{...d,document}};
+          const blob=await buildAttestation(documentState,attachmentFiles);
+          download(blob,`attesta-flanders-${document.toLowerCase().replaceAll(/[^a-z0-9]+/gi,'-')}.pdf`);
+        }
+      }else{
+        const blob=await buildAttestation(state,attachmentFiles);
+        download(blob,`attesta-${c.id}.pdf`);
+      }
+      state.status='Done'; save();
+    }catch(e){
+      console.error('Could not generate attestation',e);
+      showOutputError('PDF generation failed. Check the connection and official model files, then retry.');
+    }finally{
+      generating=false;
+      button.disabled=false;
+      button.textContent=manualHandoff?'Download prep JSON & open encoder':'Download preview PDF';
+    }
+  };
+}
+function showOutputError(message){
+  let error=$('outputError');
+  if(!error){
+    error=document.createElement('p');
+    error.id='outputError';
+    error.className='output-error';
+    error.setAttribute('role','alert');
+    $('go').before(error);
+  }
+  error.textContent=message;
 }
 function download(blob,name){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
@@ -244,22 +368,96 @@ function validate(){
     f._err='';
     const t=tr();
     if(f.required && (state.data[f.key]===''||state.data[f.key]==null)) { f._err=t.required; ok=false; }
+    if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err=t.required; ok=false; }
     if(f.type==='select' && state.data[f.key] && f.options && !f.options.includes(state.data[f.key])) { f._err=t.invalid; ok=false; }
   });
-  if(!ok) render();
+  if(step.fields.some(f=>f.key==='techAgrement')){
+    const pattern=recognitionPattern();
+    const field=step.fields.find(f=>f.key==='techAgrement');
+    if(pattern&&state.data.techAgrement&&!pattern.test(state.data.techAgrement)){
+      field._err='Invalid recognition number';
+    }
+  }
+  if(step.fields.find(f=>f.key==='techAgrement')?._err) ok=false;
+  if(!ok){
+    render();
+    requestAnimationFrame(()=>document.querySelector('.f.bad [data-k], .mrow.bad [data-k]')?.focus());
+  }
   return ok;
 }
+function recognitionPattern(){
+  const c=cfg();
+  if(c.id==='flanders'){
+    if(state.data.techCategory?.includes('gasvormige')) return /^GV\d{5}$/i;
+    if(state.data.techCategory?.includes('vloeibare')) return /^TV\d{5}$/i;
+  }
+  if(c.id==='brussels'){
+    if(state.data.techCategory?.includes('GI')) return /^(GI|GII)$/i;
+    if(state.data.techCategory?.includes('L')) return /^L$/i;
+    if(state.data.techCategory?.includes('RESCERT')) return /^RESCERT$/i;
+  }
+  if(c.id==='wallonia'){
+    if(state.data.techCategory?.includes('L')) return /^L\d*$/i;
+    if(state.data.techCategory?.includes('GII')) return /^GII\d*$/i;
+    if(state.data.techCategory?.includes('GI')) return /^GI\d*$/i;
+    if(state.data.techCategory?.includes('solides')) return /^.+$/;
+  }
+  return null;
+}
+function validateDraft(){
+  const c=cfg();
+  if(!c) return false;
+  for(let index=0;index<c.steps.length;index++){
+    const step=c.steps[index];
+    for(const f of step.fields){
+      f._err='';
+      if(f.required && (state.data[f.key]===''||state.data[f.key]==null)){ f._err='Required'; }
+      if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err='Required'; }
+      if(f.type==='select' && state.data[f.key] && f.options&&!f.options.includes(state.data[f.key])){ f._err='Invalid'; }
+    }
+  }
+  const pattern=recognitionPattern();
+  const field=cfg()?.steps.flatMap(step=>step.fields).find(f=>f.key==='techAgrement');
+  if(pattern&&state.data.techAgrement&&!pattern.test(state.data.techAgrement)){
+    if(field) field._err='Invalid recognition number';
+  }
+  const invalid=cfg().steps.flatMap(step=>step.fields).some(f=>f._err);
+  if(invalid){
+    const firstIndex=cfg().steps.findIndex(step=>step.fields.some(f=>f._err));
+    state.step=firstIndex>=0?firstIndex:0;
+  }
+  return !invalid;
+}
 $('back').onclick=()=>{ if(state.step>0){state.step--;save();render();} };
+$('changeRegion').onclick=()=>{
+  const prompt=state.status==='Done'
+    ? 'Your completed record will remain saved. Change region?'
+    : 'Your current draft will be saved so you can resume it later. Change region?';
+  if(!window.confirm(prompt)) return;
+  save();
+  state={region:null,step:0,data:{},status:'Draft'};
+  save();
+  const url=new URL(location.href);
+  url.searchParams.delete('region');
+  url.searchParams.delete('step');
+  history.replaceState(null,'',url);
+  render();
+};
 $('next').onclick=()=>{
   const c=cfg(); if(!c) return;
-  if(state.step>=c.steps.length){ issue(); return; }
+  if(state.step>=c.steps.length) return;
   if(!validate()) return;
   state.step++; save(); render();
 };
 window.addEventListener('keydown',e=>{
-  if(e.key==='Enter' && e.target.tagName!=='TEXTAREA'){ e.preventDefault(); $('next').click(); }
+  if(e.key==='Enter' && e.target.matches('input:not([type="checkbox"]), select') && !e.target.closest('.final')){
+    e.preventDefault();
+    $('next').click();
+  }
 });
 if('serviceWorker' in navigator && location.protocol!=='file:'){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(e=>{
+    console.warn('Offline support could not be enabled',e);
+  }));
 }
 render();

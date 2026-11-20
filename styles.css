@@ -23,6 +23,9 @@ input::placeholder{color:var(--soft);opacity:1}
 .head-row{height:var(--h);display:flex;align-items:center;justify-content:space-between;padding:0 20px}
 .brand{font-family:var(--mono);font-weight:600;letter-spacing:.22em;font-size:15px}
 .region{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.head-region{display:flex;align-items:center;gap:12px}
+.change-region{border:0;background:transparent;color:var(--red);font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:8px}
+.change-region[hidden],.foot button[hidden]{display:none}
 .progress{display:flex;gap:3px;padding:0 20px 8px}
 .progress i{height:3px;flex:1;background:var(--line)}
 .progress i.done{background:var(--ink)}
@@ -102,6 +105,11 @@ input::placeholder{color:var(--soft);opacity:1}
 .final .doclist div{padding:4px 0;border-bottom:1px solid var(--line)}
 .gate{display:flex;gap:8px;align-items:center;margin-top:12px}
 .gate input{flex:1}
+.output-warning{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;color:var(--bad)}
+.output-error{margin-top:10px;border-left:3px solid var(--bad);padding:8px 10px;color:var(--bad);font-size:12px}
+.btn,.choice{min-height:44px}
+.foot{padding-bottom:env(safe-area-inset-bottom)}
+@supports(padding:env(safe-area-inset-bottom)){.foot{height:calc(var(--f)+env(safe-area-inset-bottom));}}
 
 @media(max-width:520px){ .row{grid-template-columns:1fr;gap:11px} .due strong{font-size:20px} .foot.tall{height:82px} }
 @media(min-width:560px){ .fields{grid-template-columns:1fr 1fr;column-gap:26px} .row,.measure,.final,.warning{grid-column:1/-1} }

@@ -1,6 +1,21 @@
 // Wallonia — Attestation de contrôle d'un générateur de chaleur (AWAC model)
 const F = (key, label, type='text', extra={}) => ({key,label,type,...extra});
 const req = f => ({...f,required:true});
+const addMonths=(date,months)=>{
+  const d=new Date(date); const day=d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth()+months);
+  const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  d.setDate(Math.min(day,last));
+  return d;
+};
+const addYears=(date,years)=>{
+  const d=new Date(date); const month=d.getMonth(); const day=d.getDate();
+  d.setMonth(0); d.setDate(1); d.setFullYear(d.getFullYear()+years);
+  d.setMonth(month);
+  const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  d.setDate(Math.min(day,last));
+  return d;
+};
 
 export const wallonia = {
   id: 'wallonia',
@@ -9,25 +24,24 @@ export const wallonia = {
   lang: 'fr',
   output: 'pdf',
   background: 'assets/wa-attestation-bg.pdf',
-  recognition: [/^[LGI]{1,2}\d*$/i, /^GI\d*$/i, /^GII\d*$/i, /^L\d*$/i, /^.+$/],
+  recognition: [/^L\d*$/i,/^GI\d*$/i,/^GII\d*$/i],
 
   rules: {
     nextDue(date, data) {
       const d = new Date(date);
       const kw = Number(data.powerKw) || 0;
       const gas = /gaz/i.test(data.fuel||'');
-      const solid = /solide|bois|pellet|bûche/i.test(data.fuel||'');
       let years = 1;
       if (gas && kw <= 100) years = 3;      // AGW art.13 (law governs at exactly 100 kW)
       else if (gas && kw > 100) years = 2;
-      d.setFullYear(d.getFullYear() + years);
-      const from = new Date(d);
-      const to = new Date(d); to.setMonth(to.getMonth()+3);
-      return { date: d, from, to, years,
+      const due=addYears(d,years);
+      const from=due;
+      const to=addMonths(due,3);
+      return { date: due, from, to, years,
         conflict: gas && kw === 100,
         note: `Contrôle à réaliser entre le ${fmt(from)} et le ${fmt(to)}` };
     },
-    nonConformity(date){ const d=new Date(date); d.setMonth(d.getMonth()+5); return d; },
+    nonConformity(date){ return addMonths(date,5); },
     residentialException(data){ return /habitation|résidentiel/i.test(data.building||''); }
   },
 

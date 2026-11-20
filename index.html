@@ -16,7 +16,10 @@
     <div class="rule" id="rule"></div>
     <div class="head-row">
       <div class="brand">ATTESTA</div>
-      <div class="region" id="regionLabel">—</div>
+      <div class="head-region">
+        <div class="region" id="regionLabel">—</div>
+        <button type="button" class="change-region" id="changeRegion" hidden>Change region</button>
+      </div>
     </div>
     <div class="progress" id="progress" aria-label="Progress"></div>
     <div class="step-count" id="stepCount"></div>
@@ -29,6 +32,7 @@
     </div>
     <div id="warning" hidden></div>
     <form id="form" class="fields" autocomplete="off"></form>
+    <noscript>Attesta requires JavaScript to complete the wizard and generate documents.</noscript>
   </main>
 
   <footer class="foot">

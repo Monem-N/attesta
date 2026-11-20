@@ -2,6 +2,18 @@
 import {fmt} from './wallonia.js';
 const F = (key,label,type='text',extra={}) => ({key,label,type,...extra});
 const req = f => ({...f,required:true});
+const addMonths=(date,months)=>{
+  const d=new Date(date); const day=d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth()+months);
+  d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+  return d;
+};
+const addYears=(date,years)=>{
+  const d=new Date(date); const month=d.getMonth(); const day=d.getDate();
+  d.setMonth(0); d.setDate(1); d.setFullYear(d.getFullYear()+years); d.setMonth(month);
+  d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));
+  return d;
+};
 
 export const flanders = {
   id: 'flanders',
@@ -17,12 +29,12 @@ export const flanders = {
     nextDue(date,data){
       const d=new Date(date); const kw=Number(data.powerKw)||0;
       const gas=/gas/i.test(data.fuel||'');
-      d.setFullYear(d.getFullYear()+(gas?2:1));
-      return {date:d, from:d, to:d, years:gas?2:1, note:gas?'2-jaarlijks':'Jaarlijks', conflict:false};
+      const due=addYears(d,gas?2:1);
+      return {date:due, from:due, to:due, years:gas?2:1, note:gas?'2-jaarlijks':'Jaarlijks', conflict:false};
     },
     // Flanders: 3 months to remedy combustion-value defects with a new attestation
-    remedy(date){ const d=new Date(date); d.setMonth(d.getMonth()+3); return d; },
-    registrationDeadline(date){ const d=new Date(date); d.setMonth(d.getMonth()+1); return d; }
+    remedy(date){ return addMonths(date,3); },
+    registrationDeadline(date){ return addMonths(date,1); }
   },
 
   steps: [
