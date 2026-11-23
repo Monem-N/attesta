@@ -5,6 +5,12 @@
 // uses the real page size for bounds checks (see br-1mw-annex landscape).
 export const PORTRAIT = {w:595.32, h:841.92};
 
+// Official models mix A4 portrait pages with a landscape combustion annex.
+// Coordinates in the template maps are top-left origin; pdf-lib uses bottom-left.
+export function toPdfY(pageHeight,yTop){
+  return pageHeight-yTop;
+}
+
 const TRUE_LABEL = {flanders:'Ja', wallonia:'OUI', brussels:'OUI'};
 const FALSE_LABEL = {flanders:'Nee', wallonia:'NON', brussels:'NON'};
 

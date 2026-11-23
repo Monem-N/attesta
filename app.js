@@ -2,6 +2,7 @@ import {wallonia,fmt as wFmt} from './regions/wallonia.js';
 import {flanders} from './regions/flanders.js';
 import {brussels} from './regions/brussels.js';
 import {buildAttestation} from './output.js';
+import {saveAttachmentBytes,loadAttachmentBytes,clearAttachmentBytes} from './attachments.js';
 import {limitsForField} from './regions/wallonia-criteria.js';
 
 const REGIONS = {wallonia,flanders,brussels};
@@ -292,6 +293,7 @@ function render(){
       if(el.type==='file'){
         attachmentFiles.set(k,[...el.files]);
         state.data[k]=[...el.files].map(f=>f.name);
+        saveAttachmentBytes(attachmentFiles).catch(e=>console.warn('Could not persist attachment bytes',e));
       }else if(el.type==='checkbox'){
         state.data[k]=el.checked;
       }else if(el.dataset.sub){
@@ -433,6 +435,7 @@ function renderFinal(){
     if(state.status!=='Done'&&!window.confirm(t.confirmNewJob)) return;
     state={region:null,step:0,data:{},status:'Draft'};
     attachmentFiles.clear();
+    clearAttachmentBytes().catch(e=>console.warn('Could not clear attachment bytes',e));
     save();
     render();
   };
@@ -635,4 +638,11 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
     console.warn('Offline support could not be enabled',e);
   }));
 }
-render();
+// Restore original ticket bytes before the first render so a reloaded draft
+// can embed them instead of falling back to the "missing files" warning.
+loadAttachmentBytes().then(map=>{
+  for(const [key,files] of map){
+    if(files&&files.length) attachmentFiles.set(key,files.map(f=>f.blob||f));
+  }
+  render();
+}).catch(e=>{ console.warn('Could not restore attachment bytes',e); render(); });

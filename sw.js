@@ -6,7 +6,7 @@ const ASSETS=[
   './vendor/pdf-lib.min.js','./vendor/fontkit.umd.min.js','./vendor/DejaVuSans.ttf',
   './assets/wa-attestation-bg.pdf','./assets/fl-model-verbrandingsattest.pdf',
   './assets/fl-model-keuringsrapport.pdf','./assets/fl-model-reinigingsattest.pdf',
-  './assets/br-solid-fuel-model.pdf','./assets/br-1mw-annex.pdf','./assets/checkbox-rects.json',
+  './assets/br-solid-fuel-model.pdf','./assets/br-1mw-annex.pdf','./assets/checkbox-rects.json','./attachments.js',
   './assets/template-hashes.json'
 ];
 self.addEventListener('install',e=>{

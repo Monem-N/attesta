@@ -1,7 +1,7 @@
 const {PDFDocument,rgb,degrees}=window.PDFLib;
 import {flanders as flandersRegion, fmt as fmtDate} from './regions/flanders.js';
 import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions/flanders-pdf.js';
-import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit} from './regions/pdf-render.js';
+import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} from './regions/pdf-render.js';
 import {LEGACY_MAPS} from './regions/legacy-maps.js';
 import {WA_MAP, WA_CHECKBOXES, WA_ALIASES, WA_COMPUTED_KEYS, walloniaComputed} from './regions/wallonia-pdf.js';
 
@@ -40,7 +40,6 @@ const WAL={background:'assets/wa-attestation-bg.pdf'};
 const FLA={background:'assets/fl-model-verbrandingsattest.pdf'};
 const BRU={background:'assets/br-solid-fuel-model.pdf'};
 
-const H = 842; // A4 height in points
 const ink = rgb(0.086,0.094,0.114);
 
 const MAPS=LEGACY_MAPS;
@@ -88,14 +87,15 @@ const RED=rgb(0.698,0.227,0.169);
 // line-drawing API is required (works on pdf-lib 2.x).
 function tick(page,box){
   const [x0,y0,x1,y1]=box, type=box[4];
+  const pageH=page.getHeight(); // real page geometry (portrait or landscape annex)
   if(type==='word'){
-    page.drawRectangle({x:x0,y:H-y1-1.5,width:x1-x0,height:2,color:RED});
+    page.drawRectangle({x:x0,y:toPdfY(pageH,y1)-1.5,width:x1-x0,height:2,color:RED});
     return;
   }
   const w=x1-x0, h=y1-y0, t=1.6;
   const stroke=(sx,sy,ex,ey)=>{
-    const px=x0+sx*w, py=H-y1+sy*h;
-    const qx=x0+ex*w, qy=H-y1+ey*h;
+    const px=x0+sx*w, py=toPdfY(pageH,y1)+sy*h;
+    const qx=x0+ex*w, qy=toPdfY(pageH,y1)+ey*h;
     const len=Math.hypot(qx-px,qy-py);
     page.drawRectangle({x:px,y:py,width:len,height:t,color:RED,
       rotate:angleFor(px,py,qx,qy)});
@@ -211,9 +211,12 @@ async function overlay(bytes, map, data, model, audit){
   return doc.save();
 }
 
-async function appendFiles(doc, attachments, audit){
+async function appendFiles(doc, attachments, audit, pageSize){
   const appended=[], skipped=[];
-  const size=doc.getPages()[0]||{getWidth:()=>595,getHeight:()=>842};
+  // Explicit geometry from the main document, so a landscape annex or a
+  // 9-page model never imposes its first/last page size on ticket images.
+  const geometry=pageSize||(()=>{ const p=doc.getPages()[0]; return p&&{w:p.getWidth(),h:p.getHeight()}; })()
+    ||{w:595.32,h:841.92};
   for(const [key,files] of attachments?.entries?.()||[]){
     if(!files) continue;
     for(const file of files){
@@ -227,15 +230,16 @@ async function appendFiles(doc, attachments, audit){
           const attached=await PDFDocument.load(bytes);
           const pages=await doc.copyPages(attached,attached.getPageIndices());
           pages.forEach(page=>doc.addPage(page));
-          appended.push({field:key,name,pages:pages.length});
+          appended.push({field:key,name,pages:pages.length,
+            geometry:pages.map(p=>`${Math.round(p.getWidth())}x${Math.round(p.getHeight())}`)});
         }else{
           const image=/\.png$/i.test(name)||file.type==='image/png'
             ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
-          const w=size.getWidth(), h=size.getHeight();
+          const {w,h}=geometry;
           const page=doc.addPage([w,h]);
           const scale=Math.min((w-60)/image.width,(h-102)/image.height);
           page.drawImage(image,{x:30,y:51,width:image.width*scale,height:image.height*scale});
-          appended.push({field:key,name,pages:1});
+          appended.push({field:key,name,pages:1,geometry:[`${Math.round(w)}x${Math.round(h)}`]});
         }
       }catch(e){ skipped.push({field:key,name,reason:'unreadable or encrypted file'}); }
     }
@@ -305,7 +309,8 @@ export async function buildAttestation(state,attachments){
   // The official solid-fuel model already contains the combustion annex as
   // page 4 (landscape). Appending the standalone br-1mw-annex.pdf duplicated
   // it; the measurement values are written into the existing page instead.
-  doc=await appendFiles(doc,attachments,audit);
+  const primary=doc.getPages()[0];
+  doc=await appendFiles(doc,attachments,audit,primary&&{w:primary.getWidth(),h:primary.getHeight()});
 
   doc.setTitle(`Attesta — ${model}`);
   doc.setSubject('Attestation prepared with Attesta — verify against the official model before use');

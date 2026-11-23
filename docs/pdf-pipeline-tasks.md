@@ -29,7 +29,7 @@ Status legend: **DONE** (verified), **WIP** (being worked on), **TODO** (not sta
 | P1-3 | Bounds checking and collision warnings; never silently place off-page | DONE | audit warnings |
 | P1-4 | Per-field audit of printed / ticked / omitted / clipped values | DONE | `blob.audit` + result line |
 | P1-5 | Template revision + hash check; embed revision in PDF metadata | DONE | `assets/template-hashes.json` |
-| P1-6 | Handle per-page geometry (landscape annex, 9-page Wallonia) | TODO |
+| P1-6 | Handle per-page geometry (landscape annex, 9-page Wallonia) | DONE | `toPdfY()` uses each page's real height for checkbox marks; attachment pages use explicit main-document geometry; PDF attachments keep their own page sizes |
 | P1-7 | Consistent checkbox vocabulary beyond `oui/ja/non/nee` prefixes; add printed-option ticks for Brussels enums | TODO | no checkbox rectangles exist for `br-solid` yet |
 | P1-8 | Reconsolidate Flanders text-encoding comment with actual DejaVu embed | TODO |
 
@@ -40,7 +40,7 @@ Status legend: **DONE** (verified), **WIP** (being worked on), **TODO** (not sta
 | P2-1 | Let the user download exactly one Flanders document | DONE | document selector on final screen |
 | P2-2 | Avoid double automatic downloads / partial document sets | TODO | choice reduces it to one in most cases |
 | P2-3 | Stage-specific error messages (font / template / annex / attachment) | DONE | `PdfStageError` + translations |
-| P2-4 | Restore attachment bytes for reloaded drafts (IndexedDB) or warn | WIP | warning shown; byte recovery still TODO |
+| P2-4 | Restore attachment bytes for reloaded drafts (IndexedDB) or warn | DONE | `attachments.js` stores original `File` bytes in IndexedDB; restored before first render; warning remains when bytes are genuinely absent |
 | P2-5 | Align file input `accept` with supported attachment types; report skipped files | DONE | audit lists skipped files |
 | P2-6 | Skip encrypted/corrupt attachments without aborting the document | TODO |
 | P2-7 | Longer blob URL lifetime + `createObjectURL` capability check | DONE |
