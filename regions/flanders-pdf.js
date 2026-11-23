@@ -92,6 +92,8 @@ export const FL_MAPS = {
     efficiency: [0, 385, 556, 465],
     conformity: [0, 135, 687], defects: [0, 30, 722], remarks: [0, 120, 740],
     nextDueDate: [0, 432, 683],
+    // VEKA registration evidence — blank right column beside "Gebreken"
+    vekaRef: [0, 300, 714], vekaDate: [0, 300, 728],
   },
   'fl-reiniging': {
     intervention: [0, 190, 16], controlDate: [0, 360, 95], attestNumber: [0, 390, 16],
@@ -107,6 +109,8 @@ export const FL_MAPS = {
     unitOrPulsed: [0, 300, 251],
     conformity: [0, 30, 600], defects: [0, 30, 590], remarks: [0, 120, 660],
     nextDueDate: [0, 350, 687],
+    // VEKA registration evidence — right of "Andere opmerkingen"
+    vekaRef: [0, 300, 660], vekaDate: [0, 300, 674],
   },
   'fl-keuring': {
     controlDate: [0, 352, 98], attestNumber: [0, 404, 14],
@@ -127,6 +131,8 @@ export const FL_MAPS = {
     conformStookplaats: [0, 246.05, 596.4], conformVerbranding: [0, 246.05, 606.1],
     defects: [0, 30, 625], remarks: [0, 90, 700],
     nextDueDate: [0, 455, 583],
+    // VEKA registration evidence — blank band above the signature block
+    vekaRef: [0, 300, 660], vekaDate: [0, 300, 674],
   },
 };
 

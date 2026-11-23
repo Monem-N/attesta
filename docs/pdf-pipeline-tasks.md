@@ -16,7 +16,7 @@ Status legend: **DONE** (verified), **WIP** (being worked on), **TODO** (not sta
 | P0-7 | Signature support (blank signature lines / capture policy) for all regions | DONE | Policy decided: **blank lines, signed on paper**. Printed names remain; no drawn/typed/embedded e-signature. Final screen explains it per locale; test guards maps against signature-capture anchors. |
 | P0-8 | Complete Brussels solid-fuel maps (3-party, system, safety, dimensioning, protocol) | WIP | 53 of 55 wizard fields mapped; dense enum blocks still need printed-option ticks |
 | P0-9 | Fill the ≥1000 kW annex measurement table instead of appending it blank | DONE | annex is already page 4 of the official model; duplicate append removed |
-| P0-10 | Print VEKA reference/date on Flanders documents (gate evidence) | TODO |
+| P0-10 | Print VEKA reference/date on Flanders documents (gate evidence) | DONE | `vekaRef`/`vekaDate` anchors on all three `FL_MAPS` models, labelled `VEKA-ref` / `VEKA-datum`; verified printed on verbranding, reiniging and keuring with no bounds warnings |
 | P0-11 | Field-key coverage test: wizard fields vs template maps | WIP |
 | P0-12 | Category-aware Wallonia verdict thresholds from the official table | DONE | `regions/wallonia-criteria.js`, pinned to template 2015-10-29, page 8; LP/GP/GUP/GUnP rows, 2017 reclassification, butane/propane CO +15. Replaces the single LP A set in both UI and PDF. A category with no printed rule yields no OK. |
 

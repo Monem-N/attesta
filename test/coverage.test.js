@@ -25,7 +25,7 @@ test('Wallonia map has no orphan or colliding anchors',()=>{
 
 test('Flanders maps jointly cover every printable wizard field',()=>{
   const union=Object.assign({},...Object.values(FL_MAPS));
-  assert.deepEqual(missing(flanders,union),['document','condensation','vekaRef','vekaDate']);
+  assert.deepEqual(missing(flanders,union),['document','condensation']);
 });
 
 // Regression guard: the Brussels solid-fuel map is known to be incomplete
