@@ -1,4 +1,4 @@
-const {PDFDocument,rgb,degrees}=window.PDFLib;
+const {PDFDocument,rgb}=window.PDFLib;
 import {flanders as flandersRegion, fmt as fmtDate} from './regions/flanders.js';
 import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions/flanders-pdf.js';
 import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} from './regions/pdf-render.js';
@@ -94,29 +94,20 @@ async function brOptionMap(){
   return BR_OPTIONS;
 }
 const RED=rgb(0.698,0.227,0.169);
-// Draw a checkmark rather than a solid block. Written as two strokes so no
-// line-drawing API is required (works on pdf-lib 2.x).
+// A solid mark strictly inside the printed box. Checkmark strokes used to
+// overrun small glyph boxes and cross neighbouring labels, so the mark is a
+// clipped, inset fill instead. Word-style options get a short underline.
 function tick(page,box){
   const [x0,y0,x1,y1]=box, type=box[4];
   const pageH=page.getHeight(); // real page geometry (portrait or landscape annex)
   if(type==='word'){
-    page.drawRectangle({x:x0,y:toPdfY(pageH,y1)-1.5,width:x1-x0,height:2,color:RED});
+    page.drawRectangle({x:x0,y:toPdfY(pageH,y1)-1.5,width:Math.max(4,x1-x0),height:2,color:RED});
     return;
   }
-  const w=x1-x0, h=y1-y0, t=1.6;
-  const stroke=(sx,sy,ex,ey)=>{
-    const px=x0+sx*w, py=toPdfY(pageH,y1)+sy*h;
-    const qx=x0+ex*w, qy=toPdfY(pageH,y1)+ey*h;
-    const len=Math.hypot(qx-px,qy-py);
-    page.drawRectangle({x:px,y:py,width:len,height:t,color:RED,
-      rotate:angleFor(px,py,qx,qy)});
-  };
-  stroke(0.15,0.5,0.45,0.18);
-  stroke(0.45,0.18,0.9,0.85);
-}
-function angleFor(px,py,qx,qy){
-  // pdf-lib rotate is CCW in radians; PDF y grows upward here.
-  return degrees(-Math.atan2(qy-py,qx-px)*180/Math.PI);
+  const inset=Math.min(1.2,Math.max(0.4,(x1-x0)*0.15));
+  const w=Math.max(1,(x1-x0)-2*inset);
+  const h=Math.max(1,(y1-y0)-2*inset);
+  page.drawRectangle({x:x0+inset,y:toPdfY(pageH,y1)+inset,width:w,height:h,color:RED});
 }
 // Tick printed boxes. Explicit per-model selections (Flanders 3/4-way fields)
 // take precedence; otherwise find the nearest same-row OUI/NON pair.

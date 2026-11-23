@@ -72,6 +72,32 @@ export const WA_CHECKBOXES={
   orificesExempt:{oui:[[460.2,582.5]],non:[[500.8,582.5]]},
   condensationValue:{oui:[[122,342]],non:[[150,342]]},
   plaque:{absente:[[143,355]],présente:[[196,355]]},
+  // Printed options on page 1 — selections are ticked, not written as extra text.
+  techCategory:{
+    'technicien agréé l':[[43.5,78.4],[145.4,78]],
+    'technicien agréé gi':[[43.5,78.4],[180.9,78]],
+    'technicien agréé gii':[[43.5,78.4],[217.6,78]],
+    'technicien spécialisé en combustibles solides':[[43.5,91.2]],
+    'technicien spécialisé combustibles solides':[[43.5,91.2]],
+  },
+  requester:{
+    propriétaire:[[300.9,77.8]], locataire:[[300.9,90.3]], autre:[[300.9,102.9]],
+  },
+  fuelDetail:{
+    // Solid fuels (row y 236.8)
+    'pellets bois':[[102.9,236.8]], bûches:[[173.7,236.8]], plaquettes:[[237.6,236.8]],
+    céréales:[[294.4,236.8]], charbon:[[344,236.8]],
+    // Liquid fuels (row y 250.3)
+    gasoil:[[102.9,250.3]], 'gasoil extra':[[173.7,250.3]], 'fuel lourd':[[237.6,250.3]],
+    // Gaseous fuels (row y 263.8)
+    'gaz nat. g20':[[102.9,263.8]], 'gaz nat. g25':[[173.7,263.8]],
+    propane:[[237.6,263.8]], butane:[[294.4,263.8]], biogaz:[[344,263.8]],
+  },
+  burnerType:{
+    '1 allure':[[298,290.9]], 'plusieurs allures':[[347,290.9]], modulant:[[506.7,290.9]],
+  },
+  unitOrPulsed:{unit:[[358.1,304.4]], 'air pulsé':[[443.2,304.4]]},
+  premix:{prémix:[[443.2,317.9]], 'non-premix':[[506.9,317.9]]},
 };
 
 const addMonths=(iso,months)=>{
@@ -88,6 +114,10 @@ export const WA_ALIASES={
   orifices:'orifices', condensation:'condensation',
   solidSmoke:'solidSmoke', solidFlue:'solidFlue', globalResult:'globalResult',
   conformity:'conformity', followUp:'followUp',
+  // These are printed as ticked options; suppress their duplicate text lines.
+  techCategory:'techCategory', requester:'requester', fuelDetail:'fuelDetail',
+  burnerType:'burnerType', unitOrPulsed:'unitOrPulsed', premix:'premix',
+  fuel:'fuelDetail',
 };
 // Map-only keys: either derived values or aliases for fields that are printed
 // as a ticked option instead of text.
