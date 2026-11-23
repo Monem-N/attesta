@@ -1,11 +1,13 @@
-const CACHE='attesta-v3';
+const CACHE='attesta-v5';
 const ASSETS=[
   './','./index.html','./styles.css','./app.js','./output.js','./manifest.webmanifest',
-  './regions/wallonia.js','./regions/flanders.js','./regions/brussels.js',
+  './regions/wallonia.js','./regions/flanders.js','./regions/flanders-pdf.js',
+  './regions/pdf-render.js','./regions/wallonia-pdf.js','./regions/brussels.js',
   './vendor/pdf-lib.min.js','./vendor/fontkit.umd.min.js','./vendor/DejaVuSans.ttf',
   './assets/wa-attestation-bg.pdf','./assets/fl-model-verbrandingsattest.pdf',
   './assets/fl-model-keuringsrapport.pdf','./assets/fl-model-reinigingsattest.pdf',
-  './assets/br-solid-fuel-model.pdf','./assets/br-1mw-annex.pdf','./assets/checkbox-rects.json'
+  './assets/br-solid-fuel-model.pdf','./assets/br-1mw-annex.pdf','./assets/checkbox-rects.json',
+  './assets/template-hashes.json'
 ];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));

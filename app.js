@@ -2,6 +2,7 @@ import {wallonia,fmt as wFmt} from './regions/wallonia.js';
 import {flanders} from './regions/flanders.js';
 import {brussels} from './regions/brussels.js';
 import {buildAttestation} from './output.js';
+import {limitsForField} from './regions/wallonia-criteria.js';
 
 const REGIONS = {wallonia,flanders,brussels};
 const KEY = 'attesta.draft.v1';
@@ -17,6 +18,7 @@ const T = {
     needData:'Aucune donnée. Ouvrez le module et saisissez les mesures.',
     openEncoder:'Ouvrir l’encodeur BE',ack:'Accusé',
     nextControl:'PROCHAIN CONTRÔLE',required:'Obligatoire',invalid:'Valeur invalide',
+    noThreshold:'Aucun seuil imprimé pour cette catégorie',
     vekaConfirmed:'Enregistrement VEKA confirmé',
     bruDataBody:'Bruxelles génère le PDF officiel. Ouvrez l’encodeur, ressaisissez les données préparées, puis téléchargez votre attestation officielle.',
     docs:{wa:['Attestation de contrôle (modèle AWAC)','Tickets de mesure ajoutés'],
@@ -38,7 +40,14 @@ const T = {
     confirmChangeDraft:'Votre brouillon sera sauvegardé pour le reprendre plus tard. Changer de région ?',
     confirmNewJob:'Cette attestation non terminée sera sauvegardée pour la reprendre. En démarrer une autre ?',
     vekaDownloadError:'Saisissez une référence et une date VEKA avant de télécharger.',
+    vekaChecklist:'Données à déclarer (30 jours)', vekaLink:'Ouvrir Melding Centrale Stooktoestellen',
+    vekaDeadline:'Enregistrement VEKA au plus tard', remedyDeadline:'Attestation corrective au plus tard',
     pdfGenError:'La génération du PDF a échoué. Vérifiez la connexion et les fichiers de modèle officiels, puis réessayez.',
+    errFont:'La police Unicode n’a pas pu être chargée.', errTemplate:'Le modèle officiel n’a pas pu être chargé.',
+    errAnnex:'L’annexe ≥ 1000 kW n’a pas pu être chargée.', errAttachment:'Une pièce jointe n’a pas pu être traitée.',
+    attachReloadWarning:'Les fichiers ne sont pas conservés dans un brouillon rechargé. Resélectionnez les tickets avant de télécharger.',
+    flDocChoice:'Document à télécharger', flDocBoth:'Les deux documents',
+    auditSummary:'Champs écrits', auditWarnings:'Avertissements de mise en page',
     saved:'Brouillon enregistré'},
   nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'PDF downloaden',
     chooseTitle:'Attesta',chooseHint:'Kies de regio van deze interventie.',
@@ -49,6 +58,7 @@ const T = {
     needData:'Geen gegevens. Open het rooster en vul de metingen in.',
     openEncoder:'BE-encoder openen',ack:'Bevestigd',
     nextControl:'VOLGENDE CONTROLE',required:'Verplicht',invalid:'Ongeldige waarde',
+    noThreshold:'Geen gedrukte drempel voor deze categorie',
     vekaConfirmed:'VEKA-registratie bevestigd',
     bruDataBody:'Brussel genereert het officiële PDF. Open de encoder, voer de voorbereide gegevens opnieuw in en download uw officiële attest.',
     docs:{wa:['Attestation de contrôle (AWAC-model)','Meetbewijzen toegevoegd'],
@@ -70,7 +80,14 @@ const T = {
     confirmChangeDraft:'Uw concept wordt opgeslagen om later verder te gaan. Regio wijzigen?',
     confirmNewJob:'Deze onvoltooide attestatie wordt opgeslagen om later verder te gaan. Een nieuwe starten?',
     vekaDownloadError:'Voer een VEKA-referentie en -datum in vóór het downloaden.',
+    vekaChecklist:'Gegevens voor de melding (30 dagen)', vekaLink:'Melding Centrale Stooktoestellen openen',
+    vekaDeadline:'VEKA-registratie uiterlijk', remedyDeadline:'Herstelverbrandingsattest uiterlijk',
     pdfGenError:'PDF-generatie mislukt. Controleer de verbinding en de officiële modellen en probeer opnieuw.',
+    errFont:'Het Unicode-lettertype kon niet worden geladen.', errTemplate:'Het officiële model kon niet worden geladen.',
+    errAnnex:'De bijlage ≥ 1000 kW kon niet worden geladen.', errAttachment:'Een bijlage kon niet worden verwerkt.',
+    attachReloadWarning:'Bestanden worden niet bewaard in een herladen concept. Selecteer de meetbewijzen opnieuw vóór het downloaden.',
+    flDocChoice:'Te downloaden document', flDocBoth:'Beide documenten',
+    auditSummary:'Velden geschreven', auditWarnings:'Layoutwaarschuwingen',
     saved:'Concept opgeslagen'}
 };
 function tr(){ return T[cfg()?.lang||'fr']||T.fr; }
@@ -121,6 +138,8 @@ function save(){
   catch(e){ console.warn('Could not save draft',e); }
 }
 function cfg(){ return REGIONS[state.region]; }
+// A field can be shown only for a given document choice (e.g. keuring checks).
+const fieldVisible = f => typeof f.when!=='function' || f.when(state.data);
 
 /* ---------- header + footer ---------- */
 function renderChrome(){
@@ -177,7 +196,7 @@ function fieldHTML(f){
   } else if(f.type==='textarea'){
     input=`<textarea id="${id}"${name} data-k="${f.key}" rows="2" ${f.required?'required':''}>${esc(v)}</textarea>`;
   } else if(f.type==='file'){
-    input=`<input id="${id}"${name} type="file" data-k="${f.key}" accept="image/*,application/pdf" multiple>`;
+    input=`<input id="${id}"${name} type="file" data-k="${f.key}" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg" multiple>`;
   } else if(f.type==='checkbox'){
     input=`<input id="${id}"${name} type="checkbox" data-k="${f.key}" ${v?'checked':''}>`;
   } else {
@@ -186,20 +205,53 @@ function fieldHTML(f){
   }
   return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}<div class="err" id="${id}-error">${f._err||''}</div></div>`;
 }
+// Wallonia thresholds come from the official category table, not from hard-coded
+// min/max on the field definition. No resolved category means no rule and no OK.
+function ruleFor(f){
+  if(state.region==='wallonia') return limitsForField(state.data)[f.key] ?? null;
+  if(f.max!=null && f.lower) return {max:f.max,lower:true};
+  if(f.min!=null) return {min:f.min};
+  return null;
+}
 function measureHTML(f){
   const v=state.data[f.key];
   const id=`field-${f.key}`;
-  let verdict='idle', text='—';
-  if(v!==''&&v!=null){
-    const n=Number(v);
-    const ok = (f.max!=null && f.lower ? n<=f.max : true) && (f.min!=null ? n>=f.min : true);
-    verdict=ok?'ok':'bad'; text=ok?'OK':'NON OK';
+  const rule=ruleFor(f);
+  const lim = rule
+    ? (rule.max!=null?`≤ ${rule.max}`:(rule.min!=null?`≥ ${rule.min}`:''))
+    : (tr().noThreshold||'—');
+  if(f.pair){
+    const obj=(v&&typeof v==='object')?v:{i:'',f:''};
+    return `<div class="mrow paired pending">
+      <label class="ml" for="${id}-i">${f.label}<span class="thresh">${lim} ${f.unit||''}</span></label>
+      <div class="pair-inputs">
+        <label class="sub">I <input id="${id}-i" name="${f.key}.i" data-k="${f.key}" data-sub="i" value="${esc(obj.i??'')}" inputmode="decimal"></label>
+        <label class="sub">II <input id="${id}-f" name="${f.key}.f" data-k="${f.key}" data-sub="f" value="${esc(obj.f??'')}" inputmode="decimal"></label>
+        <span class="verdict idle" data-verdict="i">—</span>
+        <span class="verdict idle" data-verdict="f">—</span>
+      </div></div>`;
   }
-  const lim = f.max!=null?`≤ ${f.max}`:(f.min!=null?`≥ ${f.min}`:'');
+  let verdict='idle', text='—';
+  if(v!==''&&v!=null && rule){
+    const n=Number(v);
+    if(Number.isFinite(n)){
+      const ok = (rule.max!=null ? n<=rule.max : true) && (rule.min!=null ? n>=rule.min : true);
+      verdict=ok?'ok':'bad'; text=ok?'OK':'NON OK';
+    }
+  }
   return `<div class="mrow ${v===''||v==null?'pending':''} ${verdict==='bad'?'warn':''}">
     <label class="ml" for="${id}">${f.label}<span class="thresh">${lim} ${f.unit||''}</span></label>
     <input id="${id}" name="${f.key}" data-k="${f.key}" value="${esc(v??'')}" inputmode="decimal" ${f.required?'required':''}>
     <span class="verdict ${verdict}">${text}</span></div>`;
+}
+function measureVerdict(f,value){
+  if(value===''||value==null) return 'idle';
+  const rule=ruleFor(f);
+  if(!rule) return 'idle';
+  const n=Number(value);
+  if(!Number.isFinite(n)) return 'idle';
+  const ok=(rule.max!=null?n<=rule.max:true)&&(rule.min!=null?n>=rule.min:true);
+  return ok?'ok':'bad';
 }
 function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
@@ -225,8 +277,9 @@ function render(){
   $('warning').hidden=!$('warning').innerHTML;
   wireAcks();
 
-  const measures=step.fields.filter(f=>f.type==='measure');
-  const normal=step.fields.filter(f=>f.type!=='measure');
+  const visibleFields=step.fields.filter(fieldVisible);
+  const measures=visibleFields.filter(f=>f.type==='measure');
+  const normal=visibleFields.filter(f=>f.type!=='measure');
   let html = measures.length
     ? `<div class="measure">${measures.map(measureHTML).join('')}</div>`+normal.map(fieldHTML).join('')
     : normal.map(fieldHTML).join('');
@@ -241,9 +294,16 @@ function render(){
         state.data[k]=[...el.files].map(f=>f.name);
       }else if(el.type==='checkbox'){
         state.data[k]=el.checked;
+      }else if(el.dataset.sub){
+        const current=state.data[k];
+        const obj=(current&&typeof current==='object')?current:{i:'',f:''};
+        obj[el.dataset.sub]=el.value;
+        state.data[k]=obj;
       }else{
         state.data[k]=el.value;
       }
+      // Any edit invalidates a previously "Done" status.
+      if(state.status==='Done') state.status='Draft';
       save();
       if(k==='controlDate'||k==='powerKw'||k==='conformity'||k==='building'||k==='fuel'){
         renderChrome();
@@ -251,6 +311,7 @@ function render(){
       if(el.classList.contains('ml')||el.closest('.mrow')) updateMeasure(el);
     });
   });
+  $('form').querySelectorAll('.mrow input').forEach(updateMeasure);
   maybeFocusHeading(focusKey);
 }
 // Move focus to the step heading only when the step/region changes — not on
@@ -268,13 +329,22 @@ function maybeFocusHeading(key){
 function updateMeasure(input){
   const row=input.closest('.mrow'); if(!row) return;
   const k=input.dataset.k, f=cfg().steps[state.step].fields.find(x=>x.key===k);
-  const v=input.value; const vd=row.querySelector('.verdict');
-  if(v===''){ vd.className='verdict idle'; vd.textContent='—'; row.classList.add('pending'); return; }
-  const n=Number(v);
-  const ok=(f.max!=null&&f.lower?n<=f.max:true)&&(f.min!=null?n>=f.min:true);
-  vd.className='verdict '+(ok?'ok':'bad'); vd.textContent=ok?'OK':'NON OK';
-  row.classList.toggle('pending',false);
-  row.classList.toggle('warn',!ok);
+  if(!f) return;
+  if(input.dataset.sub){
+    const verdict=measureVerdict(f,input.value);
+    const vd=row.querySelector(`[data-verdict="${input.dataset.sub}"]`);
+    if(vd){ vd.className='verdict '+verdict; vd.textContent=verdict==='idle'?'—':verdict==='ok'?'OK':'NON OK'; }
+    const filled=[...row.querySelectorAll('input')].some(i=>i.value!=='');
+    row.classList.toggle('pending',!filled);
+    row.classList.toggle('warn',[...row.querySelectorAll('input')].some(i=>measureVerdict(f,i.value)==='bad'));
+    return;
+  }
+  const verdict=measureVerdict(f,input.value);
+  const vd=row.querySelector('.verdict');
+  if(!vd) return;
+  vd.className='verdict '+verdict; vd.textContent=verdict==='idle'?'—':verdict==='ok'?'OK':'NON OK';
+  row.classList.toggle('pending',verdict==='idle');
+  row.classList.toggle('warn',verdict==='bad');
 }
 function renderRegionChoice(){
   const t=tr();
@@ -304,6 +374,11 @@ function renderRegionChoice(){
     lastFocusKey=null; save(); syncURL(); render();
   });
 }
+const VEKA_ITEMS=['Toesteltype','Locatie','Nominaal vermogen (kW)','Brandstof',
+  'Brandertechniek','Bouwjaar','Type interventie','Datum uitvoering','Eindbeoordeling'];
+const flDocuments=d=>d.document?.includes('Keuringsrapport')
+  ? ['Keuringsrapport','Verbrandingsattest']
+  : ['Verbrandingsattest','Reinigingsattest'];
 function renderFinal(){
   const c=cfg(), d=state.data, t=tr();
   $('stepTitle').textContent=t.ready;
@@ -315,19 +390,44 @@ function renderFinal(){
     : c.id==='flanders' ? t.docs.fl
     : /solide/i.test(d.fuel||'') ? [...t.docs.brSolid, ...(d.annex1mw?[t.annex]:[])]
     : t.docs.brData;
-  const flDocs = c.id==='flanders' && d.document?.includes('Keuringsrapport')
-    ? [d.document, ...t.docs.fl.slice(1)] : docs;
+  const flDocs = c.id==='flanders' ? flDocuments(d) : docs;
+  const due=computeDue();
+  const regDeadline=c.id==='flanders'&&d.controlDate
+    ? wFmt(flanders.rules.registrationDeadline(d.controlDate)):null;
+  const hasDefect=/niet/i.test(d.conformity||'') ||
+    ['conformStooktoestel','conformRookgas','conformStookplaats','conformVerbranding']
+      .some(k=>/niet/i.test(d[k]||''));
+  const remedyDeadline=c.id==='flanders'&&d.controlDate&&hasDefect
+    ? wFmt(flanders.rules.remedy(d.controlDate)):null;
   const gate = c.id==='flanders'
-    ? `<div class="gate"><strong>${t.vekaTitle} :</strong> ${d.vekaRef&&d.vekaDate?t.vekaRecorded:t.vekaRequired}</div>`
+    ? `<div class="gate">
+        <div><strong>${t.vekaTitle} :</strong> ${d.vekaRef&&d.vekaDate?t.vekaRecorded:t.vekaRequired}</div>
+        ${regDeadline?`<div class="gate-line">${t.vekaDeadline} : <b>${regDeadline}</b></div>`:''}
+        ${remedyDeadline?`<div class="gate-line">${t.remedyDeadline} : <b>${remedyDeadline}</b></div>`:''}
+        ${due?`<div class="gate-line">${t.nextControl} : <b>${wFmt(due.date)}</b> · ${esc(due.note||'')}</div>`:''}
+        <div class="gate-sub">${t.vekaChecklist}</div>
+        <ul class="veka-list">${VEKA_ITEMS.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+        <a class="veka-link" href="https://melding.veka.vlaanderen.be" target="_blank" rel="noopener">${esc(t.vekaLink)}</a>
+      </div>`
     : '';
   const manualHandoff=isBruData;
   const body = manualHandoff?t.bruHandoff:t.previewBody;
   const goLabel = manualHandoff?t.openEncoder:t.downloadPdf;
+  const gateLocked=c.id==='flanders'&&!(d.vekaRef&&d.vekaDate);
+  const fileKeys=c.steps.flatMap(s=>s.fields).filter(f=>f.type==='file').map(f=>f.key);
+  const missingFiles=fileKeys.some(k=>Array.isArray(d[k])&&d[k].length&&!(attachmentFiles.get(k)||[]).length);
+  const docChoice=c.id==='flanders'&&flDocs.length>1
+    ? `<div class="f"><label for="flDoc">${t.flDocChoice}</label><select id="flDoc">
+        <option value="both">${t.flDocBoth}</option>
+        ${flDocs.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('')}
+      </select></div>` : '';
   $('form').innerHTML=`<div class="final"><h2>${esc(flDocs[0])}</h2>
     <p>${esc(body)}</p>
     <div class="doclist">${flDocs.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
-    ${gate}<p class="output-warning"><strong>${t.statusLabel} :</strong> ${t.statusBody}</p>
-    <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%">${goLabel}</button>
+    ${missingFiles?`<p class="output-error">${esc(t.attachReloadWarning)}</p>`:''}
+    ${docChoice}${gate}<p class="output-warning"><strong>${t.statusLabel} :</strong> ${t.statusBody}</p>
+    <p id="auditLine" class="audit-line" role="status"></p>
+    <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%" ${gateLocked?`disabled title="${esc(t.vekaDownloadError)}"`:''}>${goLabel}</button>
     <button type="button" class="btn back" id="newJob" style="margin-top:10px;width:100%">${t.startAnother}</button></div>`;
   $('newJob').onclick=()=>{
     if(state.status!=='Done'&&!window.confirm(t.confirmNewJob)) return;
@@ -355,23 +455,31 @@ function renderFinal(){
         state.status='Done'; save();
         return;
       }
+      const audits=[];
       if(c.id==='flanders'){
-        const documents=d.document?.includes('Keuringsrapport')
-          ? ['Keuringsrapport','Verbrandingsattest']
-          : ['Verbrandingsattest','Reinigingsattest'];
-        for(const document of documents){
+        const chosen=$('flDoc')?.value||'both';
+        const selected=chosen==='both'?flDocuments(d):[chosen];
+        for(const document of selected){
           const documentState={...state,data:{...d,document}};
           const blob=await buildAttestation(documentState,attachmentFiles);
+          if(blob.audit) audits.push(blob.audit);
           download(blob,`attesta-flanders-${document.toLowerCase().replaceAll(/[^a-z0-9]+/gi,'-')}.pdf`);
         }
       }else{
         const blob=await buildAttestation(state,attachmentFiles);
+        if(blob.audit) audits.push(blob.audit);
         download(blob,`attesta-${c.id}.pdf`);
+      }
+      if(audits.length&&$('auditLine')){
+        const printed=audits.reduce((n,a)=>n+a.printed.length,0);
+        const warnings=audits.reduce((n,a)=>n+a.warnings.length,0);
+        $('auditLine').textContent=`${t.auditSummary}: ${printed} · ${t.auditWarnings}: ${warnings}`;
       }
       state.status='Done'; save();
     }catch(e){
       console.error('Could not generate attestation',e);
-      showOutputError(t.pdfGenError);
+      const stageMessages={font:t.errFont,template:t.errTemplate,annex:t.errAnnex,attachment:t.errAttachment};
+      showOutputError(stageMessages[e.stage]||t.pdfGenError);
     }finally{
       generating=false;
       button.disabled=false;
@@ -391,28 +499,32 @@ function showOutputError(message){
   error.textContent=message;
 }
 function download(blob,name){
+  if(!window.URL||typeof URL.createObjectURL!=='function') throw new Error('download-unsupported');
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  document.body.appendChild(a); a.click(); a.remove();
+  // Keep the URL alive long enough for slow browsers and download managers.
+  setTimeout(()=>URL.revokeObjectURL(a.href),60000);
 }
 
 /* ---------- navigation ---------- */
 function validate(){
-  const c=cfg(), step=c.steps[state.step]; let ok=true;
-  step.fields.forEach(f=>{
+  const c=cfg(), step=c.steps[state.step], t=tr(); let ok=true;
+  const visible=step.fields.filter(fieldVisible);
+  visible.forEach(f=>{
     f._err='';
-    const t=tr();
     if(f.required && (state.data[f.key]===''||state.data[f.key]==null)) { f._err=t.required; ok=false; }
     if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err=t.required; ok=false; }
     if(f.type==='select' && state.data[f.key] && f.options && !f.options.includes(state.data[f.key])) { f._err=t.invalid; ok=false; }
   });
-  if(step.fields.some(f=>f.key==='techAgrement')){
+  const agrem=visible.find(f=>f.key==='techAgrement');
+  if(agrem){
     const pattern=recognitionPattern();
-    const field=step.fields.find(f=>f.key==='techAgrement');
-    if(pattern&&state.data.techAgrement&&!pattern.test(state.data.techAgrement)){
-      field._err=tr().invalid;
+    if(pattern){
+      if(!state.data.techAgrement && c.id==='flanders') agrem._err=t.required;
+      else if(state.data.techAgrement && !pattern.test(state.data.techAgrement)) agrem._err=t.invalid;
     }
   }
-  if(step.fields.find(f=>f.key==='techAgrement')?._err) ok=false;
+  if(visible.find(f=>f.key==='techAgrement')?._err) ok=false;
   if(!ok){
     render();
     requestAnimationFrame(()=>document.querySelector('.f.bad [data-k], .mrow.bad [data-k]')?.focus());
@@ -424,6 +536,7 @@ function recognitionPattern(){
   if(c.id==='flanders'){
     if(state.data.techCategory?.includes('gasvormige')) return /^GV\d{5}$/i;
     if(state.data.techCategory?.includes('vloeibare')) return /^TV\d{5}$/i;
+    if(state.data.techCategory?.includes('VA+')) return /^VA\+\d{5}$/i;
   }
   if(c.id==='brussels'){
     if(state.data.techCategory?.includes('GI')) return /^(GI|GII)$/i;
@@ -444,7 +557,7 @@ function validateDraft(){
   const t=tr();
   for(let index=0;index<c.steps.length;index++){
     const step=c.steps[index];
-    for(const f of step.fields){
+    for(const f of step.fields.filter(fieldVisible)){
       f._err='';
       if(f.required && (state.data[f.key]===''||state.data[f.key]==null)){ f._err=t.required; }
       if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err=t.required; }
@@ -452,13 +565,14 @@ function validateDraft(){
     }
   }
   const pattern=recognitionPattern();
-  const field=cfg()?.steps.flatMap(step=>step.fields).find(f=>f.key==='techAgrement');
-  if(pattern&&state.data.techAgrement&&!pattern.test(state.data.techAgrement)){
-    if(field) field._err=t.invalid;
+  const field=c.steps.flatMap(step=>step.fields).find(f=>f.key==='techAgrement'&&fieldVisible(f));
+  if(pattern&&field){
+    if(!state.data.techAgrement && c.id==='flanders') field._err=t.required;
+    else if(state.data.techAgrement && !pattern.test(state.data.techAgrement)) field._err=t.invalid;
   }
-  const invalid=cfg().steps.flatMap(step=>step.fields).some(f=>f._err);
+  const invalid=c.steps.flatMap(step=>step.fields).some(f=>f._err);
   if(invalid){
-    const firstIndex=cfg().steps.findIndex(step=>step.fields.some(f=>f._err));
+    const firstIndex=c.steps.findIndex(step=>step.fields.some(f=>f._err));
     state.step=firstIndex>=0?firstIndex:0;
   }
   return !invalid;

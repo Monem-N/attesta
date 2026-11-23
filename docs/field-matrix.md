@@ -10,8 +10,8 @@ All coordinates are PDF points (origin top-left), page size A4 portrait **595 ×
 | Flanders | `assets/fl-model-keuringsrapport.pdf` | 1 | First-commissioning report (Dutch) |
 | Flanders | `assets/fl-model-verbrandingsattest.pdf` | 1 | Combustion attestation (Dutch) |
 | Flanders | `assets/fl-model-reinigingsattest.pdf` | 1 | Cleaning attestation (Dutch) |
-| Brussels | `assets/br-solid-fuel-model.pdf` | 4 | Solid-fuel periodic control (French) — self-generated PDF path |
-| Brussels | `assets/br-1mw-annex.pdf` | 1 | ≥1000 kW combustion table (landscape 842 × 595) |
+| Brussels | `assets/br-solid-fuel-model.pdf` | 4 | Solid-fuel periodic control (French); **page 4 already contains the landscape combustion annex** |
+| Brussels | `assets/br-1mw-annex.pdf` | 1 | Standalone copy of the annex — not appended by the app (would duplicate page 4) |
 
 ## Wallonia — `wa-attestation-bg.pdf`
 
@@ -149,11 +149,28 @@ All output text in **Dutch**. Recognition patterns: `GV#####`, `TV#####`, `VA+##
 
 **Only page 1 of the Wallonia source (the "A quoi sert ce modèle?" instruction page with the "cadre à supprimer après l'avoir lu" and emergency notices) was removed.** Do **not** remove embedded images: `image1.emf` is the mandatory measurement-criteria table and `image5.emf` is the mandatory category/performance table. Removing either would shorten the official model and void its legal validity. Regional logos (image2/3/4) are retained as part of the official document.
 
+## Wallonia verdict criteria
+
+The comparison marks on page 2 (index 1) are **not** governed by one fixed threshold set.
+They come from the *Performances minimales* table printed on the last page of
+`assets/wa-attestation-bg.pdf` (revision 2015-10-29), transcribed into
+`regions/wallonia-criteria.js`. Category = fuel + burner type + premix + year of
+fabrication, with the 30/05/2017 reclassification of B rows and +15 mg/kWh CO for
+butane/propane. The same module drives the wizard's OK / non OK badges and the PDF's
+comparison ticks, so the two cannot disagree.
+
+A blank printed column means **no rule applies**: the field shows "no threshold for this
+category", the PDF leaves the comparison row unticked, and the global result is not
+printed. There is no green OK for a value that was never evaluated.
+
 ## Overlay implementation notes
 
 - **Checkbox model:** `assets/checkbox-rects.json` holds printed checkbox rectangles for five models: `wallonia` (vector + Wingdings `U+F097` glyph boxes), `fl-verbranding` (43 boxes), `fl-reiniging` (32), `fl-keuring` (99), and `br-solid` (0 — the Brussels solid-fuel form uses plain OUI/NON text with no boxes, so nothing is ticked there). `output.js` selects the map by model and ticks the correct box by finding the nearest same-row pair to each field anchor. Text for ticked binary fields is suppressed (the printed labels remain).
-- **Verified ticks:** Wallonia — room conformities, declaration, all five diagnostic branches, regulation rows. Flanders combustion — conformity. Flanders keuring — conformity via a per-model anchor override (`ANCHOR_OVERRIDES`). Brussels solid fuel — the printed OUI/NON words (no drawn boxes) are marked with a red underline.
-- **Flanders cleaning:** no OUI/NON box pair exists near the shared conformity anchor (only a vertical checklist column), so the value is written as text instead of ticking.
+- **Verified ticks:** Wallonia — room conformities, declaration, all five diagnostic branches, regulation rows. Flanders combustion — intervention, central/type/fuel/brander and the four *Eindbeoordeling* boxes (`goed` / `veilig` / `niet goed` / `niet veilig`) via explicit per-value centres. Flanders keuring — central/type/fuel, six installation checks and the four *EINDBEOORDELING* OK/Niet OK pairs. Flanders cleaning — intervention, recognition, central/type/fuel/brander. Brussels solid fuel — the printed OUI/NON words (no drawn boxes) are marked with a red underline.
+- **Flanders maps are per model:** `regions/flanders-pdf.js` holds `FL_MAPS` for `fl-verbranding`, `fl-reiniging` and `fl-keuring`, with coordinates taken from the actual PDFs. There is no shared combustion map. The generic nearest-pair heuristic is disabled for Flanders so a field without an explicit box selection is written as text instead of ticking an unrelated box.
+- **Wallonia map is calibrated per page:** `regions/wallonia-pdf.js` holds `WA_MAP` (pages 0–4 carry all fillable content; pages 5–8 are reference material). It includes the measurement table (page 2), per-column comparison boxes, the global result, the follow-up dates (page 4) and signature/receipt names. Checkmarks are drawn as two red strokes instead of solid rectangles. Page 9 (landscape category table) is reference-only.
+- **Flanders measurements:** the combustion step captures Proef I and Proef II per parameter (`{i, f}`); both are written in their respective columns. The computed next-due date is printed on all three models.
+- **Flanders cleaning:** no OUI/NON box pair exists for the final assessment (only a vertical checklist column), so its value is written as text.
 - **Fallback rule:** text for a binary field is suppressed only when a mark was actually drawn; otherwise the value is still written as text, so no answer is ever lost.
 - **Previously unmapped fields:** `intervention`, `building`, `techCategory`, `requester`, `fuel`, `clientCompany` now render as labelled lines in the blank strip below the orifice section on Wallonia page 1.
 - **Text encoding:** standard-font WinAnsi renders French accents correctly (verified: Élise, François, Béland, Église). Non-WinAnsi characters (e.g. Dutch `ĳ`) are transliterated (`ij`) and each field draw is guarded so one bad character can never abort the PDF. Full Unicode via a vendored TTF + fontkit was rejected: it would add ~2 MB to a deliberately lightweight static app.

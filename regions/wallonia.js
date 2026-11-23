@@ -51,6 +51,10 @@ export const wallonia = {
       req(F('controlDate','Date du contrôle','date')),
       F('attestNumber','N° attestation (facultatif)'),
       F('building','Type de bâtiment','select',{options:['Habitation','Collectif / autre']}),
+      F('measureDate','Date de la mesure','date'),
+      F('measureTime','Heure de la mesure'),
+      F('analyzerMake','Appareil de mesure — marque / modèle'),
+      F('analyzerSerial','Appareil de mesure — n° de série'),
     ]},
     { title:'Technicien', hint:'Qui a réalisé le contrôle ?', fields:[
       req(F('techCategory','Agrément','select',{options:['Technicien agréé L','Technicien agréé GI','Technicien agréé GII','Technicien spécialisé combustibles solides']})),
@@ -90,13 +94,23 @@ export const wallonia = {
       F('airSupply','Amenée d’air comburant','select',{options:['OUI','NON']}),
       F('flue','Évacuation gaz de combustion','select',{options:['OUI','NON']}),
       F('orifices','Orifices de mesure','select',{options:['Dispensé','Présent et conforme','Présent et non conforme','Absent et techniquement non réalisable']}),
-      {key:'smoke',label:'Indice de fumée (Bacharach)',type:'measure',unit:'',max:2,lower:true},
-      {key:'o2',label:'Teneur en O₂',type:'measure',unit:'%',max:4.4,lower:true},
-      {key:'co2',label:'Teneur en CO₂',type:'measure',unit:'%',min:12},
-      {key:'co',label:'Teneur en CO',type:'measure',unit:'mg/kWh',max:155,lower:true},
-      {key:'efficiency',label:'Rendement combustion',type:'measure',unit:'%',min:90},
+      // Limits are NOT stored on the field: they depend on the official category
+      // (fuel / burner / premix / year) and are resolved by wallonia-criteria.js.
+      {key:'smoke',label:'Indice de fumée (Bacharach)',type:'measure',unit:''},
+      {key:'flueTemp',label:'Température des gaz de combustion',type:'measure',unit:'°C'},
+      {key:'o2',label:'Teneur en O₂',type:'measure',unit:'%'},
+      {key:'co2',label:'Teneur en CO₂',type:'measure',unit:'%'},
+      {key:'co',label:'Teneur en CO',type:'measure',unit:'mg/kWh'},
+      {key:'efficiency',label:'Rendement combustion',type:'measure',unit:'%'},
+      {key:'waterTemp',label:'Température de l’eau',type:'measure',unit:'°C'},
       F('chimneyPressure','Pression cheminée (type B)','number'),
       F('pumpPressure','Pression pompe (bar)','number'),
+      F('nozzleMake','Gicleur — marque & type'),
+      F('nozzleFlow','Gicleur — débit (gal/h)'),
+      F('nozzleAngle','Gicleur — angle (degré)'),
+      F('solidSmoke','Fumée très brève (solide)','select',{options:['OUI','NON']}),
+      F('solidFlue','Évacuation correcte (solide)','select',{options:['OUI','NON']}),
+      F('solidResult','Résultat global (solide)','select',{options:['OK','non OK']}),
     ]},
     { title:'Déclaration', hint:'Diagnostic, conformité et prochaines interventions.', fields:[
       F('diagReport','Diagnostic approfondi présent ?','select',{options:['OUI','NON']}),
@@ -111,6 +125,15 @@ export const wallonia = {
       F('clock','Horloge','select',{options:['OUI','NON']}),
       F('night','Mode réduit nuit','select',{options:['OUI','NON']}),
       F('pumpIssue','Indices dysfonctionnement pompe','select',{options:['OUI','NON']}),
+      F('regulationRemarks','Remarques régulation','textarea'),
+    ]},
+    { title:'Suivi & signatures', hint:'Prochaines interventions et réception de l’attestation.', fields:[
+      F('followUp','Prochaine intervention','select',{options:[
+        'Prochaine inspection périodique','Contrôle de mise en conformité',
+        'Remise en service','Entretien conseillé','Diagnostic approfondi']}),
+      F('techSignatureName','Attestation établie par (nom)'),
+      F('recipientName','Attestation reçue par (nom)'),
+      F('recipientCapacity','En qualité de'),
     ]},
   ]
 };
