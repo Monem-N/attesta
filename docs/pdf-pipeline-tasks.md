@@ -13,7 +13,7 @@ Status legend: **DONE** (verified), **WIP** (being worked on), **TODO** (not sta
 | P0-4 | Proef I / Proef II measurements and next-due date on Flanders PDFs | DONE | paired `{i,f}` values |
 | P0-5 | Calibrated Wallonia maps for all 9 pages; add missing appliance/regulation fields | DONE | `regions/wallonia-pdf.js`, measured from the official PDF |
 | P0-6 | Print Wallonia next-control date/range, remedy, maintenance and diagnostic dates | DONE | page 4 follow-up block |
-| P0-7 | Signature support (blank signature lines / capture policy) for all regions | TODO | recipient/technician names are printed; signature capture is a policy decision |
+| P0-7 | Signature support (blank signature lines / capture policy) for all regions | DONE | Policy decided: **blank lines, signed on paper**. Printed names remain; no drawn/typed/embedded e-signature. Final screen explains it per locale; test guards maps against signature-capture anchors. |
 | P0-8 | Complete Brussels solid-fuel maps (3-party, system, safety, dimensioning, protocol) | WIP | 53 of 55 wizard fields mapped; dense enum blocks still need printed-option ticks |
 | P0-9 | Fill the ≥1000 kW annex measurement table instead of appending it blank | DONE | annex is already page 4 of the official model; duplicate append removed |
 | P0-10 | Print VEKA reference/date on Flanders documents (gate evidence) | TODO |

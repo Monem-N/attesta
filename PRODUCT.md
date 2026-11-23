@@ -51,6 +51,7 @@ The tool asks a short series of questions (wizard steps, ~6 fields max per step)
 
 ### Constraints
 - **No backend, no database, no accounts.** Static files only.
+- **Signatures are blank lines, signed on paper.** Decided 2026-11-23: Attesta prints the technician/recipient names but embeds no drawn, typed or electronic signature. The final screen tells the technician to print and sign by hand. Avoids claiming e-signature validity and adds no biometric data.
 - **No automatic authority submission.** VEKA API, BE encoder API — both require vendor onboarding, out of scope for Phase 1.
 - **No multi-device sync.** Data lives on one device.
 - **No push reminders.** Out of scope.

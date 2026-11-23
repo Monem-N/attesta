@@ -33,6 +33,7 @@ const T = {
     gen:'Génération…', startAnother:'Nouvelle attestation', statusLabel:'Statut du document',
     statusBody:'Modèle et calques en attente de revue finale des coordonnées et de conformité légale. Vérifiez chaque champ avant un usage professionnel.',
     previewBody:'Attesta crée un aperçu PDF à partir des données saisies. Ses positions de champs et sa conformité légale ne sont pas vérifiées ; comparez-le au modèle officiel en vigueur avant tout usage professionnel.',
+    signNote:'Les lignes de signature restent vierges : imprimez l’attestation et faites signer le technicien et le client à la main. Attesta n’appose aucune signature électronique.',
     bruHandoff:'Attesta ne peut pas émettre le PDF officiel Bruxelles gaz/mazout. Utilisez le JSON téléchargé comme aide, ressaisissez les données dans l’encodeur Bruxelles Environnement, puis téléchargez le document officiel.',
     vekaTitle:'Enregistrement VEKA', vekaRecorded:'Référence et date enregistrées', vekaRequired:'Référence et date requises',
     newIn:l=>`Nouvelle attestation — ${l}`, resume:l=>`Reprendre le brouillon ${l}`, record:l=>`Ouvrir l’enregistrement ${l}`,
@@ -73,6 +74,7 @@ const T = {
     gen:'Genereren…', startAnother:'Nieuwe attestatie', statusLabel:'Documentstatus',
     statusBody:'Model en overlays wachten op de finale coördinaat- en wettelijke controle. Controleer elk veld vóór professioneel gebruik.',
     previewBody:'Attesta maakt een PDF-voorbeeld van de ingevoerde gegevens. De veldposities en wettelijke naleving zijn niet geverifieerd; vergelijk dit met het huidige officiële model vóór professioneel gebruik.',
+    signNote:'De handtekeninglijnen blijven blanco: print de attestatie en laat de technicus en de klant met de hand tekenen. Attesta plaatst geen elektronische handtekening.',
     bruHandoff:'Attesta kan de officiële Brusselse gas/olie-PDF niet afgeven. Gebruik het gedownloade JSON als hulpmiddel, voer de gegevens opnieuw in in de BE-encoder en download daar het officiële document.',
     vekaTitle:'VEKA-registratie', vekaRecorded:'Referentie en datum geregistreerd', vekaRequired:'Referentie en datum vereist',
     newIn:l=>`Nieuwe attestatie — ${l}`, resume:l=>`Concept hervatten ${l}`, record:l=>`Opgeslagen ${l} openen`,
@@ -427,7 +429,7 @@ function renderFinal(){
     <p>${esc(body)}</p>
     <div class="doclist">${flDocs.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
     ${missingFiles?`<p class="output-error">${esc(t.attachReloadWarning)}</p>`:''}
-    ${docChoice}${gate}<p class="output-warning"><strong>${t.statusLabel} :</strong> ${t.statusBody}</p>
+    ${docChoice}${gate}${manualHandoff?'':`<p class="sign-note">${esc(t.signNote)}</p>`}<p class="output-warning"><strong>${t.statusLabel} :</strong> ${t.statusBody}</p>
     <p id="auditLine" class="audit-line" role="status"></p>
     <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%" ${gateLocked?`disabled title="${esc(t.vekaDownloadError)}"`:''}>${goLabel}</button>
     <button type="button" class="btn back" id="newJob" style="margin-top:10px;width:100%">${t.startAnother}</button></div>`;
