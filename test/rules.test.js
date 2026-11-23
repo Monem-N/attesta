@@ -11,6 +11,32 @@ test('Wallonia uses 3 years at exactly 100 kW gas',()=>{
   assert.equal(result.date.getFullYear(),2029);
 });
 
+test('Wallonia anchors the control window to first commissioning (art. 13 §2)',()=>{
+  const r=wallonia.rules.nextDue('2026-01-10',{
+    fuel:'Gazeux',powerKw:'80',commissioningDate:'2020-03-15'});
+  assert.equal(r.date.getFullYear(),2023);
+  assert.equal(r.date.getMonth(),2);
+  assert.equal(r.date.getDate(),15);
+  // three-month window after the anniversary
+  assert.equal(r.to.getMonth(),5);
+  assert.equal(r.to.getDate(),15);
+  assert.equal(r.anchoredTo,'2020-03-15');
+  assert.ok(!r.note.includes('à défaut'));
+});
+
+test('Wallonia falls back to the control date with an explicit caveat',()=>{
+  const r=wallonia.rules.nextDue('2026-01-10',{fuel:'Gazeux',powerKw:'80'});
+  assert.equal(r.date.getFullYear(),2029);
+  assert.ok(r.note.includes('à défaut'));
+  assert.equal(r.anchoredTo,'2026-01-10');
+});
+
+test('first-commissioning controls use their own date as the anchor',()=>{
+  const r=wallonia.rules.nextDue('2026-01-10',{fuel:'Gazeux',powerKw:'80',intervention:'Première mise en service'});
+  assert.equal(r.anchoredTo,'2026-01-10');
+  assert.ok(!r.note.includes('à défaut'));
+});
+
 test('Wallonia clamps leap-day and month-end deadlines',()=>{
   assert.equal(wallonia.rules.nonConformity('2026-09-30').getMonth(),1);
   assert.equal(wallonia.rules.nextDue('2028-02-29',{fuel:'Gazeux',powerKw:'50'}).date.getDate(),28);

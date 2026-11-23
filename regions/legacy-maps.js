@@ -24,6 +24,7 @@ export const LEGACY_MAPS={
     night:[2,206,716], pumpIssue:[2,494,656],
     intervention:[0,60,692], building:[0,310,692], techCategory:[0,60,708],
     requester:[0,310,708], fuel:[0,60,724], clientCompany:[0,310,724],
+    commissioningDate:[0,310,740],
   },
   brussels:{
     // page 1 — act, parties, declaration, requirements

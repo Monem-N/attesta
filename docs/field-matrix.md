@@ -175,6 +175,10 @@ printed. There is no green OK for a value that was never evaluated.
 - **Previously unmapped fields:** `intervention`, `building`, `techCategory`, `requester`, `fuel`, `clientCompany` now render as labelled lines in the blank strip below the orifice section on Wallonia page 1.
 - **Text encoding (updated for the DejaVu embed):** the renderer registers the vendored `fontkit.umd.min.js` and embeds `vendor/DejaVuSans.ttf` with subsetting, so French accents and Dutch characters (including `ĳ`) render as real glyphs. `SUBST` only normalises typographic punctuation (curly quotes, non-breaking spaces, em dashes) for clean, portable field text; each `drawText` remains guarded so a single bad character can never abort the document. The earlier note recommending WinAnsi/transliteration is obsolete — the bundled Unicode font supersedes it (task P1-8).
 
+## Wallonia next-control date (art. 13 §2)
+
+The cycle is anchored to the generator's **first commissioning date** (`commissioningDate` wizard field), not to the last control. The printed window runs from the anniversary (+1 year for liquid/solid, +2 or +3 years for gas depending on power) to three months after it. When no commissioning date is given, the control date is used as a fallback but the UI marks the date as provisional and the printed note says "à défaut de date de mise en service". Transitional rules for existing installations and the 2023 AGW diagnostic exemptions are **not** encoded — legal review still required.
+
 ## Status
 
 - [x] All 6 model files downloaded and converted

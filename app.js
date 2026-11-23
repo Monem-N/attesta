@@ -27,6 +27,7 @@ const T = {
       brSolid:['Attestation PEB — combustibles solides'],brData:['Paquet de données pour l’encodeur BE','Liste de ressaisie manuelle']},
     annex:'Annexe ≥ 1000 kW incluse',
     w100:'<strong>Limite 100 kW.</strong> La loi (≤100 kW) donne 3 ans, mais la note du modèle dit 2. Attesta applique 3 ans et affiche cet avertissement.',
+    wAnchor:'<strong>Échéance provisoire.</strong> Sans date de première mise en service, Attesta calcule depuis la date du contrôle. Ajoutez cette date pour une échéance conforme à l’art. 13 §2.',
     wGate:'<strong>Aucune attestation sans enregistrement.</strong> Saisissez la référence et la date VEKA avant le téléchargement.',
     wBru:'<strong>Pas de PDF ici.</strong> Les attestations gaz/mazout bruxelloises sont générées par Bruxelles Environnement. Attesta prépare les données pour la saisie manuelle.',
     wNon:'<strong>Non conforme.</strong> 5 mois pour remédier ; une exception résidentielle de 3 mois (1 sept.–30 avr.) peut s’appliquer.',
@@ -68,6 +69,7 @@ const T = {
       brSolid:['Attestation PEB — vaste brandstof'],brData:['Gegevenspakket voor BE-encoder','Lijst voor manuele invoer']},
     annex:'Bijlage ≥ 1000 kW inbegrepen',
     w100:'<strong>100 kW-grens.</strong> De wet (≤100 kW) geeft 3 jaar, maar voetnoot 14 van het model zegt 2. Attesta gebruikt 3 jaar en toont deze waarschuwing.',
+    wAnchor:'<strong>Voorlopige vervaldatum.</strong> Zonder datum van eerste ingebruikname berekent Attesta vanaf de controldatum. Voeg die datum toe voor een vervaldatum volgens art. 13 §2.',
     wGate:'<strong>Geen attest zonder registratie.</strong> Vul de VEKA-referentie en -datum in vóór het downloaden.',
     wBru:'<strong>Geen PDF hier.</strong> Brusselse gas/olie-attesten worden door Bruxelles Environnement gegenereerd. Attesta bereidt de gegevens voor manuelle invoer voor.',
     wNon:'<strong>Niet conform.</strong> 5 maanden om te herstellen ; één uitzondering van 3 maanden (1 sept.–30 apr.) kan gelden.',
@@ -177,6 +179,9 @@ function warningFor(){
   const out=[];
   if(c.id==='wallonia' && d.fuel && /gaz/i.test(d.fuel) && Number(d.powerKw)===100)
     out.push(['kw100',t.w100]);
+  if(c.id==='wallonia' && d.controlDate && !d.commissioningDate &&
+     !/première mise en service/i.test(d.intervention||''))
+    out.push(['anchor',t.wAnchor]);
   if(c.id==='flanders' && state.step===c.steps.length)
     out.push(['gate',t.wGate]);
   if(c.id==='brussels' && d.fuel && !/solide/i.test(d.fuel))
@@ -206,7 +211,7 @@ function fieldHTML(f){
     const isCode=f.key==='techAgrement'||f.key==='bce';
     input=`<input id="${id}"${name} type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.key}" value="${esc(v)}" ${f.required?'required':''} spellcheck="false" autocomplete="off">`;
   }
-  return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}<div class="err" id="${id}-error">${f._err||''}</div></div>`;
+  return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}${f.hint?`<div class="fhint">${esc(f.hint)}</div>`:''}<div class="err" id="${id}-error">${f._err||''}</div></div>`;
 }
 // Wallonia thresholds come from the official category table, not from hard-coded
 // min/max on the field definition. No resolved category means no rule and no OK.

@@ -28,18 +28,25 @@ export const wallonia = {
 
   rules: {
     nextDue(date, data) {
-      const d = new Date(date);
       const kw = Number(data.powerKw) || 0;
       const gas = /gaz/i.test(data.fuel||'');
       let years = 1;
       if (gas && kw <= 100) years = 3;      // AGW art.13 (law governs at exactly 100 kW)
       else if (gas && kw > 100) years = 2;
-      const due=addYears(d,years);
+      // Art. 13 §2: the cycle is anchored to the generator's first commissioning,
+      // with a three-month window after the anniversary — not to the last control.
+      const anchorSource = data.commissioningDate
+        || (/première mise en service/i.test(data.intervention||'') ? date : null);
+      const anchor = new Date(anchorSource || date);
+      if (Number.isNaN(anchor.getTime())) throw new Error('invalid commissioning date');
+      const due=addYears(anchor,years);
       const from=due;
       const to=addMonths(due,3);
-      return { date: due, from, to, years,
+      const caveat = anchorSource ? ''
+        : " (à défaut de date de mise en service — vérifiez l'échéance)";
+      return { date: due, from, to, years, anchor, anchoredTo: anchorSource||date,
         conflict: gas && kw === 100,
-        note: `Contrôle à réaliser entre le ${fmt(from)} et le ${fmt(to)}` };
+        note: `Contrôle à réaliser entre le ${fmt(from)} et le ${fmt(to)}${caveat}` };
     },
     nonConformity(date){ return addMonths(date,5); },
     residentialException(data){ return /habitation|résidentiel/i.test(data.building||''); }
@@ -49,6 +56,8 @@ export const wallonia = {
     { title:'Intervention', hint:'Nature et date du contrôle.', fields:[
       req(F('intervention','Type d’intervention','select',{options:['Contrôle périodique','Contrôle après intervention combustion','Mise en conformité','Première mise en service']})),
       req(F('controlDate','Date du contrôle','date')),
+      F('commissioningDate','Date de première mise en service du générateur','date',
+        {hint:'Art. 13 §2 : l’échéance se calcule depuis cette date, pas depuis le dernier contrôle.'}),
       F('attestNumber','N° attestation (facultatif)'),
       F('building','Type de bâtiment','select',{options:['Habitation','Collectif / autre']}),
       F('measureDate','Date de la mesure','date'),

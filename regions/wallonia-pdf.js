@@ -21,6 +21,7 @@ export const WA_MAP={
   orifices:[0,367,531], causes:[0,37,547], remarks:[0,197,647],
   intervention:[0,60,692], building:[0,310,692], techCategory:[0,60,708],
   requester:[0,310,708], fuel:[0,60,724],
+  commissioningDate:[0,310,740],
   // page 2 — measurement table, complementary data, declaration
   waterTemp:[1,137,72],
   smoke:[1,178,141], flueTemp:[1,226,141], co2:[1,274,141],

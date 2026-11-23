@@ -60,6 +60,7 @@ input::placeholder{color:var(--soft);opacity:1}
 .f input:focus,.f select:focus{border-bottom-color:var(--red);outline:none}
 .f input:focus-visible,.f select:focus-visible,.f textarea:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .f input[type=date]{font-family:var(--mono)}
+.f .fhint{font-size:10.5px;line-height:1.4;color:var(--soft);margin-top:3px}
 .f .err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:3px;min-height:12px}
 .f.bad input,.f.bad select{border-bottom-color:var(--red)}
 .f.req label::after{content:' *';color:var(--red)}

@@ -52,7 +52,8 @@ const SUBST = {'\u2019':"'",'\u2018':"'",'\u2013':'-','\u2014':'-','\u00a0':' '}
 const EXTRA_LABEL={intervention:'Intervention',building:'Bâtiment',techCategory:'Agrément',
   requester:'Demandeur',fuel:'Combustible',clientCompany:'Entreprise',
   measureDate:'Date mesure',measureTime:'Heure',analyzerMake:'Analyseur',analyzerSerial:'N° série',
-  vekaRef:'VEKA-ref',vekaDate:'VEKA-datum',tickets:'Tickets',techCategory:'Agrément'};
+  vekaRef:'VEKA-ref',vekaDate:'VEKA-datum',tickets:'Tickets',techCategory:'Agrément',
+  commissioningDate:'Mise en service'};
 function safeText(s){
   return String(s).replace(/[\u2018\u2019\u2013\u2014\u00a0]/g,ch=>SUBST[ch]||'?');
 }
