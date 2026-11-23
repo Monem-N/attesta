@@ -173,7 +173,7 @@ printed. There is no green OK for a value that was never evaluated.
 - **Flanders cleaning:** no OUI/NON box pair exists for the final assessment (only a vertical checklist column), so its value is written as text.
 - **Fallback rule:** text for a binary field is suppressed only when a mark was actually drawn; otherwise the value is still written as text, so no answer is ever lost.
 - **Previously unmapped fields:** `intervention`, `building`, `techCategory`, `requester`, `fuel`, `clientCompany` now render as labelled lines in the blank strip below the orifice section on Wallonia page 1.
-- **Text encoding:** standard-font WinAnsi renders French accents correctly (verified: Élise, François, Béland, Église). Non-WinAnsi characters (e.g. Dutch `ĳ`) are transliterated (`ij`) and each field draw is guarded so one bad character can never abort the PDF. Full Unicode via a vendored TTF + fontkit was rejected: it would add ~2 MB to a deliberately lightweight static app.
+- **Text encoding (updated for the DejaVu embed):** the renderer registers the vendored `fontkit.umd.min.js` and embeds `vendor/DejaVuSans.ttf` with subsetting, so French accents and Dutch characters (including `ĳ`) render as real glyphs. `SUBST` only normalises typographic punctuation (curly quotes, non-breaking spaces, em dashes) for clean, portable field text; each `drawText` remains guarded so a single bad character can never abort the document. The earlier note recommending WinAnsi/transliteration is obsolete — the bundled Unicode font supersedes it (task P1-8).
 
 ## Status
 

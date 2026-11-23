@@ -3,6 +3,7 @@ import {flanders as flandersRegion, fmt as fmtDate} from './regions/flanders.js'
 import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions/flanders-pdf.js';
 import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} from './regions/pdf-render.js';
 import {LEGACY_MAPS} from './regions/legacy-maps.js';
+import {binaryIndex} from './regions/checkbox-vocab.js';
 import {WA_MAP, WA_CHECKBOXES, WA_ALIASES, WA_COMPUTED_KEYS, walloniaComputed} from './regions/wallonia-pdf.js';
 
 // Custom Unicode font so FR/NL accents (é/è/à/ï/ç/œ/ĳ) render correctly.
@@ -115,12 +116,6 @@ function tick(page,box){
 function angleFor(px,py,qx,qy){
   // pdf-lib rotate is CCW in radians; PDF y grows upward here.
   return degrees(-Math.atan2(qy-py,qx-px)*180/Math.PI);
-}
-function binaryIndex(v){
-  if(v==null) return null;
-  const s=String(v);
-  return /^(oui|yes|ja|conforme|goed)/i.test(s)?0
-    : /^(non|no|nee|non conforme|niet)/i.test(s)?1 : null;
 }
 // Tick printed boxes. Explicit per-model selections (Flanders 3/4-way fields)
 // take precedence; otherwise find the nearest same-row OUI/NON pair.

@@ -30,8 +30,8 @@ Status legend: **DONE** (verified), **WIP** (being worked on), **TODO** (not sta
 | P1-4 | Per-field audit of printed / ticked / omitted / clipped values | DONE | `blob.audit` + result line |
 | P1-5 | Template revision + hash check; embed revision in PDF metadata | DONE | `assets/template-hashes.json` |
 | P1-6 | Handle per-page geometry (landscape annex, 9-page Wallonia) | DONE | `toPdfY()` uses each page's real height for checkbox marks; attachment pages use explicit main-document geometry; PDF attachments keep their own page sizes |
-| P1-7 | Consistent checkbox vocabulary beyond `oui/ja/non/nee` prefixes; add printed-option ticks for Brussels enums | TODO | no checkbox rectangles exist for `br-solid` yet |
-| P1-8 | Reconsolidate Flanders text-encoding comment with actual DejaVu embed | TODO |
+| P1-7 | Consistent checkbox vocabulary beyond `oui/ja/non/nee` prefixes; add printed-option ticks for Brussels enums | DONE | `regions/checkbox-vocab.js` centralises FR/NL/EN affirmative/negative labels and verdict phrases; Brussels printed-word option ticks in `assets/br-option-marks.json` (P0-8) |
+| P1-8 | Reconsolidate Flanders text-encoding comment with actual DejaVu embed | DONE | `docs/field-matrix.md` now describes the vendored fontkit + DejaVuSans subset embed; `SUBST` only normalises punctuation; the old WinAnsi note is marked obsolete |
 
 ## P2 — Downloads, attachments, errors
 
