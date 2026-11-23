@@ -14,7 +14,7 @@ Status legend: **DONE** (verified), **WIP** (being worked on), **TODO** (not sta
 | P0-5 | Calibrated Wallonia maps for all 9 pages; add missing appliance/regulation fields | DONE | `regions/wallonia-pdf.js`, measured from the official PDF |
 | P0-6 | Print Wallonia next-control date/range, remedy, maintenance and diagnostic dates | DONE | page 4 follow-up block |
 | P0-7 | Signature support (blank signature lines / capture policy) for all regions | DONE | Policy decided: **blank lines, signed on paper**. Printed names remain; no drawn/typed/embedded e-signature. Final screen explains it per locale; test guards maps against signature-capture anchors. |
-| P0-8 | Complete Brussels solid-fuel maps (3-party, system, safety, dimensioning, protocol) | WIP | 53 of 55 wizard fields mapped; dense enum blocks still need printed-option ticks |
+| P0-8 | Complete Brussels solid-fuel maps (3-party, system, safety, dimensioning, protocol) | DONE | 55/55 wizard fields mapped; `assets/br-option-marks.json` holds printed-word positions for 23 enum options (ownerType, techCategory, motif, systemType, collective, condensation, usage, connection); selected options are marked with a red underline. `tickets` and `techCategory` gaps closed. |
 | P0-9 | Fill the ≥1000 kW annex measurement table instead of appending it blank | DONE | annex is already page 4 of the official model; duplicate append removed |
 | P0-10 | Print VEKA reference/date on Flanders documents (gate evidence) | DONE | `vekaRef`/`vekaDate` anchors on all three `FL_MAPS` models, labelled `VEKA-ref` / `VEKA-datum`; verified printed on verbranding, reiniging and keuring with no bounds warnings |
 | P0-11 | Field-key coverage test: wizard fields vs template maps | WIP |

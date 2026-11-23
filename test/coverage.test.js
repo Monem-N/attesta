@@ -33,7 +33,7 @@ test('Flanders maps jointly cover every printable wizard field',()=>{
 test('Brussels solid-fuel coverage does not regress',()=>{
   // `tickets` bytes are appended as pages; `techCategory` needs a printed
   // option tick (no checkbox rectangles exist yet for this model).
-  const outstanding=new Set(['tickets','techCategory']);
+  const outstanding=new Set();
   const gap=missing(brussels,LEGACY_MAPS.brussels);
   assert.ok(gap.every(k=>outstanding.has(k)),`new unmapped fields: ${gap.filter(k=>!outstanding.has(k))}`);
   assert.ok(gap.length<=outstanding.size,`coverage improved: update outstanding list (${gap.length})`);

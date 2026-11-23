@@ -51,7 +51,7 @@ const SUBST = {'\u2019':"'",'\u2018':"'",'\u2013':'-','\u2014':'-','\u00a0':' '}
 const EXTRA_LABEL={intervention:'Intervention',building:'Bâtiment',techCategory:'Agrément',
   requester:'Demandeur',fuel:'Combustible',clientCompany:'Entreprise',
   measureDate:'Date mesure',measureTime:'Heure',analyzerMake:'Analyseur',analyzerSerial:'N° série',
-  vekaRef:'VEKA-ref',vekaDate:'VEKA-datum'};
+  vekaRef:'VEKA-ref',vekaDate:'VEKA-datum',tickets:'Tickets',techCategory:'Agrément'};
 function safeText(s){
   return String(s).replace(/[\u2018\u2019\u2013\u2014\u00a0]/g,ch=>SUBST[ch]||'?');
 }
@@ -82,6 +82,14 @@ async function checkboxMap(model){
     catch(e){ BOXES={}; }
   }
   return BOXES[model]||{};
+}
+let BR_OPTIONS=null;
+async function brOptionMap(){
+  if(!BR_OPTIONS){
+    try{ const r=await fetch('assets/br-option-marks.json'); BR_OPTIONS=r.ok?await r.json():{}; }
+    catch(e){ BR_OPTIONS={}; }
+  }
+  return BR_OPTIONS;
 }
 const RED=rgb(0.698,0.227,0.169);
 // Draw a checkmark rather than a solid block. Written as two strokes so no
@@ -183,6 +191,16 @@ async function overlay(bytes, map, data, model, audit){
   const font=await doc.embedFont(fontBytes,{subset:true});
   const pages=doc.getPages();
   const ticked=await markBoxes(doc,map,data,model);
+  // Brussels enums have no drawn boxes; mark the selected printed word instead.
+  if(model==='br-solid'){
+    const opts=await brOptionMap();
+    for(const [key,value] of Object.entries(data)){
+      const box=opts[key]?.[String(value)];
+      if(!box||!pages[Number(box[0])]) continue;
+      tick(pages[Number(box[0])],box.slice(1));
+      ticked.add(key);
+    }
+  }
   if(model==='wallonia'){
     // Some wizard enums are printed as option boxes rather than text.
     for(const [field,boxKey] of Object.entries(WA_ALIASES)){

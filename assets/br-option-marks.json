@@ -1,0 +1,202 @@
+{
+ "ownerType": {
+  "Particulier": [
+   "0",
+   307.1,
+   130.9,
+   337.7,
+   139.5,
+   "word"
+  ],
+  "Copropriété": [
+   "0",
+   394.8,
+   129.7,
+   430.8,
+   138.3,
+   "word"
+  ],
+  "Entreprise": [
+   "0",
+   462.1,
+   130.3,
+   493.6,
+   138.9,
+   "word"
+  ]
+ },
+ "techCategory": {
+  "RESCERT biomasse": [
+   "0",
+   306.0,
+   649.8,
+   335.2,
+   658.3,
+   "word"
+  ],
+  "Technicien chaudière PEB GI": [
+   "0",
+   395.3,
+   660.0,
+   402.7,
+   668.5,
+   "word"
+  ],
+  "Technicien chaudière PEB GII": [
+   "0",
+   421.8,
+   659.5,
+   431.9,
+   668.1,
+   "word"
+  ],
+  "Technicien chaudière PEB L": [
+   "0",
+   451.1,
+   659.5,
+   454.6,
+   668.1,
+   "word"
+  ]
+ },
+ "motif": {
+  "Délai max entre 2 CP atteint": [
+   "0",
+   130.1,
+   100.0,
+   144.5,
+   108.5,
+   "word"
+  ],
+  "Intervention partie combustion": [
+   "0",
+   130.1,
+   109.1,
+   166.8,
+   117.6,
+   "word"
+  ],
+  "Mise en conformité": [
+   "0",
+   366.1,
+   99.4,
+   380.5,
+   107.9,
+   "word"
+  ],
+  "Autre raison": [
+   "0",
+   366.1,
+   109.7,
+   382.3,
+   118.2,
+   "word"
+  ]
+ },
+ "systemType": {
+  "Type 1 (1 chaudière ≤ 100 kW)": [
+   "1",
+   101.3,
+   107.6,
+   114.8,
+   116.2,
+   "word"
+  ],
+  "Type 2 (> 100 kW ou plusieurs chaudières)": [
+   "1",
+   289.9,
+   107.2,
+   303.4,
+   115.7,
+   "word"
+  ]
+ },
+ "collective": {
+  "Individuel (1 unité PEB)": [
+   "1",
+   91.6,
+   118.0,
+   120.6,
+   126.5,
+   "word"
+  ],
+  "Collectif (plusieurs unités PEB)": [
+   "1",
+   280.1,
+   117.2,
+   303.5,
+   125.8,
+   "word"
+  ]
+ },
+ "condensation": {
+  "À condensation": [
+   "1",
+   159.1,
+   169.1,
+   200.1,
+   177.6,
+   "word"
+  ],
+  "PAS à condensation": [
+   "1",
+   279.5,
+   168.8,
+   320.5,
+   177.4,
+   "word"
+  ]
+ },
+ "usage": {
+  "Chauffage des locaux": [
+   "1",
+   159.3,
+   179.4,
+   189.9,
+   187.9,
+   "word"
+  ],
+  "Eau chaude sanitaire": [
+   "1",
+   337.9,
+   178.8,
+   364.0,
+   187.3,
+   "word"
+  ],
+  "Chauffage + ECS": [
+   "1",
+   429.8,
+   178.8,
+   460.2,
+   187.3,
+   "word"
+  ]
+ },
+ "connection": {
+  "Type B": [
+   "1",
+   164.8,
+   240.7,
+   180.0,
+   249.3,
+   "word"
+  ],
+  "Type C": [
+   "1",
+   226.0,
+   242.0,
+   241.2,
+   250.6,
+   "word"
+  ],
+  "B22p / B23p": [
+   "1",
+   333.0,
+   241.8,
+   348.3,
+   250.3,
+   "word"
+  ]
+ }
+}

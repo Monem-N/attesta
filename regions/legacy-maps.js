@@ -33,6 +33,7 @@ export const LEGACY_MAPS={
     pebUnitRef:[0,140,162], floor:[0,110,151], buildingName:[0,140,172],
     applianceLocation:[0,130,131],
     company:[0,160,609], techName:[0,370,681], techAgrement:[0,400,671],
+    techCategory:[0,306,650], tickets:[2,60,235],
     bce:[0,140,671], techPhone:[0,130,650],
     conformity:[0,300,286], stopProtocol:[0,400,303], derogation:[0,400,313],
     coAmbient:[0,400,392], safety:[0,400,413], flueState:[0,400,433],
