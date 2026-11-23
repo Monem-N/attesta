@@ -60,6 +60,8 @@ export const wallonia = {
         {hint:'Art. 13 §2 : l’échéance se calcule depuis cette date, pas depuis le dernier contrôle.'}),
       F('attestNumber','N° attestation (facultatif)'),
       F('building','Type de bâtiment','select',{options:['Habitation','Collectif / autre']}),
+      F('maintenanceIntervalMonths','Intervalle d’entretien conseillé (mois)','number',
+        {hint:'Facultatif. Sans intervalle, aucune date d’entretien n’est imprimée.'}),
       F('measureDate','Date de la mesure','date'),
       F('measureTime','Heure de la mesure'),
       F('analyzerMake','Appareil de mesure — marque / modèle'),

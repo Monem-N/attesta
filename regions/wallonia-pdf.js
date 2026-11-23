@@ -21,7 +21,7 @@ export const WA_MAP={
   orifices:[0,367,531], causes:[0,37,547], remarks:[0,197,647],
   intervention:[0,60,692], building:[0,310,692], techCategory:[0,60,708],
   requester:[0,310,708], fuel:[0,60,724],
-  commissioningDate:[0,310,740],
+  commissioningDate:[0,310,740], maintenanceIntervalMonths:[0,60,752],
   // page 2 — measurement table, complementary data, declaration
   waterTemp:[1,137,72],
   smoke:[1,178,141], flueTemp:[1,226,141], co2:[1,274,141],
@@ -74,8 +74,12 @@ export const WA_CHECKBOXES={
   plaque:{absente:[[143,355]],présente:[[196,355]]},
 };
 
-const addYears=(iso,years)=>{
-  const d=new Date(iso); d.setFullYear(d.getFullYear()+years); return d;
+const addMonths=(iso,months)=>{
+  const d=new Date(iso), day=d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth()+months);
+  const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  d.setDate(Math.min(day,last));
+  return d;
 };
 
 // Values the renderer derives rather than collects in the wizard.
@@ -104,14 +108,24 @@ export function walloniaComputed(data){
   if(evaluation.globalResult) out.globalResult=evaluation.globalResult;
   else delete out.globalResult;
   if(evaluation.category) out.waCategory=evaluation.category.code;
+  // Never carry a stale computed date from a reloaded draft.
+  for(const k of ['nextFrom','nextTo','diagnosticFrom','diagnosticTo','remedyDate','maintenanceDate']) delete out[k];
   const date=data.controlDate;
   if(date){
     try{
-      const due=wallonia.rules.nextDue(date,data);
-      out.nextFrom=fmt(due.from); out.nextTo=fmt(due.to);
-      out.diagnosticFrom=out.nextFrom; out.diagnosticTo=out.nextTo;
-      out.remedyDate=fmt(wallonia.rules.nonConformity(date));
-      out.maintenanceDate=fmt(addYears(date,1));
+      // Conditional dates only. A date we cannot derive from collected facts
+      // stays blank on the printed attestation instead of being guessed.
+      const anchored=!!(data.commissioningDate || /première mise en service/i.test(data.intervention||''));
+      if(anchored){
+        const due=wallonia.rules.nextDue(date,data);
+        out.nextFrom=fmt(due.from); out.nextTo=fmt(due.to);
+        out.diagnosticFrom=out.nextFrom; out.diagnosticTo=out.nextTo;
+      }
+      if(/non conforme/i.test(data.conformity||''))
+        out.remedyDate=fmt(wallonia.rules.nonConformity(date));
+      const interval=Number(data.maintenanceIntervalMonths);
+      if(Number.isFinite(interval)&&interval>0)
+        out.maintenanceDate=fmt(addMonths(date,interval));
     }catch(e){ /* invalid date: leave the printed lines blank */ }
   }
   return out;

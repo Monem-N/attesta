@@ -53,7 +53,7 @@ const EXTRA_LABEL={intervention:'Intervention',building:'Bâtiment',techCategory
   requester:'Demandeur',fuel:'Combustible',clientCompany:'Entreprise',
   measureDate:'Date mesure',measureTime:'Heure',analyzerMake:'Analyseur',analyzerSerial:'N° série',
   vekaRef:'VEKA-ref',vekaDate:'VEKA-datum',tickets:'Tickets',techCategory:'Agrément',
-  commissioningDate:'Mise en service'};
+  commissioningDate:'Mise en service',maintenanceIntervalMonths:'Entretien (mois)'};
 function safeText(s){
   return String(s).replace(/[\u2018\u2019\u2013\u2014\u00a0]/g,ch=>SUBST[ch]||'?');
 }

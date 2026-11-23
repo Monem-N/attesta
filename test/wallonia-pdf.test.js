@@ -26,14 +26,27 @@ test('an unclassifiable appliance produces no ticks and no global result',()=>{
   assert.equal(out.cmpO2,undefined);
 });
 
-test('writes the follow-up date range and remedy date onto page 4',()=>{
-  const out=walloniaComputed(gas);
-  assert.equal(out.nextFrom,'31/01/2029');
-  assert.equal(out.nextTo,'30/04/2029');
-  assert.equal(out.remedyDate,'30/06/2026');
-  assert.equal(out.maintenanceDate,'31/01/2027');
+test('writes the follow-up date range only when commissioning is known',()=>{
+  const anchored=walloniaComputed({...gas,commissioningDate:'2020-01-31'});
+  assert.equal(anchored.nextFrom,'31/01/2023');
+  assert.equal(anchored.nextTo,'30/04/2023');
   assert.equal(WA_MAP.nextFrom[0],3);
   assert.equal(WA_MAP.techSignatureName[0],3);
+  const provisional=walloniaComputed(gas);
+  assert.equal(provisional.nextFrom,undefined);
+  assert.equal(provisional.nextTo,undefined);
+});
+
+test('remedy and maintenance dates are only printed when applicable',()=>{
+  const compliant=walloniaComputed({...gas,conformity:'CONFORME',maintenanceIntervalMonths:'12'});
+  assert.equal(compliant.remedyDate,undefined);
+  assert.equal(compliant.maintenanceDate,'31/01/2027');
+  const nonConform=walloniaComputed({...gas,conformity:'NON CONFORME'});
+  assert.equal(nonConform.remedyDate,'30/06/2026');
+  assert.equal(nonConform.maintenanceDate,undefined);
+  const stale=walloniaComputed({...gas,remedyDate:'01/01/2000',maintenanceDate:'02/02/2000'});
+  assert.equal(stale.remedyDate,undefined);
+  assert.equal(stale.maintenanceDate,undefined);
 });
 
 test('computed keys are present on the tool map',()=>{
