@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {walloniaComputed, WA_MAP, WA_COMPUTED_KEYS} from '../regions/wallonia-pdf.js';
+import {walloniaComputed, WA_MAP, WA_COMPUTED_KEYS, WA_WIDTHS} from '../regions/wallonia-pdf.js';
 
 const gas = {controlDate:'2026-01-31',fuel:'Gazeux',year:2005,unitOrPulsed:'air pulsé',powerKw:'80'};
 
@@ -47,6 +47,21 @@ test('remedy and maintenance dates are only printed when applicable',()=>{
   const stale=walloniaComputed({...gas,remedyDate:'01/01/2000',maintenanceDate:'02/02/2000'});
   assert.equal(stale.remedyDate,undefined);
   assert.equal(stale.maintenanceDate,undefined);
+});
+
+test('page-1 widths keep values inside their printed columns',()=>{
+  const left=['controlDate','techName','techAgrement','company','techPhone','techEmail','bce'];
+  const right=['clientName','clientCompany','clientStreet','clientCity','clientPhone','clientEmail'];
+  for(const key of left){
+    const [pi,x]=WA_MAP[key];
+    assert.equal(pi,0);
+    assert.ok(x+WA_WIDTHS[key]<=292,`${key} crosses the centre divider`);
+  }
+  for(const key of right){
+    const [pi,x]=WA_MAP[key];
+    assert.equal(pi,0);
+    assert.ok(x+WA_WIDTHS[key]<=560,`${key} runs off the right column`);
+  }
 });
 
 test('computed keys are present on the tool map',()=>{

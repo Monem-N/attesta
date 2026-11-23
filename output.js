@@ -4,7 +4,7 @@ import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions
 import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} from './regions/pdf-render.js';
 import {LEGACY_MAPS} from './regions/legacy-maps.js';
 import {binaryIndex} from './regions/checkbox-vocab.js';
-import {WA_MAP, WA_CHECKBOXES, WA_ALIASES, WA_COMPUTED_KEYS, walloniaComputed} from './regions/wallonia-pdf.js';
+import {WA_MAP, WA_CHECKBOXES, WA_ALIASES, WA_COMPUTED_KEYS, WA_WIDTHS, WA_STYLES, walloniaComputed} from './regions/wallonia-pdf.js';
 
 // Custom Unicode font so FR/NL accents (é/è/à/ï/ç/œ/ĳ) render correctly.
 // StandardFonts.Helvetica (WinAnsi) corrupts several of these.
@@ -53,14 +53,18 @@ const EXTRA_LABEL={intervention:'Intervention',building:'Bâtiment',techCategory
   requester:'Demandeur',fuel:'Combustible',clientCompany:'Entreprise',
   measureDate:'Date mesure',measureTime:'Heure',analyzerMake:'Analyseur',analyzerSerial:'N° série',
   vekaRef:'VEKA-ref',vekaDate:'VEKA-datum',tickets:'Tickets',techCategory:'Agrément',
-  commissioningDate:'Mise en service',maintenanceIntervalMonths:'Entretien (mois)'};
+  commissioningDate:'Mise en service',maintenanceIntervalMonths:'Entretien (mois)',
+  techEmail:'Courriel technicien',clientEmail:'Courriel client'};
 function safeText(s){
   return String(s).replace(/[\u2018\u2019\u2013\u2014\u00a0]/g,ch=>SUBST[ch]||'?');
 }
 // Draw wrapped text at a glyph-top anchor. Returns audit information instead
 // of silently truncating or swallowing failures.
-function draw(page,key,text,x,yTop,size,font,audit,maxLines){
-  const width=fieldWidth(key,page.getWidth(),x);
+function draw(page,key,text,x,yTop,size,font,audit,maxLines,widths={},styles={}){
+  const style=styles[key]||{};
+  size=style.size||size;
+  maxLines=style.maxLines||maxLines;
+  const width=fieldWidth(key,page.getWidth(),x,widths);
   const {lines,clipped}=wrapText(safeText(String(text)),s=>font.widthOfTextAtSize(s,size),width,maxLines);
   const lineH=size+3;
   audit.warnings.push(...boundsWarnings(page.getWidth(),page.getHeight(),x,yTop,width,lines.length*lineH)
@@ -197,6 +201,8 @@ async function overlay(bytes, map, data, model, audit){
   audit.ticked.push(...ticked);
   const isFl=model.startsWith('fl-');
   const region=isFl?'flanders':model==='br-solid'?'brussels':'wallonia';
+  const widths=model==='wallonia'?WA_WIDTHS:{};
+  const styles=model==='wallonia'?WA_STYLES:{};
   for(const [key,anchor] of Object.entries(map)){
     const v=data[key];
     if(v===''||v==null||v===false){ audit.omitted.push(key); continue; }
@@ -204,15 +210,15 @@ async function overlay(bytes, map, data, model, audit){
     const page=pages[pi];
     if(!page){ audit.warnings.push(`${key}: page ${pi} missing from template`); audit.omitted.push(key); continue; }
     if(isPaired(anchor,v)){
-      if(v.i!==''&&v.i!=null) draw(page,`${key}.I`,v.i,resolved[1],resolved[2],9,font,audit,1);
-      if(v.f!==''&&v.f!=null) draw(page,`${key}.II`,v.f,resolved[3],resolved[2],9,font,audit,1);
+      if(v.i!==''&&v.i!=null) draw(page,`${key}.I`,v.i,resolved[1],resolved[2],9,font,audit,1,widths);
+      if(v.f!==''&&v.f!=null) draw(page,`${key}.II`,v.f,resolved[3],resolved[2],9,font,audit,1,widths);
       continue;
     }
     if(ticked.has(key)) continue;
     const [,x,y]=resolved;
     let value=isFl?flTextValue(key,formatValue(v,region)):formatValue(v,region);
     const text=!isFl&&EXTRA_LABEL[key]?`${EXTRA_LABEL[key]} : ${value}`:value;
-    draw(page,key,text,x,y,9,font,audit,/^(defects|remarks|causes|recommendations)/i.test(key)?4:3);
+    draw(page,key,text,x,y,9,font,audit,/^(defects|remarks|causes|recommendations)/i.test(key)?4:3,widths,styles);
   }
   return doc.save();
 }

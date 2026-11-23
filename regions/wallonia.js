@@ -73,7 +73,8 @@ export const wallonia = {
       F('techAgrement','N° d’agrément'),
       req(F('company','Nom entreprise')),
       req(F('bce','N° entreprise (BCE)')),
-      F('techPhone','Tél / courriel'),
+      F('techPhone','Téléphone'),
+      F('techEmail','Courriel'),
     ]},
     { title:'Demandeur', hint:'Le demandeur et le lieu du générateur.', fields:[
       req(F('requester','Demandeur','select',{options:['Propriétaire','Locataire','Autre']})),
@@ -81,7 +82,8 @@ export const wallonia = {
       F('clientCompany','Entreprise (si pertinent)'),
       req(F('clientStreet','Rue et numéro')),
       req(F('clientCity','Code postal et localité')),
-      F('clientPhone','Tél / courriel'),
+      F('clientPhone','Téléphone'),
+      F('clientEmail','Courriel'),
       F('applianceLocation','Localisation du générateur si différente'),
     ]},
     { title:'Générateur', hint:'Identification de l’appareil et du brûleur.', fields:[

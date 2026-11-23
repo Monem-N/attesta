@@ -8,9 +8,9 @@ export const WA_MAP={
   // page 1 — header, technician, demandeur, generator
   controlDate:[0,133,46], attestNumber:[0,467,46],
   techName:[0,122,104], techAgrement:[0,180,124], company:[0,122,138],
-  techPhone:[0,205,151], bce:[0,145,172],
+  techPhone:[0,65,151], bce:[0,145,172],
   clientName:[0,380,110], clientCompany:[0,401,128], clientStreet:[0,342,141],
-  clientCity:[0,404,154], clientPhone:[0,319,166],
+  clientCity:[0,404,154], clientPhone:[0,350,180],
   applianceLocation:[0,487,192],
   fuelDetail:[0,430,233], genCount:[0,250,285],
   raccordement:[0,118,322], condensation:[0,122,343],
@@ -22,6 +22,7 @@ export const WA_MAP={
   intervention:[0,60,692], building:[0,310,692], techCategory:[0,60,708],
   requester:[0,310,708], fuel:[0,60,724],
   commissioningDate:[0,310,740], maintenanceIntervalMonths:[0,60,752],
+  techEmail:[0,60,764], clientEmail:[0,310,764],
   // page 2 — measurement table, complementary data, declaration
   waterTemp:[1,137,72],
   smoke:[1,178,141], flueTemp:[1,226,141], co2:[1,274,141],
@@ -122,6 +123,28 @@ export const WA_ALIASES={
 // Map-only keys: either derived values or aliases for fields that are printed
 // as a ticked option instead of text.
 export const WA_MAP_ONLY=new Set(['causes','remarks','flueTemp']);
+
+// Per-field widths (pt) measured from the printed column boundaries. The
+// generic renderer only knows the page edge, which let values cross the
+// centre divider or run into the adjacent field on page 1.
+export const WA_WIDTHS={
+  controlDate:95, attestNumber:90,
+  techName:165, techAgrement:100, company:165,
+  techPhone:60, techEmail:230, bce:135,
+  clientName:175, clientCompany:150, clientStreet:205, clientCity:145,
+  clientPhone:60, clientEmail:230, applianceLocation:250,
+  fuelDetail:120, genCount:40, powerKw:60, year:45,
+  make:110, model:110, serial:120, raccordement:55,
+  burnerType:90, unitOrPulsed:75, premix:75,
+  fluid:90, production:90,
+  intervention:230, building:230, techCategory:230, requester:230,
+  fuel:230, commissioningDate:230, maintenanceIntervalMonths:230,
+};
+
+// Fields that must stay on one short line in a narrow printed slot.
+export const WA_STYLES={
+  techPhone:{size:7,maxLines:1}, clientPhone:{size:7,maxLines:1},
+};
 export const WA_COMPUTED_KEYS=new Set([
   'cmpSmoke','cmpFlueTemp','cmpCo2','cmpO2','cmpCo','cmpEfficiency','globalResult',
   'nextFrom','nextTo','remedyDate','maintenanceDate','diagnosticFrom','diagnosticTo',
