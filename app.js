@@ -36,7 +36,11 @@ const T = {
     previewBody:'Attesta crée un aperçu PDF à partir des données saisies. Ses positions de champs et sa conformité légale ne sont pas vérifiées ; comparez-le au modèle officiel en vigueur avant tout usage professionnel.',
     signNote:'Les lignes de signature restent vierges : imprimez l’attestation et faites signer le technicien et le client à la main. Attesta n’appose aucune signature électronique.',
     bruHandoff:'Attesta ne peut pas émettre le PDF officiel Bruxelles gaz/mazout. Utilisez le JSON téléchargé comme aide, ressaisissez les données dans l’encodeur Bruxelles Environnement, puis téléchargez le document officiel.',
-    vekaTitle:'Enregistrement VEKA', vekaRecorded:'Référence et date enregistrées', vekaRequired:'Référence et date requises',
+    vekaTitle:'Référence VEKA (saisie manuelle)', vekaRecorded:'Référence et date saisis par l’utilisateur — non vérifiés', vekaRequired:'Référence et date à saisir',
+    vekaUnverified:'Attesta ne vérifie pas l’enregistrement auprès du VEKA : la registration doit être faite dans l’outil officiel.',
+    statusDraft:'Brouillon', statusPrepared:'Données préparées (envoi manuel)', statusIssued:'PDF émis',
+    statusRegistered:'Référence VEKA saisie (non vérifiée)', statusSubmitted:'Envoyé (déclaré par l’utilisateur)',
+    markSubmitted:'Marquer comme envoyé', submittedAt:'Envoyé le',
     newIn:l=>`Nouvelle attestation — ${l}`, resume:l=>`Reprendre le brouillon ${l}`, record:l=>`Ouvrir l’enregistrement ${l}`,
     confirmReplace:(l,k)=>`Un enregistrement (${k}) pour ${l} existe. Démarrer un nouveau le remplacera. Continuer ?`,
     confirmChangeSaved:'Votre enregistrement complété restera sauvegardé. Changer de région ?',
@@ -78,7 +82,11 @@ const T = {
     previewBody:'Attesta maakt een PDF-voorbeeld van de ingevoerde gegevens. De veldposities en wettelijke naleving zijn niet geverifieerd; vergelijk dit met het huidige officiële model vóór professioneel gebruik.',
     signNote:'De handtekeninglijnen blijven blanco: print de attestatie en laat de technicus en de klant met de hand tekenen. Attesta plaatst geen elektronische handtekening.',
     bruHandoff:'Attesta kan de officiële Brusselse gas/olie-PDF niet afgeven. Gebruik het gedownloade JSON als hulpmiddel, voer de gegevens opnieuw in in de BE-encoder en download daar het officiële document.',
-    vekaTitle:'VEKA-registratie', vekaRecorded:'Referentie en datum geregistreerd', vekaRequired:'Referentie en datum vereist',
+    vekaTitle:'VEKA-referentie (manueel ingevoerd)', vekaRecorded:'Referentie en datum door de gebruiker ingevoerd — niet geverifieerd', vekaRequired:'Referentie en datum in te voeren',
+    vekaUnverified:'Attesta controleert de registratie niet bij VEKA: de melding moet in de officiële tool gebeuren.',
+    statusDraft:'Concept', statusPrepared:'Gegevens voorbereid (manuele verzending)', statusIssued:'PDF afgegeven',
+    statusRegistered:'VEKA-referentie ingevoerd (niet geverifieerd)', statusSubmitted:'Verzonden (door gebruiker gemeld)',
+    markSubmitted:'Markeren als verzonden', submittedAt:'Verzonden op',
     newIn:l=>`Nieuwe attestatie — ${l}`, resume:l=>`Concept hervatten ${l}`, record:l=>`Opgeslagen ${l} openen`,
     confirmReplace:(l,k)=>`Er bestaat een opgeslagen record (${k}) voor ${l}. Een nieuwe starten vervangt het. Doorgaan?`,
     confirmChangeSaved:'Uw voltooide record blijft opgeslagen. Regio wijzigen?',
@@ -101,7 +109,10 @@ let acks=loadAcks();
 function loadAcks(){ try{return JSON.parse(sessionStorage.getItem(ACK_KEY))||{};}catch(e){return {};} }
 function saveAcks(){ sessionStorage.setItem(ACK_KEY,JSON.stringify(acks)); }
 
+import {isComplete,statusText,statusOnIssue,statusOnHandoff} from './status.js';
+
 let state = load();
+if(state.status==='Done') state.status='Issued';
 let generating = false;
 const attachmentFiles = new Map();
 
@@ -312,7 +323,7 @@ function render(){
         state.data[k]=el.value;
       }
       // Any edit invalidates a previously "Done" status.
-      if(state.status==='Done') state.status='Draft';
+      if(isComplete(state.status)){ state.status='Draft'; delete state.data.submittedAt; }
       save();
       if(k==='controlDate'||k==='powerKw'||k==='conformity'||k==='building'||k==='fuel'){
         renderChrome();
@@ -364,7 +375,7 @@ function renderRegionChoice(){
     <p>${t.chooseHint}</p>
     <div class="choices">${Object.values(REGIONS).map(r=>{
       const saved=readRegionDraft(r.id);
-      const savedLabel=saved?.status==='Done'?t.record(r.label):t.resume(r.label);
+      const savedLabel=isComplete(saved?.status)?t.record(r.label):t.resume(r.label);
       return `<button type="button" class="choice red" data-region="${r.id}">${t.newIn(r.label)}</button>
         ${saved?`<button type="button" class="choice" data-resume="${r.id}">${savedLabel}</button>`:''}`;
     }).join('')}</div></div>`;
@@ -372,7 +383,7 @@ function renderRegionChoice(){
       const saved=readRegionDraft(b.dataset.region);
       if(saved){
         const label=REGIONS[b.dataset.region].label;
-        const kind=saved.status==='Done'?'record':'draft';
+        const kind=isComplete(saved.status)?'record':'draft';
         if(!window.confirm(tr().confirmReplace(label,kind))) return;
       }
     state={region:b.dataset.region,step:0,data:{},status:'Draft'};
@@ -411,6 +422,7 @@ function renderFinal(){
   const gate = c.id==='flanders'
     ? `<div class="gate">
         <div><strong>${t.vekaTitle} :</strong> ${d.vekaRef&&d.vekaDate?t.vekaRecorded:t.vekaRequired}</div>
+        <div class="gate-sub">${t.vekaUnverified}</div>
         ${regDeadline?`<div class="gate-line">${t.vekaDeadline} : <b>${regDeadline}</b></div>`:''}
         ${remedyDeadline?`<div class="gate-line">${t.remedyDeadline} : <b>${remedyDeadline}</b></div>`:''}
         ${due?`<div class="gate-line">${t.nextControl} : <b>${wFmt(due.date)}</b> · ${esc(due.note||'')}</div>`:''}
@@ -434,17 +446,24 @@ function renderFinal(){
     <p>${esc(body)}</p>
     <div class="doclist">${flDocs.map(x=>`<div>${esc(x)}</div>`).join('')}</div>
     ${missingFiles?`<p class="output-error">${esc(t.attachReloadWarning)}</p>`:''}
-    ${docChoice}${gate}${manualHandoff?'':`<p class="sign-note">${esc(t.signNote)}</p>`}<p class="output-warning"><strong>${t.statusLabel} :</strong> ${t.statusBody}</p>
+    ${docChoice}${gate}${manualHandoff?'':`<p class="sign-note">${esc(t.signNote)}</p>`}
+    <p class="output-warning"><strong>${t.statusLabel} :</strong> ${esc(statusText(state.status,t))}${d.submittedAt?` · ${t.submittedAt} ${esc(d.submittedAt.slice(0,10))}`:''}<br>${t.statusBody}</p>
+    ${['Prepared','Issued','Registered'].includes(state.status)?'<button type="button" class="btn back" id="markSubmitted" style="margin-top:10px;width:100%">'+esc(t.markSubmitted)+'</button>':''}
     <p id="auditLine" class="audit-line" role="status"></p>
     <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%" ${gateLocked?`disabled title="${esc(t.vekaDownloadError)}"`:''}>${goLabel}</button>
     <button type="button" class="btn back" id="newJob" style="margin-top:10px;width:100%">${t.startAnother}</button></div>`;
   $('newJob').onclick=()=>{
-    if(state.status!=='Done'&&!window.confirm(t.confirmNewJob)) return;
+    if(!isComplete(state.status)&&!window.confirm(t.confirmNewJob)) return;
     state={region:null,step:0,data:{},status:'Draft'};
     attachmentFiles.clear();
     clearAttachmentBytes().catch(e=>console.warn('Could not clear attachment bytes',e));
     save();
     render();
+  };
+  if($('markSubmitted')) $('markSubmitted').onclick=()=>{
+    state.status='Submitted';
+    state.data.submittedAt=new Date().toISOString();
+    save(); render();
   };
   $('go').onclick=async()=>{
     if(generating) return;
@@ -462,7 +481,7 @@ function renderFinal(){
         const blob=await buildAttestation(state,attachmentFiles);
         download(blob,'attesta-brussels-data.json');
         window.open(c.encoder,'_blank','noopener');
-        state.status='Done'; save();
+        state.status=statusOnHandoff(c.id); save();
         return;
       }
       const audits=[];
@@ -485,7 +504,7 @@ function renderFinal(){
         const warnings=audits.reduce((n,a)=>n+a.warnings.length,0);
         $('auditLine').textContent=`${t.auditSummary}: ${printed} · ${t.auditWarnings}: ${warnings}`;
       }
-      state.status='Done'; save();
+      state.status=statusOnIssue(c.id); save();
     }catch(e){
       console.error('Could not generate attestation',e);
       const stageMessages={font:t.errFont,template:t.errTemplate,annex:t.errAnnex,attachment:t.errAttachment};
@@ -590,7 +609,7 @@ function validateDraft(){
 $('back').onclick=()=>{ if(state.step>0){state.step--;save();syncURL();render();} };
 $('changeRegion').onclick=()=>{
   const t=tr();
-  const prompt=state.status==='Done'?t.confirmChangeSaved:t.confirmChangeDraft;
+  const prompt=isComplete(state.status)?t.confirmChangeSaved:t.confirmChangeDraft;
   if(!window.confirm(prompt)) return;
   save();
   state={region:null,step:0,data:{},status:'Draft'};
@@ -645,11 +664,12 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){
     console.warn('Offline support could not be enabled',e);
   }));
 }
-// Restore original ticket bytes before the first render so a reloaded draft
-// can embed them instead of falling back to the "missing files" warning.
+// Render immediately; then restore ticket bytes and re-render if they arrive,
+// so a slow or unavailable IndexedDB can never leave the wizard blank.
+render();
 loadAttachmentBytes().then(map=>{
   for(const [key,files] of map){
     if(files&&files.length) attachmentFiles.set(key,files.map(f=>f.blob||f));
   }
   render();
-}).catch(e=>{ console.warn('Could not restore attachment bytes',e); render(); });
+}).catch(e=>{ console.warn('Could not restore attachment bytes',e); });
