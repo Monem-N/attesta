@@ -105,10 +105,12 @@ class Sheet{
 
 // ---------- logo masthead ----------
 async function masthead(doc,sheet,logoBytes){
+  // Zied masthead proportions (PDF pt): rooster ~54x74, DGO4 ~54x50,
+  // Air Climat ~156x61. Height drives width so aspect ratios are preserved.
   const LAYOUT={
-    'wallonie.jpg':{x:M,y:2,h:24},
-    'dgo4.png':{x:250,y:2,h:24},
-    'air-climat.jpg':{x:385,y:4,h:22},
+    'wallonie.jpg':{x:M,y:6,h:74},
+    'dgo4.png':{x:255,y:14,h:50},
+    'air-climat.jpg':{x:382,y:18,h:61},
   };
   for(const b of logoBytes){
     const pos=LAYOUT[b.name]; if(!pos) continue;
@@ -116,7 +118,7 @@ async function masthead(doc,sheet,logoBytes){
     const h=pos.h, w=img.width*h/(img.height||1);
     sheet.page.drawImage(img,{x:pos.x,y:H-pos.y-h,width:w,height:h});
   }
-  sheet.y=112; // content starts below the masthead, as in the reference
+  sheet.y=150; // content starts below the larger masthead
 }
 
 // ---------- document ----------
