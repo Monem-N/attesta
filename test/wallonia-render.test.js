@@ -13,7 +13,7 @@ fs.copyFileSync(new URL('../vendor/pdf-lib.min.js',import.meta.url),libPath);
 fs.copyFileSync(new URL('../vendor/fontkit.umd.min.js',import.meta.url),fkPath);
 globalThis.window={PDFLib:require(libPath),fontkit:require(fkPath)};
 
-const {renderWallonia}=await import('../regions/wallonia-render.js');
+const {renderWallonia,parseLoad}=await import('../regions/wallonia-render.js');
 const fontBytes=new Uint8Array(fs.readFileSync(new URL('../vendor/DejaVuSans.ttf',import.meta.url)));
 
 test('Wallonia output is a clean four-page generated attestation',async()=>{
@@ -50,6 +50,24 @@ test('solid fuel uses its own global result',async()=>{
   await renderWallonia({controlDate:'2026-03-15',fuel:'Solide',fuelDetail:'Pellets bois',
     solidSmoke:'OUI',solidFlue:'OUI',solidResult:'OK'},fontBytes,audit);
   assert.ok(audit.printed.includes('verdict:OK'));
+});
+
+test('parseLoad handles the documented CO₂/O₂ input without cross-capturing CO',()=>{
+  const p=parseLoad('CO₂ 11 / O₂ 4 / CO 100 / rendement 91');
+  assert.equal(p.co2,'11');
+  assert.equal(p.o2,'4');
+  assert.equal(p.co,'100');
+  assert.equal(p.efficiency,'91');
+});
+
+test('requester and solid-technician selection tick exactly one correct box',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  await renderWallonia({controlDate:'2026-03-15',requester:'Locataire',
+    techCategory:'Technicien spécialisé en combustibles solides'},fontBytes,audit);
+  assert.ok(audit.ticked.includes('Locataire'));
+  assert.ok(!audit.ticked.includes('Propriétaire'));
+  assert.ok(audit.ticked.includes('Technicien spécialisé en combustibles solides'));
+  assert.ok(!audit.ticked.some(x=>/^(L|GI|GII)$/.test(x)),'solid specialist is not agréé');
 });
 
 test('generated source excludes instruction pages and the post-signature notice',()=>{

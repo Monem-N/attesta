@@ -25,6 +25,8 @@ function band(page,label,y){
 // The embedded font is stored here so the pure helpers can use it.
 const fontRef={regular:null,bold:null};
 let A=null; // active audit sink
+function recordPrinted(v){ if(A&&v) A.printed.push(v); }
+function recordTicked(v){ if(A&&v&&!A.ticked.includes(v)) A.ticked.push(v); }
 function field(page,label,x,y,labelW,valueW,value,font,size=9){
   text(page,label,x,y,size,font,soft);
   const vx=x+labelW;
@@ -34,18 +36,18 @@ function field(page,label,x,y,labelW,valueW,value,font,size=9){
   const {lines,clipped}=wrapText(raw,s=>font.widthOfTextAtSize(s,size),Math.max(20,valueW-4),2);
   lines.forEach((line,i)=>text(page,line,vx+2,y-0.5+i*(size+3),size,font,ink));
   if(A){
-    A.printed.push(label);
+    recordPrinted(`field:${label}`);
     if(clipped){ A.clipped.push(label); A.warnings.push(`${label}: value clipped to field width`); }
   }
 }
-function box(page,x,y,checked,label,font){
+function box(page,x,y,checked,label,font,silent=false){
   const s=8;
   page.drawRectangle({x,y:yOf(page,y+ s),width:s,height:s,borderColor:ink,borderWidth:0.8,color:paper});
   if(checked){
     page.drawRectangle({x:x+1.4,y:yOf(page,y+s-1.4),width:s-2.8,height:s-2.8,color:red});
-    if(A&&label) A.ticked.push(label);
+    recordTicked(label);
   }
-  if(label) text(page,label,x+s+4,y,8.5,font,ink);
+  if(label&&!silent) text(page,label,x+s+4,y,8.5,font,ink);
 }
 // Match a selected value to a printed option. Keys beginning with ^ are
 // anchored regexes; other keys match on word boundaries. The longest matched
@@ -60,12 +62,8 @@ function matchesOption(value,key){
 }
 function selectionFor(items,selected){
   if(selected==null||selected==='') return [];
-  const hits=items.filter(([,k])=>matchesOption(selected,k));
-  if(!hits.length){
-    // A generic first option ("Technicien agréé") is ticked when a value was
-    // selected but no specific option matched it.
-    return items.some(([,k])=>k==='')?['']:[];
-  }
+  const hits=items.filter(([,k])=>k!==''&&matchesOption(selected,k));
+  if(!hits.length) return []; // never fall back to a generic "agréé" box
   const longest=Math.max(...hits.map(([,k])=>String(k).length));
   return hits.filter(([,k])=>String(k).length===longest).map(([,k])=>k);
 }
@@ -81,7 +79,7 @@ function options(page,title,y,items,selected,font,startX=M+110){
 }
 function verdict(page,x,y,value,font){
   const v=String(value||'');
-  if(A) A.printed.push(`verdict:${v||'non déterminé'}`);
+  recordPrinted(`verdict:${v||'non déterminé'}`);
   const ok=/^(ok|oui|conforme)$/i.test(v), bad=/^(non ok|non conforme|niet ok)$/i.test(v);
   if(!ok&&!bad){ text(page,'non déterminé',x,y,8,font,soft); return; }
   text(page,ok?'OK':'NON OK',x,y,8.5,font,ok?green:red);
@@ -115,7 +113,7 @@ export async function renderWallonia(data,fontBytes,audit){
   field(p,'Courriel',300,y,85,130,d.techEmail,font); y+=18;
 
   band(p,'Demandeur du contrôle',y); y+=20;
-  options(p,'',y,[['Propriétaire','propri',180],['Locataire','locat',180],['Autre','autre',180]],d.requester,font); y+=18;
+  options(p,'',y,[['Propriétaire','propriétaire',180],['Locataire','locataire',180],['Autre','autre',180]],d.requester,font); y+=18;
   field(p,'Nom et prénom',M,y,90,170,d.clientName,font);
   field(p,'Entreprise',300,y,85,130,d.clientCompany,font); y+=18;
   field(p,'Rue et numéro',M,y,90,170,d.clientStreet,font);
@@ -185,13 +183,15 @@ export async function renderWallonia(data,fontBytes,audit){
   for(const [label,key] of [['Allure 2','load2'],['Allure 3','load3']]){
     if(!d[key]) continue;
     const parsed=parseLoad(String(d[key]));
-    const ev=evaluateCriteria({...d,...parsed});
+    const ev=evaluateCriteria(parsed); // load row alone, never inherit the main run
     text(p,label,cols[0],yy,9,font,ink);
     text(p,'selon catégorie',cols[1],yy,8,font,soft);
-    text(p,compactLoad(parsed),cols[2],yy,8,font,ink);
+    const {lines,clipped}=wrapText(compactLoad(parsed),s=>font.widthOfTextAtSize(s,8),72,2);
+    lines.forEach((line,i)=>text(p,line,cols[2],yy+i*10,8,font,ink));
     verdict(p,cols[3],yy,ev.globalResult,font);
-    rule(p,M,yy+12,RIGHT,line);
-    yy+=18;
+    if(A&&clipped){ A.clipped.push(label); A.warnings.push(`${label}: load values clipped`); }
+    rule(p,M,yy+20,RIGHT,line);
+    yy+=26;
   }
   text(p,'Les tickets de mesure (date, heure, valeurs initiales et finales) doivent être joints.',M,yy+6,8.5,font,soft);
   yy+=24;
@@ -217,6 +217,11 @@ export async function renderWallonia(data,fontBytes,audit){
   p=doc.addPage([W,H]);
   text(p,'Diagnostic approfondi (Pnom > 20 kW)',M,30,13,font,ink);
   rule(p,M,38,RIGHT,ink,1);
+  if(!(Number(d.powerKw)>20)){
+    text(p,'Non applicable — puissance nominale ≤ 20 kW',M,58,9,font,soft);
+    text(p,'3 / 4',RIGHT-28,H-24,8.5,font,soft);
+    // page 3 intentionally kept for stable numbering
+  }else{
   const diag=[['A. Rapport de diagnostic présent ?','diagReport'],
     ['B. Modification depuis le dernier rapport ?','diagModified'],
     ['C. Modification après le 30/04/2015 ?','diagAfter2015'],
@@ -239,6 +244,7 @@ export async function renderWallonia(data,fontBytes,audit){
     yy+=28;
   }
   text(p,'3 / 4',RIGHT-28,H-24,8.5,font,soft);
+  }
 
   /* ---------------- page 4 ---------------- */
   p=doc.addPage([W,H]);
@@ -251,7 +257,7 @@ export async function renderWallonia(data,fontBytes,audit){
     ['Diagnostic approfondi','diagnostic',d.diagnosticFrom,d.diagnosticTo]];
   yy=52;
   for(const [label,key,a,b] of follow){
-    box(p,M,yy+4,matchesOption(d.followUp,key),label,font);
+    box(p,M,yy+4,matchesOption(d.followUp,key),label,font,true);
     text(p,label,M+16,yy,9,font,ink);
     text(p,a||'',300,yy,9,font,ink);
     if(b) text(p,`au ${b}`,400,yy,9,font,ink);
@@ -275,12 +281,13 @@ export async function renderWallonia(data,fontBytes,audit){
   return doc.save();
 }
 
-function parseLoad(s){
+export function parseLoad(s){
   const out={};
-  const pats={co2:/\bco2?\s*[=:]?\s*([\d.,]+)/i,o2:/\bo2\s*[=:]?\s*([\d.,]+)/i,
+  const normalized=String(s).replace(/₂/g,'2').replace(/₁/g,'1');
+  const pats={co2:/\bco2\s*[=:]?\s*([\d.,]+)/i,o2:/\bo2\s*[=:]?\s*([\d.,]+)/i,
     co:/\bco\b\s*[=:]?\s*([\d.,]+)/i,efficiency:/rendement\s*[=:]?\s*([\d.,]+)/i};
   for(const [key,re] of Object.entries(pats)){
-    const m=re.exec(s);
+    const m=re.exec(normalized);
     if(m) out[key]=m[1].replace(',','.');
   }
   return out;
