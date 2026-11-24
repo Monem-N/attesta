@@ -118,6 +118,8 @@ export const wallonia = {
       {key:'waterTemp',label:'Température de l’eau',type:'measure',unit:'°C'},
       F('chimneyPressure','Pression cheminée (type B)','number'),
       F('pumpPressure','Pression pompe (bar)','number'),
+      F('load2','Allure 2 — valeurs','text',{hint:'Facultatif, brûleurs multiples/modulants. Ex. : CO₂ 11 / O₂ 4 / CO 100 / rendement 91'}),
+      F('load3','Allure 3 — valeurs','text'),
       F('nozzleMake','Gicleur — marque & type'),
       F('nozzleFlow','Gicleur — débit (gal/h)'),
       F('nozzleAngle','Gicleur — angle (degré)'),

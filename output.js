@@ -4,6 +4,7 @@ import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions
 import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} from './regions/pdf-render.js';
 import {LEGACY_MAPS} from './regions/legacy-maps.js';
 import {binaryIndex} from './regions/checkbox-vocab.js';
+import {renderWallonia} from './regions/wallonia-render.js';
 import {WA_MAP, WA_CHECKBOXES, WA_ALIASES, WA_COMPUTED_KEYS, WA_WIDTHS, WA_STYLES, walloniaComputed} from './regions/wallonia-pdf.js';
 
 // Custom Unicode font so FR/NL accents (é/è/à/ï/ç/œ/ĳ) render correctly.
@@ -300,13 +301,6 @@ export async function buildAttestation(state,attachments){
   }
   if(state.region==='brussels') model='br-solid';
 
-  let res;
-  try{ res=await fetch(src); }catch(e){ throw new PdfStageError('template','Official model could not be fetched'); }
-  if(!res.ok) throw new PdfStageError('template','Official model could not be fetched');
-  const bytes=await res.arrayBuffer();
-  audit.template={model,src};
-  await verifyTemplate(src.replace('assets/',''),bytes,audit);
-
   let data=d;
   if(state.region==='wallonia') data=walloniaComputed(d);
   if(state.region==='flanders' && d.controlDate){
@@ -315,8 +309,23 @@ export async function buildAttestation(state,attachments){
       data={...d,nextDueDate:fmtDate(due.date)};
     }catch(e){ /* leave the printed line blank on invalid input */ }
   }
-  let out=await overlay(bytes,map,data,model,audit);
-  let doc=await PDFDocument.load(out);
+
+  let out, doc;
+  if(state.region==='wallonia'){
+    // Wallonia is generated from the data: no instruction pages, no official
+    // background with dotted placeholders, no post-signature ATTENTION block.
+    out=await renderWallonia(data,await loadFontBytes(),audit);
+    doc=await PDFDocument.load(out);
+  }else{
+    let res;
+    try{ res=await fetch(src); }catch(e){ throw new PdfStageError('template','Official model could not be fetched'); }
+    if(!res.ok) throw new PdfStageError('template','Official model could not be fetched');
+    const bytes=await res.arrayBuffer();
+    audit.template={model,src};
+    await verifyTemplate(src.replace('assets/',''),bytes,audit);
+    out=await overlay(bytes,map,data,model,audit);
+    doc=await PDFDocument.load(out);
+  }
 
   // The official solid-fuel model already contains the combustion annex as
   // page 4 (landscape). Appending the standalone br-1mw-annex.pdf duplicated

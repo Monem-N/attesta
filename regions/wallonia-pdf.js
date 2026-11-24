@@ -29,6 +29,7 @@ export const WA_MAP={
   o2:[1,315,141], co:[1,356,141], efficiency:[1,398,141],
   measureDate:[1,300,258], measureTime:[1,430,258],
   analyzerMake:[1,300,268], analyzerSerial:[1,430,268],
+  load2:[1,60,700], load3:[1,300,700],
   cmpSmoke:[1,178.9,242.4], cmpFlueTemp:[1,226.5,242.4], cmpCo2:[1,277.2,242.4],
   cmpO2:[1,317.4,242.4], cmpCo:[1,358.9,242.4], cmpEfficiency:[1,399,242.4],
   globalResult:[1,461,501],
