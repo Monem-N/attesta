@@ -26,7 +26,7 @@ export function valueFor(data, key) {
     clientPhone: () => d.clientPhone || '', applianceLocation: () => d.applianceLocation || '',
     powerKw: () => d.powerKw ?? '', year: () => d.year ?? '', make: () => d.make || '', model: () => d.model || '',
     serial: () => d.serial || '', smoke: () => d.smoke ?? '', draft: () => d.draft ?? '',
-    nextDueDate: () => fmtDots(d.nextDueDate), defects: () => d.defects || '', remarks: () => d.remarks || '',
+    nextDueDate: () => fmtDots(d.nextDueDate), nextCleaning: () => fmtDots(d.nextCleaning), defects: () => d.defects || '', remarks: () => d.remarks || '',
     vekaRef: () => d.vekaRef || '',
   };
   return map[key] ? map[key]() : d[key] ?? '';
@@ -75,10 +75,20 @@ function computeVerdicts(d) {
   return out;
 }
 
+function toISO(d) {
+  if (!d) return '';
+  if (typeof d === 'string') return d;
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
 export function buildFlandersHtml(state) {
   const data = state.region === 'flanders' ? { ...state.data } : state.data;
-  // computed next control date
-  if (data.controlDate) { try { data.nextDueDate = fmtDots(flanders.rules.nextDue(data.controlDate, data).date); } catch (e) {} }
+  // computed next control / cleaning dates
+  if (data.controlDate) {
+    try { data.nextDueDate = fmtDots(toISO(flanders.rules.nextDue(data.controlDate, data).date)); } catch (e) {}
+    try { data.nextCleaning = fmtDots(toISO(flanders.rules.nextCleaning(data.controlDate, data))); } catch (e) {}
+  }
   Object.assign(data, computeVerdicts(data));
   return { data };
 }

@@ -36,6 +36,8 @@ export const flanders = {
     },
     // Flanders: 3 months to remedy combustion-value defects with a new attestation
     remedy(date){ return addMonths(date,3); },
+    // Eerstvolgende reiniging: annual (periodic maintenance of the appliance).
+    nextCleaning(date,data){ const d=new Date(date); return addYears(d,1); },
     registrationDeadline(date){ return addMonths(date,1); }
   },
 
