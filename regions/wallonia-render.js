@@ -62,10 +62,14 @@ function matchesOption(value,key){
 }
 function selectionFor(items,selected){
   if(selected==null||selected==='') return [];
-  const hits=items.filter(([,k])=>k!==''&&matchesOption(selected,k));
+  const hits=items.filter(([,k])=>k!==''&&k!=='*'&&matchesOption(selected,k));
   if(!hits.length) return []; // never fall back to a generic "agréé" box
   const longest=Math.max(...hits.map(([,k])=>String(k).length));
-  return hits.filter(([,k])=>String(k).length===longest).map(([,k])=>k);
+  const chosen=hits.filter(([,k])=>String(k).length===longest).map(([,k])=>k);
+  // '*' is a companion box (e.g. the generic "Technicien agréé" beside
+  // L/GI/GII): tick it only when a specific accredited level matched.
+  if(items.some(([,k])=>k==='*')) chosen.push('*');
+  return chosen;
 }
 function options(page,title,y,items,selected,font,startX=M+110){
   text(page,title,M,y,8.5,font,soft);
@@ -103,7 +107,7 @@ export async function renderWallonia(data,fontBytes,audit){
   field(p,'N° attestation',300,y,80,140,d.attestNumber||'',font); y+=18;
 
   band(p,'Technicien',y); y+=20;
-  options(p,'Agrément',y,[['Technicien agréé','',165],['L','l',45],['GI','gi',45],['GII','gii',45]],d.techCategory,font); y+=18;
+  options(p,'Agrément',y,[['Technicien agréé','*',165],['L','l',45],['GI','gi',45],['GII','gii',45]],d.techCategory,font); y+=18;
   box(p,M,y,!!/solide/i.test(d.techCategory||''),'Technicien spécialisé en combustibles solides',font); y+=18;
   field(p,'Nom et prénom',M,y,90,170,d.techName,font);
   field(p,'N° d’agrément',300,y,85,130,d.techAgrement,font); y+=18;

@@ -38,8 +38,14 @@ export const wallonia = {
       const anchorSource = data.commissioningDate
         || (/première mise en service/i.test(data.intervention||'') ? date : null);
       const anchor = new Date(anchorSource || date);
-      if (Number.isNaN(anchor.getTime())) throw new Error('invalid commissioning date');
-      const due=addYears(anchor,years);
+      const control = new Date(date);
+      if (Number.isNaN(anchor.getTime()) || Number.isNaN(control.getTime()))
+        throw new Error('invalid commissioning date');
+      // Art. 13 §2: find the first anniversary STRICTLY AFTER the completed
+      // control, not the anniversary that the control itself falls on.
+      let due=addYears(anchor,years);
+      let guard=0;
+      while (due <= control && guard++ < 50) due=addYears(due,years);
       const from=due;
       const to=addMonths(due,3);
       const caveat = anchorSource ? ''

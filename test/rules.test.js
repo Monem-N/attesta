@@ -14,7 +14,8 @@ test('Wallonia uses 3 years at exactly 100 kW gas',()=>{
 test('Wallonia anchors the control window to first commissioning (art. 13 §2)',()=>{
   const r=wallonia.rules.nextDue('2026-01-10',{
     fuel:'Gazeux',powerKw:'80',commissioningDate:'2020-03-15'});
-  assert.equal(r.date.getFullYear(),2023);
+  // first anniversary strictly AFTER the completed control
+  assert.equal(r.date.getFullYear(),2026);
   assert.equal(r.date.getMonth(),2);
   assert.equal(r.date.getDate(),15);
   // three-month window after the anniversary
@@ -22,6 +23,17 @@ test('Wallonia anchors the control window to first commissioning (art. 13 §2)',
   assert.equal(r.to.getDate(),15);
   assert.equal(r.anchoredTo,'2020-03-15');
   assert.ok(!r.note.includes('à défaut'));
+});
+
+test('Wallonia advances a full cycle when the control falls on an anniversary (Zied sample)',()=>{
+  const r=wallonia.rules.nextDue('2026-10-15',{
+    fuel:'Gazeux',powerKw:'80',commissioningDate:'2023-10-15',year:2023});
+  assert.equal(r.date.getFullYear(),2029);
+  assert.equal(r.date.getMonth(),9);
+  assert.equal(r.date.getDate(),15);
+  assert.equal(r.to.getFullYear(),2030);
+  assert.equal(r.to.getMonth(),0);
+  assert.equal(r.to.getDate(),15);
 });
 
 test('Wallonia falls back to the control date with an explicit caveat',()=>{

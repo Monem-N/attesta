@@ -46,6 +46,13 @@ test('audit is populated and selections are exclusive',async()=>{
   assert.ok(audit.ticked.includes('Entretien conseillé'));
 });
 
+test('accredited technician ticks the generic and specific boxes together',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  await renderWallonia({controlDate:'2026-03-15',techCategory:'Technicien agréé GI'},fontBytes,audit);
+  assert.ok(audit.ticked.includes('Technicien agréé'));
+  assert.ok(audit.ticked.includes('GI'));
+});
+
 test('solid fuel uses its own global result',async()=>{
   const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
   await renderWallonia({controlDate:'2026-03-15',fuel:'Solide',fuelDetail:'Pellets bois',

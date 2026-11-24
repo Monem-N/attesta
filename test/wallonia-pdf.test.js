@@ -28,8 +28,8 @@ test('an unclassifiable appliance produces no ticks and no global result',()=>{
 
 test('writes the follow-up date range only when commissioning is known',()=>{
   const anchored=walloniaComputed({...gas,commissioningDate:'2020-01-31'});
-  assert.equal(anchored.nextFrom,'31/01/2023');
-  assert.equal(anchored.nextTo,'30/04/2023');
+  assert.equal(anchored.nextFrom,'31/01/2029');
+  assert.equal(anchored.nextTo,'30/04/2029');
   assert.equal(WA_MAP.nextFrom[0],3);
   assert.equal(WA_MAP.techSignatureName[0],3);
   const provisional=walloniaComputed(gas);
