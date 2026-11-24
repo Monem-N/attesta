@@ -6,7 +6,7 @@
 <style>
   @page{size:A4;margin:0}
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0;background:#e9e9e9;font-family:"Roboto",Arial,Helvetica,sans-serif;color:#111;line-height:1.3}
+  html,body{margin:0;padding:0;background:#e9e9e9;font-family:Calibri,Carlito,"Liberation Sans",Arial,Helvetica,sans-serif;color:#111;line-height:1.3}
   .sheet{width:210mm;height:297mm;background:#fff;margin:0;padding:11mm 13mm 12mm;position:relative;page-break-after:always;overflow:hidden}
   .sheet:last-child{page-break-after:auto}
   @media screen{.sheet{margin:6mm auto}}
@@ -30,6 +30,8 @@
   .kgrid{width:100%}.kgrid td{border:.5pt solid #ddd;font-size:8px;padding:.7mm 1mm}
   .kgrid .ksec td{background:#eee;font-weight:700;font-size:8px}
   .kgrid .ki{color:#333}.kgrid .kn{text-align:right;white-space:nowrap}
+  .cols2{width:100%;margin-bottom:1.6mm}.cols2>tbody>tr>td{border:none;padding:0;vertical-align:top}
+  .h3{font-size:10px;font-weight:700;margin:1.5mm 0 1mm;color:#111}
 </style></head>
 <body>
 
@@ -69,12 +71,32 @@
       <span class="opt"><span class="cb" data-tick="fuel:vloeibaar">☐</span>Vloeibaar</span>
       <span class="opt"><span class="cb" data-tick="fuel:vast">☐</span>Vast</span></td></tr>
     <tr><td class="k">Centraal toestel</td><td><span class="opt"><span class="cb" data-tick="central:ja">☐</span>Ja</span><span class="opt"><span class="cb" data-tick="central:nee">☐</span>Nee</span></td>
-      <td class="k">Type</td><td><span class="opt"><span class="cb" data-tick="type:b">☐</span>B</span><span class="opt"><span class="cb" data-tick="type:c">☐</span>C</span></td></tr>
-    <tr><td class="k">Condensatie</td><td><span class="opt"><span class="cb" data-tick="condensation:ja">☐</span>Ja</span><span class="opt"><span class="cb" data-tick="condensation:nee">☐</span>Nee</span></td>
-      <td class="k">Bouwjaar</td><td class="v">{{year}}</td></tr>
-    <tr><td class="k">Merk / Type</td><td class="v">{{make}} {{model}}</td><td class="k">Fabricatienummer</td><td class="v">{{serial}}</td></tr>
-    <tr><td class="k">Nominaal vermogen (kW)</td><td class="v">{{powerKw}}</td><td class="k">Brander</td><td><span class="opt"><span class="cb" data-tick="unitOrPulsed:unit">☐</span>unit</span><span class="opt"><span class="cb" data-tick="unitOrPulsed:air pulsed">☐</span>air pulsed</span></td></tr>
+      <td class="k">Type</td><td><span class="opt"><span class="cb" data-tick="type:b">☐</span>B</span><span class="opt"><span class="cb" data-tick="type:c">☐</span>C</span> <span class="small">(NBN CR 1749)</span></td></tr>
+    <tr><td class="k">Condensatie</td><td><span class="opt"><span class="cb" data-tick="condensation:ja">☐</span>Ja</span><span class="opt"><span class="cb" data-tick="condensation:nee">☐</span>Nee</span></td><td></td><td></td></tr>
   </table>
+  <table class="cols2"><tr>
+    <td style="width:50%;vertical-align:top">
+      <div class="h3">Toestel</div>
+      <table>
+        <tr><td class="k w28">Merk</td><td class="v">{{make}}</td></tr>
+        <tr><td class="k">Type</td><td class="v">{{model}}</td></tr>
+        <tr><td class="k">Bouwjaar</td><td class="v">{{year}}</td></tr>
+        <tr><td class="k">Fabricatienummer</td><td class="v">{{serial}}</td></tr>
+        <tr><td class="k">Nominaal vermogen (kW)</td><td class="v">{{powerKw}}</td></tr>
+      </table>
+    </td>
+    <td style="width:50%;vertical-align:top">
+      <div class="h3">Brander (enkel CV)</div>
+      <table>
+        <tr><td class="k w28">Merk</td><td></td></tr>
+        <tr><td class="k">Type</td><td></td></tr>
+        <tr><td class="k">Bouwjaar</td><td></td></tr>
+        <tr><td class="k">Fabricatienummer</td><td></td></tr>
+        <tr><td class="k">Debiet</td><td></td></tr>
+        <tr><td class="k">Brander</td><td><span class="opt"><span class="cb" data-tick="unitOrPulsed:unit">☐</span>unit</span><span class="opt"><span class="cb" data-tick="unitOrPulsed:air pulsed">☐</span>air pulsed</span></td></tr>
+      </table>
+    </td>
+  </tr></table>
 
   <div class="h2">Goede staat van werking — metingen (Proef I initiële / Proef II eindmeting)</div>
   <table class="perf">
