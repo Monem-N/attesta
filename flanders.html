@@ -79,6 +79,7 @@
   <div class="h2">Goede staat van werking — metingen (Proef I initiële / Proef II eindmeting)</div>
   <table class="perf">
     <tr><th style="text-align:left">Parameter</th><th>Eenheid</th><th>Brandstof</th><th>Proef I</th><th>OK/Niet OK</th><th>Proef II</th><th>OK/Niet OK</th></tr>
+    <tr><td class="l">Performances minimales (10) — {{waCategory}}</td><td></td><td></td><td class="v">{{lim_net}}</td><td></td><td class="v">{{lim_net}}</td><td></td></tr>
     <tr><td class="l">Zuurstof (O₂)</td><td>%</td><td>2</td><td class="v">{{o2_1}}</td><td><span class="cb" data-tick="v_o2_1:OK">☐</span>OK <span class="cb" data-tick="v_o2_1:Niet OK">☐</span>Niet OK</td><td class="v">{{o2_2}}</td><td><span class="cb" data-tick="v_o2_2:OK">☐</span>OK <span class="cb" data-tick="v_o2_2:Niet OK">☐</span>Niet OK</td></tr>
     <tr><td class="l">Koolstofdioxide (CO₂)</td><td>%</td><td>2</td><td class="v">{{co2_1}}</td><td><span class="cb" data-tick="v_co2_1:OK">☐</span>OK <span class="cb" data-tick="v_co2_1:Niet OK">☐</span>Niet OK</td><td class="v">{{co2_2}}</td><td><span class="cb" data-tick="v_co2_2:OK">☐</span>OK <span class="cb" data-tick="v_co2_2:Niet OK">☐</span>Niet OK</td></tr>
     <tr><td class="l">Koolstofmonoxide (CO)</td><td>mg/kWh</td><td>1,2</td><td class="v">{{co_1}}</td><td><span class="cb" data-tick="v_co_1:OK">☐</span>OK <span class="cb" data-tick="v_co_1:Niet OK">☐</span>Niet OK</td><td class="v">{{co_2}}</td><td><span class="cb" data-tick="v_co_2:OK">☐</span>OK <span class="cb" data-tick="v_co_2:Niet OK">☐</span>Niet OK</td></tr>
@@ -108,7 +109,7 @@
     <tr><td class="k">Andere opmerkingen</td><td colspan="3">{{remarks}}</td></tr>
   </table>
 
-  <div class="sign"><div>Handtekening erkende technicus<div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
+  <div class="sign"><div>Handtekening erkende technicus<div class="line"></div><span class="small">{{techName}} — {{techAgrement}}</span></div><div>Voor kennisname (klant)<div class="line"></div><span class="small">{{clientName}}</span></div></div>
   <div class="foot"><span>Attest — besluit Vlaamse Regering 8 december 2006 · veiligverwarmen.be</span><span data-page-no>1 / 2</span></div>
 </div>
 

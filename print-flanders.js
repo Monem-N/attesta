@@ -38,6 +38,7 @@ const CATS = [
 ];
 
 export function categoryFor(fuel, year, unitOrPulsed) {
+  fuel = String(fuel || '').toLowerCase();
   if (fuel === 'vast') return null;
   const y = Number(year) || 0;
   let burner;
@@ -60,6 +61,9 @@ export function valueFor(data, key) {
     serial: () => d.serial || '', smoke: () => d.smoke ?? '', draft: () => d.draft ?? '',
     nextDueDate: () => fmtDots(d.nextDueDate), nextCleaning: () => fmtDots(d.nextCleaning),
     defects: () => d.defects || '', remarks: () => d.remarks || '', vekaRef: () => d.vekaRef || '',
+    waCategory: () => d.waCategory || '',
+    lim_smoke: () => d.lim_smoke || '—', lim_net: () => d.lim_net || '—', lim_co2: () => d.lim_co2 || '—',
+    lim_o2: () => d.lim_o2 || '—', lim_co: () => d.lim_co || '—', lim_eff: () => d.lim_eff || '—',
   };
   return Object.hasOwn(map, key) ? map[key]() : (d[key] ?? '');
 }
@@ -118,6 +122,16 @@ export function buildFlandersHtml(state) {
     try { data.nextCleaning = fmtDots(toISO(flanders.rules.nextCleaning(data.controlDate, data))); } catch (e) {}
   }
   Object.assign(data, computeVerdicts(data));
+  // category + "Performances minimales" limit strings (official row 10)
+  const cat = categoryFor(data.fuel, data.year, data.unitOrPulsed);
+  const lpg = (data.fuel === 'gasvormig' && data.gas && !/aardgas/i.test(data.gas)) ? 15 : 0;
+  data.waCategory = cat ? cat.code : '';
+  data.lim_smoke = cat && cat.smoke != null ? '≤ ' + cat.smoke : '—';
+  data.lim_net = cat && cat.net != null ? '≤ ' + cat.net : '—';
+  data.lim_co2 = cat && cat.co2 != null ? '≥ ' + cat.co2 : '—';
+  data.lim_o2 = cat && cat.o2 != null ? '≤ ' + cat.o2 : '—';
+  data.lim_co = cat && cat.co != null ? '≤ ' + (cat.co + lpg) : '—';
+  data.lim_eff = cat && cat.eff != null ? '≥ ' + cat.eff : '—';
   return { data };
 }
 
