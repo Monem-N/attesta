@@ -554,7 +554,8 @@ function validate(){
     }
   }
   if(visible.find(f=>f.key==='techAgrement')?._err) ok=false;
-  if(!addressOk(state.data,c) && visible.some(f=>f.key==='clientStreetName')) ok=false;
+  const streetField=visible.find(f=>f.key==='clientStreetName');
+  if(streetField && !addressOk(state.data,c)){ streetField._err=t.required; ok=false; }
   if(!ok){
     render();
     requestAnimationFrame(()=>document.querySelector('.f.bad [data-k], .mrow.bad [data-k]')?.focus());

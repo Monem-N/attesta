@@ -36,6 +36,13 @@ test('Wallonia advances a full cycle when the control falls on an anniversary (Z
   assert.equal(r.to.getDate(),15);
 });
 
+test('Wallonia finds a future cycle for a very old installation',()=>{
+  const r=wallonia.rules.nextDue('2026-06-01',{
+    fuel:'Liquide',powerKw:'80',commissioningDate:'1970-06-01'});
+  assert.ok(r.date>new Date('2026-06-01'),`${r.date} must be after the control`);
+  assert.equal(r.date.getFullYear(),2027); // 1-year cycle
+});
+
 test('Wallonia falls back to the control date with an explicit caveat',()=>{
   const r=wallonia.rules.nextDue('2026-01-10',{fuel:'Gazeux',powerKw:'80'});
   assert.equal(r.date.getFullYear(),2029);

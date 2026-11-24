@@ -133,6 +133,8 @@ test('generated PDF passes the deterministic quality gate',async()=>{
     '--required','4 / 4',
     '--required','Secours d’urgence : 100 ou 112',
     '--required','SOS odeurs de gaz',
+    '--required','chacune en recevant une copie',
+    '--required','avertissant du danger potentiel',
     '--forbidden','Dernière mise à jour',
     '--forbidden','……',
     '--outdir',path.join(outDir,'raster')],{encoding:'utf8'});

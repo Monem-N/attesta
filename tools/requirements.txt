@@ -1,0 +1,3 @@
+# PDF quality gate dependencies (tools/check-pdf.py)
+PyMuPDF>=1.24
+Pillow>=10.0

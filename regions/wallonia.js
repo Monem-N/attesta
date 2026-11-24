@@ -43,9 +43,15 @@ export const wallonia = {
         throw new Error('invalid commissioning date');
       // Art. 13 §2: find the first anniversary STRICTLY AFTER the completed
       // control, not the anniversary that the control itself falls on.
-      let due=addYears(anchor,years);
-      let guard=0;
-      while (due <= control && guard++ < 50) due=addYears(due,years);
+      // Compute the number of whole cycles elapsed directly so very old
+      // installations (e.g. 1970) never hit an iteration cap and stop early.
+      const elapsedYears=(control-anchor)/(365.25*24*3600*1000)/years;
+      let cycles=Math.max(1,Math.floor(elapsedYears)+1);
+      let due=addYears(anchor,cycles*years);
+      // Correct in both directions: month/day ordering can put the estimated
+      // anniversary on either side of the control date.
+      while(due>control && cycles>1) due=addYears(anchor,--cycles*years);
+      while(due<=control) due=addYears(anchor,++cycles*years);
       const from=due;
       const to=addMonths(due,3);
       const caveat = anchorSource ? ''

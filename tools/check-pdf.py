@@ -30,10 +30,19 @@ for i, page in enumerate(doc):
     fonts = [f[3] for f in page.get_fonts()]
     if a.font and not any(a.font in f for f in fonts):
         errors.append(f'page {i+1}: missing embedded font {a.font!r} (found {sorted(set(fonts))[:3]})')
-    for b in page.get_text('blocks'):
+    blocks=[b for b in page.get_text('blocks') if b[4].strip()]
+    for b in blocks:
         x0, y0, x1, y1 = b[:4]
         if x0 < -1 or y0 < -1 or x1 > w + 1 or y1 > h + 1:
             errors.append(f'page {i+1}: text block outside page: ({x0:.1f},{y0:.1f},{x1:.1f},{y1:.1f})')
+    # Detect genuinely overlapping text blocks (allow tiny touching from kerning).
+    for bi in range(len(blocks)):
+        for bj in range(bi+1,len(blocks)):
+            p,q=blocks[bi],blocks[bj]
+            ox=min(p[2],q[2])-max(p[0],q[0])
+            oy=min(p[3],q[3])-max(p[1],q[1])
+            if ox>2 and oy>2:
+                errors.append(f'page {i+1}: text overlap: {p[4].strip()[:30]!r} / {q[4].strip()[:30]!r}')
     all_text.append(page.get_text())
 text = '\n'.join(all_text)
 

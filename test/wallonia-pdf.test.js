@@ -37,6 +37,15 @@ test('writes the follow-up date range only when commissioning is known',()=>{
   assert.equal(provisional.nextTo,undefined);
 });
 
+test('diagnostic dates are blank at or below 20 kW',()=>{
+  const small=walloniaComputed({...gas,powerKw:'20',commissioningDate:'2020-01-31'});
+  assert.equal(small.diagnosticFrom,undefined);
+  assert.equal(small.diagnosticTo,undefined);
+  assert.ok(small.nextFrom);
+  const large=walloniaComputed({...gas,powerKw:'80',commissioningDate:'2020-01-31'});
+  assert.equal(large.diagnosticFrom,large.nextFrom);
+});
+
 test('remedy and maintenance dates are only printed when applicable',()=>{
   const compliant=walloniaComputed({...gas,conformity:'CONFORME',maintenanceIntervalMonths:'12'});
   assert.equal(compliant.remedyDate,undefined);

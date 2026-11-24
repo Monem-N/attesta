@@ -179,7 +179,11 @@ export function walloniaComputed(data){
       if(anchored){
         const due=wallonia.rules.nextDue(date,data);
         out.nextFrom=fmt(due.from); out.nextTo=fmt(due.to);
-        out.diagnosticFrom=out.nextFrom; out.diagnosticTo=out.nextTo;
+        // The in-depth diagnostic only applies above 20 kW (the page-3 grid is
+        // suppressed at/below 20 kW), so its dates must be blank there too.
+        if(Number(data.powerKw)>20){
+          out.diagnosticFrom=out.nextFrom; out.diagnosticTo=out.nextTo;
+        }
       }
       if(/non conforme/i.test(data.conformity||''))
         out.remedyDate=fmt(wallonia.rules.nonConformity(date));

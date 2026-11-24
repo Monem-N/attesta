@@ -12,8 +12,16 @@ const ink=rgb(0.086,0.094,0.114), soft=rgb(0.38,0.40,0.43), red=rgb(0.698,0.227,
       green=rgb(0.184,0.42,0.31), line=rgb(0.78,0.78,0.75), paper=rgb(1,1,1);
 
 function yOf(page,v){ return page.getHeight()-v; }
-function text(page,s,x,y,size,font,color=ink){
-  page.drawText(String(s??''),{x,y:yOf(page,y),size,font,color});
+function text(page,s,x,y,size,font,color=ink,maxWidth){
+  const v=String(s??'');
+  if(!v) return;
+  if(maxWidth&&font.widthOfTextAtSize(v,size)>maxWidth)
+    A?.warnings.push(`text overflows ${maxWidth}pt: ${v.slice(0,40)}`);
+  page.drawText(v,{x,y:yOf(page,y),size,font,color});
+  recordText(v);
+}
+function recordText(v){
+  if(A&&!A.printed.includes(`text:${v}`)) A.printed.push(`text:${v}`);
 }
 function rule(page,x1,y,x2,color=line,thickness=0.6){
   page.drawRectangle({x:x1,y:yOf(page,y),width:x2-x1,height:thickness,color});
@@ -36,6 +44,7 @@ function field(page,label,x,y,labelW,valueW,value,font,size=9){
   const {lines,clipped}=wrapText(raw,s=>font.widthOfTextAtSize(s,size),Math.max(20,valueW-4),2);
   lines.forEach((line,i)=>text(page,line,vx+2,y-0.5+i*(size+3),size,font,ink));
   if(A){
+    recordText(raw);
     recordPrinted(`field:${label}`);
     if(clipped){ A.clipped.push(label); A.warnings.push(`${label}: value clipped to field width`); }
   }
@@ -121,8 +130,7 @@ export async function renderWallonia(data,fontBytes,audit){
   options(p,'',y,[['Propriétaire','propriétaire',180],['Locataire','locataire',180],['Autre','autre',180]],d.requester,font); y+=18;
   field(p,'Nom et prénom',M,y,90,170,d.clientName,font);
   field(p,'Entreprise',300,y,85,130,d.clientCompany,font); y+=18;
-  const street=d.clientStreetName||d.clientStreet||'';
-  const number=d.clientStreetNumber||'';
+  const [street,number]=streetParts(d);
   field(p,'Rue',M,y,40,140,street,font);
   field(p,'Numéro',235,y,50,60,number,font); y+=18;
   field(p,'Téléphone',M,y,90,170,d.clientPhone,font);
@@ -288,11 +296,16 @@ export async function renderWallonia(data,fontBytes,audit){
   text(p,d.recipientCapacity?`En qualité de ${d.recipientCapacity}`:'',300,yy+30,8,font,soft);
   yy+=58;
   // Mandatory danger notice and emergency contacts (AWAC model, page 9).
-  text(p,'ATTENTION : en cas de constatation d’un danger pour les utilisateurs du générateur',M,yy,8.5,font,red);
-  text(p,'contrôlé ou pour toute autre personne, le technicien agréé est tenu de prévenir',M,yy+11,8.5,font,red);
-  text(p,'l’utilisateur et le propriétaire : écrit signé si présents, courrier recommandé',M,yy+22,8.5,font,red);
-  text(p,'avec accusé de réception si absents.',M,yy+33,8.5,font,red);
-  yy+=52;
+  const notice=[
+    'ATTENTION : En cas de constatation d’un danger pour les utilisateurs du générateur',
+    'contrôlé ou pour toute autre personne, le technicien agréé est tenu de prévenir',
+    'l’utilisateur et le propriétaire du générateur ; soit, s’ils sont présents, par un',
+    'écrit signé par les parties concernées, chacune en recevant une copie, soit, s’ils',
+    'sont absents, par l’envoi d’un courrier recommandé avec accusé de réception',
+    'avertissant du danger potentiel.'
+  ];
+  notice.forEach((line,i)=>text(p,line,M,yy+i*11,8.5,font,red));
+  yy+=notice.length*11+10;
   text(p,'Secours d’urgence : 100 ou 112',M,yy,9,font,ink);
   text(p,'SOS odeurs de gaz :',M,yy+16,9,font,ink);
   text(p,'ORES : 0800 87 087   |   RESA / NETHYS : 04 362 98 38 (fr) – 087 74 20 18 (de)',M,yy+30,8.5,font,ink);
@@ -322,6 +335,21 @@ function compactLoad(v){
   if(v.co) parts.push(`CO ${v.co}`);
   if(v.efficiency) parts.push(`η ${v.efficiency}`);
   return parts.join(' · ');
+}
+// Split a legacy combined address into street + number so an old draft never
+// loses its number when the user starts editing only the new street field.
+function streetParts(d){
+  const legacy=String(d.clientStreet||'').trim();
+  if(d.clientStreetName){
+    let num=String(d.clientStreetNumber||'').trim();
+    if(!num && legacy){
+      const m=/^(.*?)\s+(\S+)$/.exec(legacy);
+      if(m) num=m[2];
+    }
+    return [String(d.clientStreetName),num];
+  }
+  const m=/^(.*?)\s+(\S+)$/.exec(legacy);
+  return m?[m[1],m[2]]:[legacy,''];
 }
 function fmtDate(v){
   if(!v) return '';
