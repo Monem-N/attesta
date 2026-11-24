@@ -155,7 +155,7 @@ export const wallonia = {
       F('solidFlue','Évacuation correcte (solide)','select',{options:['OUI','NON']}),
       F('solidResult','Résultat global (solide)','select',{options:['OK','non OK']}),
     ]},
-    { title:'Déclaration', hint:'Diagnostic, conformité et prochaines interventions.', fields:[
+    { title:'Déclaration', hint:'Diagnostic, conformité et prochaines interventions.', helper:'diagnostic', fields:[
       F('diagReport','Diagnostic approfondi présent ?','select',{options:['OUI','NON']}),
       F('diagModified','Modification depuis ?','select',{options:['OUI','NON']}),
       F('diagAfter2015','Modification après 30/04/2015 ?','select',{options:['OUI','NON']}),

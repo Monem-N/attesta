@@ -5,6 +5,7 @@ import {buildAttestation} from './output.js';
 import {openWalloniaPrint} from './print-wallonia.js';
 import {saveAttachmentBytes,loadAttachmentBytes,clearAttachmentBytes} from './attachments.js';
 import {limitsForField} from './regions/wallonia-criteria.js';
+import {diagHelperHTML,wireDiagHelper} from './regions/diag-helper.js';
 
 const REGIONS = {wallonia,flanders,brussels};
 const KEY = 'attesta.draft.v1';
@@ -304,6 +305,18 @@ function render(){
     ? `<div class="measure">${measures.map(measureHTML).join('')}</div>`+normal.map(fieldHTML).join('')
     : normal.map(fieldHTML).join('');
   $('form').innerHTML=html;
+
+  // Interactive diagnostic logigramme helper (feeds the diag* fields).
+  if(step.helper==='diagnostic'){
+    const h=document.createElement('div');
+    h.innerHTML=diagHelperHTML(state.data);
+    $('form').prepend(h);
+    wireDiagHelper(h,(k,v)=>{
+      state.data[k]=v;
+      if(isComplete(state.status)){ state.status='Draft'; delete state.data.submittedAt; }
+      save(); render();
+    });
+  }
 
   $('form').querySelectorAll('[data-k]').forEach(el=>{
     const k=el.dataset.k;
