@@ -116,6 +116,9 @@ export const wallonia = {
       F('premix','Prémix','select',{options:['prémix','non-premix']}),
       F('fluid','Fluide caloporteur','select',{options:['Eau','Vapeur basse pression','Huile thermique']}),
       F('production','Production','select',{options:['Chauffage','ECS','Chauffage + ECS']}),
+      F('raccordementDetail','Détail raccordement (ex. C 53)'),
+      F('burnerModel','Type du brûleur (ex. Top 22/28-3)'),
+      F('plaque','Plaque signalétique','select',{options:['Absente','Présente']}),
     ]},
     { title:'Mesures & critères', hint:'Valeurs relevées. Le résultat se résout en OK / non OK.', measure:true, fields:[
       F('permisDate','Permis d’urbanisme','select',{options:['Avant le 29/05/2009','Après le 29/05/2009']}),

@@ -4,8 +4,8 @@ import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions
 import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} from './regions/pdf-render.js';
 import {LEGACY_MAPS} from './regions/legacy-maps.js';
 import {binaryIndex} from './regions/checkbox-vocab.js';
-import {renderWallonia} from './regions/wallonia-render.js';
 import {walloniaComputed} from './regions/wallonia-pdf.js';
+import {generateWallonia} from './regions/wa-template.js';
 
 // Custom Unicode font so FR/NL accents (é/è/à/ï/ç/œ/ĳ) render correctly.
 // StandardFonts.Helvetica (WinAnsi) corrupts several of these.
@@ -118,7 +118,22 @@ function tick(page,box){
 async function markBoxes(doc,map,data,model){
   const boxes=await checkboxMap(model); const pages=doc.getPages();
   const ticked=new Set();
-  const explicitFor=(key,value,list)=>explicitBoxes(model,key,value,list);
+  const explicitFor=(key,value,list)=>{
+    // Wallonia's explicit box centres are stored with the layout (WA_CHECKBOXES),
+    // not in BOX_SELECT — restore them now that the official template is used.
+    if(model==='wallonia'){
+      const extra=WA_CHECKBOXES[key];
+      if(extra){
+        const v=String(value).toLowerCase().trim();
+        const centres=extra[v];
+        if(!centres) return null;
+        const found=centres.map(([cx,cy])=>list.find(b=>
+          Math.hypot((b[0]+b[2])/2-cx,(b[1]+b[3])/2-cy)<4));
+        return found.every(Boolean)?found:null;
+      }
+    }
+    return explicitBoxes(model,key,value,list);
+  };
   for(const [key,anchor] of Object.entries(map)){
     const value=data[key];
     if(value===''||value==null||value===false) continue;
@@ -293,9 +308,16 @@ export async function buildAttestation(state,attachments){
 
   let out, doc;
   if(state.region==='wallonia'){
-    // Wallonia is generated from the data: no instruction pages, no official
-    // background with dotted placeholders, no post-signature ATTENTION block.
-    out=await renderWallonia(data,await loadFontBytes(),audit);
+    // Generate the full A4 Wallonia attestation from the declarative template:
+    // real logo images, checkbox grid, tables and every section — no overlay.
+    const logoBytes=[];
+    for(const name of ['wallonie.jpg','dgo4.png','air-climat.jpg']){
+      try{
+        const r=await fetch(`assets/logos/${name}`);
+        if(r.ok) logoBytes.push({name,bytes:new Uint8Array(await r.arrayBuffer())});
+      }catch(e){ /* logo optional */ }
+    }
+    out=await generateWallonia(data,await loadFontBytes(),logoBytes,audit);
     doc=await PDFDocument.load(out);
   }else{
     let res;

@@ -13,6 +13,10 @@ const fkPath=path.join(tmp,'attesta-fontkit.cjs');
 fs.copyFileSync(new URL('../vendor/pdf-lib.min.js',import.meta.url),libPath);
 fs.copyFileSync(new URL('../vendor/fontkit.umd.min.js',import.meta.url),fkPath);
 globalThis.window={PDFLib:require(libPath),fontkit:require(fkPath)};
+globalThis.fetch=async(p)=>{
+  const abs=new URL('../'+p,import.meta.url);
+  return {ok:fs.existsSync(abs),arrayBuffer:async()=>fs.readFileSync(abs)};
+};
 
 const {renderWallonia,parseLoad,splitLegacyAddressForTest}=await import('../regions/wallonia-render.js');
 const fontBytes=new Uint8Array(fs.readFileSync(new URL('../vendor/DejaVuSans.ttf',import.meta.url)));

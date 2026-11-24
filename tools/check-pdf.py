@@ -7,6 +7,7 @@ all failures listed. Render failures never imply a correct document.
 """
 import argparse, json, os, sys
 import fitz
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 ap = argparse.ArgumentParser()
 ap.add_argument('pdf')

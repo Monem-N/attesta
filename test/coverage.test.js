@@ -12,7 +12,8 @@ const missing=(cfg,map)=>[...keys(cfg)].filter(k=>!(k in map)&&!COMPUTED_KEYS.ha
 
 test('Wallonia map covers every wizard field',()=>{
   // New split street fields are rendered by wallonia-render.js, not WA_MAP.
-  assert.deepEqual(missing(wallonia,WA_MAP),['clientStreetName','clientStreetNumber']);
+  assert.deepEqual(missing(wallonia,WA_MAP),['clientStreetName','clientStreetNumber',
+    'raccordementDetail','burnerModel','plaque']);
 });
 test('Wallonia map has no orphan or colliding anchors',()=>{
   const seen=new Map();

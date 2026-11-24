@@ -109,7 +109,7 @@ export async function renderWallonia(data,fontBytes,audit){
 
   /* ---------------- page 1 ---------------- */
   let p=doc.addPage([W,H]);
-  text(p,"ATTESTA — CONTRÔLE PÉRIODIQUE",M,26,9,font,red);
+  // Title — real regional logo images are stamped on every page at the end.
   text(p,"Attestation de contrôle d’un générateur de chaleur",M,42,15,font,ink);
   rule(p,M,48,RIGHT,ink,1);
   let y=64;
@@ -147,10 +147,11 @@ export async function renderWallonia(data,fontBytes,audit){
   field(p,'Nombre de générateurs',M,y,130,70,d.genCount,font);
   field(p,'Puissance utile (kW)',300,y,120,100,d.powerKw,font); y+=18;
   field(p,'Année de construction',M,y,130,70,d.year,font);
-  field(p,'Type de raccordement',300,y,120,100,d.raccordement,font); y+=18;
+  field(p,'Raccordement',300,y,110,110,`B (3) ${d.raccordement||''} ${d.raccordementDetail||''}`.trim(),font); y+=18;
   field(p,'Marque',M,y,130,70,d.make,font);
-  field(p,'Type',300,y,120,100,d.model,font); y+=18;
-  field(p,'N° de série',M,y,130,70,d.serial,font);
+  field(p,'Type',300,y,120,100,d.model||d.burnerModel||'',font); y+=18;
+  field(p,'N° de série',M,y,130,70,d.serial,font); y+=18;
+  options(p,'Plaque signalétique',y,[['Absente','absente',90],['Présente','présente',100]],d.plaque||d.plaqueSignaletique,font); y+=18;
   field(p,'Fluide caloporteur',300,y,120,100,d.fluid,font); y+=18;
   options(p,'Condensation',y,[['oui','oui',90],['non','non',90]],d.condensation,font); y+=18;
   options(p,'Allures',y,[['1 allure','1 allure',110],['plusieurs','plusieurs',120],['modulant','modulant',120]],d.burnerType,font); y+=18;
@@ -214,8 +215,17 @@ export async function renderWallonia(data,fontBytes,audit){
     rule(p,M,yy+20,RIGHT,line);
     yy+=26;
   }
-  text(p,'Les tickets de mesure (date, heure, valeurs initiales et finales) doivent être joints.',M,yy+6,8.5,font,soft);
-  yy+=24;
+  const tickets=[
+    'ATTENTION : les tickets sur lesquels figurent les résultats des mesures,',
+    'mentionnant en outre l’heure et la date à laquelle la mesure a été réalisée,',
+    'doivent être agrafés sur cette attestation.',
+    'Dérogation : en cas d’utilisation d’un système de transmission électronique',
+    'des paramètres mesurés vers une application générant l’attestation, via un',
+    'protocole fermé sur lequel l’opérateur ne peut modifier les valeurs, le',
+    'ticket agrafé n’est pas obligatoire.'
+  ];
+  tickets.forEach((line,i)=>text(p,line,M,yy+6+i*11,8.5,font,soft));
+  yy+=tickets.length*11+16;
   band(p,'Informations complémentaires',yy); yy+=28;
   field(p,'Date de mesure',M,yy,100,110,d.measureDate,font);
   field(p,'Heure',300,yy,70,120,d.measureTime,font); yy+=18;
@@ -223,7 +233,10 @@ export async function renderWallonia(data,fontBytes,audit){
   field(p,'N° série analyseur',300,yy,110,80,d.analyzerSerial,font); yy+=18;
   field(p,'Pression cheminée (Pa)',M,yy,140,90,d.chimneyPressure,font);
   field(p,'Pression pompe (bar)',300,yy,140,90,d.pumpPressure,font); yy+=18;
-  field(p,"Température d'eau",M,yy,140,90,d.waterTemp,font); yy+=22;
+  field(p,"Température d'eau",M,yy,140,90,d.waterTemp,font); yy+=18;
+  field(p,'Gicleur — marque & type',M,yy,140,120,d.nozzleMake,font);
+  field(p,'Gicleur — débit (gal/h)',300,yy,140,100,d.nozzleFlow,font); yy+=18;
+  field(p,'Gicleur — angle (°)',M,yy,140,120,d.nozzleAngle,font); yy+=22;
   options(p,'Fumée (solide)',yy,[['OUI','oui',90],['NON','non',90]],d.solidSmoke,font); yy+=20;
   options(p,'Évacuation (solide)',yy,[['OUI','oui',90],['NON','non',90]],d.solidFlue,font); yy+=26;
   band(p,'Déclaration de conformité',yy); yy+=24;
@@ -243,27 +256,49 @@ export async function renderWallonia(data,fontBytes,audit){
     text(p,'3 / 4',RIGHT-28,H-24,8.5,font,soft);
     // page 3 intentionally kept for stable numbering
   }else{
-  const diag=[['A. Rapport de diagnostic présent ?','diagReport'],
-    ['B. Modification depuis le dernier rapport ?','diagModified'],
-    ['C. Modification après le 30/04/2015 ?','diagAfter2015'],
-    ['D. Au moins 2 ans depuis la modification ?','diagTwoYears'],
-    ['E. Diagnostic déjà reporté ?','diagDeferred']];
+  const diag=[
+    ['A. Un rapport de diagnostic approfondi est-il présent ?','diagReport',
+      'Si OUI → Passer au point B. Si NON → Passer au point C.'],
+    ['B. Modification du système ou des exigences depuis le rapport ?','diagModified',
+      'Si OUI → Passer au point D. Si NON → Installation en ordre jusqu’au prochain contrôle. Sortie du tableau.'],
+    ['C. Modification après le 30/04/2015 ?','diagAfter2015',
+      'Si OUI → Passer au point D. Si NON → Passer au point E.'],
+    ['D. Au moins 2 ans depuis la modification ?','diagTwoYears',
+      'Si OUI → Effectuer un diagnostic ; installation en ordre jusqu’au prochain contrôle. Sortie du tableau. Si NON → Attendre le 1er contrôle périodique après ces 2 ans.'],
+    ['E. Le diagnostic a-t-il déjà été reporté ?','diagDeferred',
+      'Si OUI → Effectuer le diagnostic. Si NON → Effectuer un diagnostic ; report toléré une seule fois.'],
+  ];
   yy=54;
-  for(const [label,key] of diag){
-    text(p,label,M,yy,9,font,ink);
+  for(const [label,key,route] of diag){
+    const labelLines=wrapText(label,s=>font.widthOfTextAtSize(s,9),220,2).lines;
+    labelLines.forEach((line,i)=>text(p,line,M,yy+i*11,9,font,ink));
     options(p,'',yy,[['OUI','oui',90],['NON','non',90]],d[key],font,M+230);
-    rule(p,M,yy+20,RIGHT,line);
-    yy+=26;
+    const labelEnd=yy+labelLines.length*11;
+    rule(p,M,labelEnd+2,RIGHT,line);
+    yy=labelEnd+6;
+    wrapText(route,s=>font.widthOfTextAtSize(s,7.5),RIGHT-M-20,2).lines
+      .forEach((line,i)=>text(p,line,M+10,yy+i*10,7.5,font,soft));
+    yy+=24;
   }
   yy+=6;
   band(p,'Régulation et pompes de circulation',yy);
-  const checks=[['Mode de régulation',d.regulationMode],['Thermostat',d.thermostat],
-    ['Horloge',d.clock],['Programme nuit',d.night],['Indices dysfonctionnement pompe',d.pumpIssue]];
-  for(const [label,val] of checks){
-    text(p,label,M,yy+24,9,font,ink);
-    options(p,'',yy+24,[['OUI','oui',90],['NON','non',90],['AUTO','auto',90],['MAN','man',90]],val,font,M+230);
+  const checks=[
+    ['La régulation fonctionne-t-elle en AUTO ou MAN ?',d.regulationMode,[['AUTO','auto',90],['MAN','man',90]]],
+    ['Le thermostat d’ambiance fonctionne-t-il ?',d.thermostat,[['OUI','oui',90],['NON','non',90]]],
+    ['L’horloge est-elle correctement réglée ?',d.clock,[['OUI','oui',90],['NON','non',90]]],
+    ['Chauffage programmé en mode réduit la nuit ?',d.night,[['OUI','oui',90],['NON','non',90]]],
+    ['Indices de dysfonctionnement de la pompe ?',d.pumpIssue,[['OUI','oui',90],['NON','non',90]]],
+  ];
+  for(const [label,val,items] of checks){
+    text(p,label,M,yy+24,8.5,font,ink,RIGHT-M-250);
+    options(p,'',yy+24,items,val,font,M+230);
     yy+=28;
   }
+  yy+=6;
+  [['(a) Si dérogation manuelle, inciter l’utilisateur à passer en mode automatique.',yy],
+   ['(b) Proposer à l’utilisateur de réduire la consigne de température nocturne.',yy+10],
+   ['(c) Inviter le client à faire diagnostiquer la pompe (bruit anormal).',yy+20]]
+    .forEach(([line,ly])=>text(p,line,M,ly,7.5,font,soft));
   text(p,'3 / 4',RIGHT-28,H-24,8.5,font,soft);
   }
 
@@ -281,7 +316,7 @@ export async function renderWallonia(data,fontBytes,audit){
     box(p,M,yy+4,matchesOption(d.followUp,key),label,font,true);
     text(p,label,M+16,yy,9,font,ink);
     text(p,a||'',300,yy,9,font,ink,100);
-    if(b) text(p,`au ${b}`,400,yy,9,font,ink,RIGHT-402);
+    if(b) text(p,`entre le ${a} et le ${b}`,330,yy,9,font,ink,RIGHT-332);
     rule(p,M,yy+16,RIGHT,line);
     yy+=24;
   }
@@ -312,6 +347,27 @@ export async function renderWallonia(data,fontBytes,audit){
   text(p,'EANDIS / GASELWEST : 0800 65 0 65',M,yy+43,8.5,font,ink);
   text(p,'4 / 4',RIGHT-28,H-24,8.5,font,soft);
 
+  // Stamp the genuine Wallonia / DGO4 / Air Climat logo images on every page,
+  // matching the reference instead of using text placeholders.
+  const logos=[
+    {src:'assets/logos/wallonie.jpg',x:M,y:2,h:24},
+    {src:'assets/logos/dgo4.png',x:250,y:2,h:24},
+    {src:'assets/logos/air-climat.jpg',x:385,y:4,h:22},
+  ];
+  for(const item of logos){
+    let bytes;
+    try{
+      const r=await fetch(item.src);
+      if(!r.ok) throw new Error(String(r.status));
+      bytes=new Uint8Array(await r.arrayBuffer());
+    }catch(e){
+      if(audit) audit.warnings.push(`logo ${item.src} unavailable`);
+      continue;
+    }
+    const img=/\.png$/i.test(item.src)?await doc.embedPng(bytes):await doc.embedJpg(bytes);
+    const w=img.width*24/img.height; // width for a 24pt height
+    doc.getPages().forEach(pg=>pg.drawImage(img,{x:item.x,y:pg.getHeight()-item.y-24,width:w,height:24}));
+  }
   if(audit){ audit.template={model:'wallonia-clean-4p',src:'generated'};
     audit.pages=4; }
   return doc.save();
@@ -361,7 +417,7 @@ function streetParts(d){
 function fmtDate(v){
   if(!v) return '';
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v));
-  return m?`${m[3]}/${m[2]}/${m[1]}`:String(v);
+  return m?`${m[3]}.${m[2]}.${m[1]}`:String(v);
 }
 function limitText(rule){
   if(!rule) return '—';
