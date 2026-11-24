@@ -554,11 +554,16 @@ function validate(){
     }
   }
   if(visible.find(f=>f.key==='techAgrement')?._err) ok=false;
+  if(!addressOk(state.data,c) && visible.some(f=>f.key==='clientStreetName')) ok=false;
   if(!ok){
     render();
     requestAnimationFrame(()=>document.querySelector('.f.bad [data-k], .mrow.bad [data-k]')?.focus());
   }
   return ok;
+}
+function addressOk(d,c){
+  if(c.id!=='wallonia') return true;
+  return !!(d.clientStreetName&&d.clientStreetNumber) || !!d.clientStreet;
 }
 function recognitionPattern(){
   const c=cfg();
@@ -598,6 +603,10 @@ function validateDraft(){
   if(pattern&&field){
     if(!state.data.techAgrement && c.id==='flanders') field._err=t.required;
     else if(state.data.techAgrement && !pattern.test(state.data.techAgrement)) field._err=t.invalid;
+  }
+  if(!addressOk(state.data,c)){
+    const f=c.steps.flatMap(step=>step.fields).find(x=>x.key==='clientStreetName');
+    if(f) f._err=t.required;
   }
   const invalid=c.steps.flatMap(step=>step.fields).some(f=>f._err);
   if(invalid){

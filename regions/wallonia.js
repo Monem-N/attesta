@@ -86,7 +86,11 @@ export const wallonia = {
       req(F('requester','Demandeur','select',{options:['Propriétaire','Locataire','Autre']})),
       req(F('clientName','Nom et prénom')),
       F('clientCompany','Entreprise (si pertinent)'),
-      req(F('clientStreet','Rue et numéro')),
+      // New split fields; `clientStreet` is kept as a legacy combined value so
+      // earlier drafts still render (see renderer fallback).
+      F('clientStreetName','Rue'),
+      F('clientStreetNumber','Numéro'),
+      F('clientStreet','Rue et numéro (ancien format)'),
       req(F('clientCity','Code postal et localité')),
       F('clientPhone','Téléphone'),
       F('clientEmail','Courriel'),

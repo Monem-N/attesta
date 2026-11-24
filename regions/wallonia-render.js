@@ -121,10 +121,13 @@ export async function renderWallonia(data,fontBytes,audit){
   options(p,'',y,[['Propriétaire','propriétaire',180],['Locataire','locataire',180],['Autre','autre',180]],d.requester,font); y+=18;
   field(p,'Nom et prénom',M,y,90,170,d.clientName,font);
   field(p,'Entreprise',300,y,85,130,d.clientCompany,font); y+=18;
-  field(p,'Rue et numéro',M,y,90,170,d.clientStreet,font);
-  field(p,'Code postal / localité',300,y,110,105,d.clientCity,font); y+=18;
+  const street=d.clientStreetName||d.clientStreet||'';
+  const number=d.clientStreetNumber||'';
+  field(p,'Rue',M,y,40,140,street,font);
+  field(p,'Numéro',235,y,50,60,number,font); y+=18;
   field(p,'Téléphone',M,y,90,170,d.clientPhone,font);
   field(p,'Courriel',300,y,85,130,d.clientEmail,font); y+=18;
+  field(p,'Code postal / localité',300,y,110,105,d.clientCity,font); y+=18;
   field(p,'Localisation du générateur',M,y,150,360,d.applianceLocation,font); y+=20;
 
   band(p,'Combustibles',y); y+=20;

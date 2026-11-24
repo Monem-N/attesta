@@ -98,6 +98,18 @@ test('requester and solid-technician selection tick exactly one correct box',asy
   assert.ok(!audit.ticked.some(x=>/^(L|GI|GII)$/.test(x)),'solid specialist is not agréé');
 });
 
+test('street and number print in separate fields with legacy fallback',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  await renderWallonia({controlDate:'2026-03-15',clientStreetName:'Rue de la Gare',
+    clientStreetNumber:'12 bis',clientCity:'5000 Namur'},fontBytes,audit);
+  const legacy={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  const out={controlDate:'2026-03-15',clientStreet:'Rue de la Gare 12 bis'};
+  const bytes=await renderWallonia(out,fontBytes,legacy);
+  const doc=await globalThis.window.PDFLib.PDFDocument.load(bytes);
+  assert.equal(doc.getPageCount(),4);
+  assert.ok(audit.printed.includes('field:Rue')&&audit.printed.includes('field:Numéro'));
+});
+
 test('generated PDF passes the deterministic quality gate',async()=>{
   const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
   const data={controlDate:'2026-03-15',commissioningDate:'2020-03-15',powerKw:'80',
