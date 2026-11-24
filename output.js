@@ -5,7 +5,7 @@ import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} f
 import {LEGACY_MAPS} from './regions/legacy-maps.js';
 import {binaryIndex} from './regions/checkbox-vocab.js';
 import {renderWallonia} from './regions/wallonia-render.js';
-import {WA_MAP, WA_CHECKBOXES, WA_ALIASES, WA_COMPUTED_KEYS, WA_WIDTHS, WA_STYLES, walloniaComputed} from './regions/wallonia-pdf.js';
+import {walloniaComputed} from './regions/wallonia-pdf.js';
 
 // Custom Unicode font so FR/NL accents (é/è/à/ï/ç/œ/ĳ) render correctly.
 // StandardFonts.Helvetica (WinAnsi) corrupts several of these.
@@ -45,7 +45,6 @@ const BRU={background:'assets/br-solid-fuel-model.pdf'};
 const ink = rgb(0.086,0.094,0.114);
 
 const MAPS=LEGACY_MAPS;
-MAPS.wallonia=WA_MAP;
 
 // Normalize typographic characters to plain equivalents. The Unicode font can
 // render these, but ASCII forms keep the attestation fields clean and portable.
@@ -119,18 +118,7 @@ function tick(page,box){
 async function markBoxes(doc,map,data,model){
   const boxes=await checkboxMap(model); const pages=doc.getPages();
   const ticked=new Set();
-  const explicitFor=(key,value,list)=>{
-    const extra=model==='wallonia'?WA_CHECKBOXES[key]:null;
-    if(extra){
-      const v=String(value).toLowerCase().trim();
-      const centers=extra[v];
-      if(!centers) return null;
-      const found=centers.map(([cx,cy])=>list.find(b=>
-        Math.hypot((b[0]+b[2])/2-cx,(b[1]+b[3])/2-cy)<3));
-      return found.every(Boolean)?found:null;
-    }
-    return explicitBoxes(model,key,value,list);
-  };
+  const explicitFor=(key,value,list)=>explicitBoxes(model,key,value,list);
   for(const [key,anchor] of Object.entries(map)){
     const value=data[key];
     if(value===''||value==null||value===false) continue;
@@ -193,17 +181,10 @@ async function overlay(bytes, map, data, model, audit){
       ticked.add(key);
     }
   }
-  if(model==='wallonia'){
-    // Some wizard enums are printed as option boxes rather than text.
-    for(const [field,boxKey] of Object.entries(WA_ALIASES)){
-      if(data[field]!=null && ticked.has(boxKey)) ticked.add(field);
-    }
-  }
   audit.ticked.push(...ticked);
   const isFl=model.startsWith('fl-');
   const region=isFl?'flanders':model==='br-solid'?'brussels':'wallonia';
-  const widths=model==='wallonia'?WA_WIDTHS:{};
-  const styles=model==='wallonia'?WA_STYLES:{};
+  const widths={}, styles={};
   for(const [key,anchor] of Object.entries(map)){
     const v=data[key];
     if(v===''||v==null||v===false){ audit.omitted.push(key); continue; }
@@ -335,7 +316,7 @@ export async function buildAttestation(state,attachments){
 
   doc.setTitle(`Attesta — ${model}`);
   doc.setSubject('Attestation prepared with Attesta — verify against the official model before use');
-  doc.setKeywords([`attesta-template:${model}`,`attesta-audit:${audit.printed.length}/${Object.keys(map).length}`]);
+  doc.setKeywords([`attesta-template:${model}`,`attesta-audit:${audit.printed.length}`]);
   doc.setCreationDate(new Date());
   out=await doc.save();
   const blob=new Blob([out],{type:'application/pdf'});

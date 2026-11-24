@@ -29,6 +29,29 @@ test('Wallonia output is a clean four-page generated attestation',async()=>{
   assert.deepEqual(audit.warnings,[]);
 });
 
+test('audit is populated and selections are exclusive',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  const data={controlDate:'2026-03-15',techCategory:'Technicien agréé GI',
+    orifices:'Présent et non conforme',conformity:'NON CONFORME',
+    followUp:'Entretien conseillé',defects:'Réglage à refaire',
+    fuelDetail:'Gaz nat. G20',load2:'CO₂ 11 / O₂ 4 / CO 100 / rendement 91'};
+  await renderWallonia(data,fontBytes,audit);
+  assert.ok(audit.printed.length>10,'printed fields recorded');
+  assert.ok(audit.ticked.includes('GI'));
+  assert.ok(!audit.ticked.includes('GII'),'GI must not tick GII');
+  assert.ok(audit.ticked.includes('Présent et non conforme'));
+  assert.ok(!audit.ticked.includes('Présent et conforme'),'non-conforme must not tick conforme');
+  assert.ok(audit.ticked.includes('NON'),'declaration mapped to NON');
+  assert.ok(audit.ticked.includes('Entretien conseillé'));
+});
+
+test('solid fuel uses its own global result',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  await renderWallonia({controlDate:'2026-03-15',fuel:'Solide',fuelDetail:'Pellets bois',
+    solidSmoke:'OUI',solidFlue:'OUI',solidResult:'OK'},fontBytes,audit);
+  assert.ok(audit.printed.includes('verdict:OK'));
+});
+
 test('generated source excludes instruction pages and the post-signature notice',()=>{
   const src=fs.readFileSync(new URL('../regions/wallonia-render.js',import.meta.url),'utf8');
   assert.ok(!src.includes('Dernière mise à jour'));
@@ -36,4 +59,6 @@ test('generated source excludes instruction pages and the post-signature notice'
   assert.ok(!/text\(p,\s*['"]ATTENTION/.test(src));
   assert.ok(src.includes('1 / 4'));
   assert.ok(src.includes('4 / 4'));
+  assert.ok(!src.includes('d.causes'));
+  assert.ok(src.includes('techSignatureName')&&src.includes('recipientName'));
 });

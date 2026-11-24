@@ -4,6 +4,7 @@
 // which facts must appear; instruction pages, footnotes, logigrams and the
 // post-signature ATTENTION block are deliberately not reproduced.
 import {evaluateCriteria} from './wallonia-criteria.js';
+import {wrapText} from './pdf-render.js';
 const {PDFDocument,rgb}=globalThis.window?.PDFLib||{};
 
 const W=595.32, H=841.92, M=42, RIGHT=W-M;
@@ -18,38 +19,70 @@ function rule(page,x1,y,x2,color=line,thickness=0.6){
   page.drawRectangle({x:x1,y:yOf(page,y),width:x2-x1,height:thickness,color});
 }
 function band(page,label,y){
-  text(page,label,M,y,10.5,fontRef.bold||fontRef.regular,red);
+  text(page,label,M,y,10.5,fontRef.regular,red);
   rule(page,M,y+14,RIGHT,red,1);
 }
 // The embedded font is stored here so the pure helpers can use it.
 const fontRef={regular:null,bold:null};
+let A=null; // active audit sink
 function field(page,label,x,y,labelW,valueW,value,font,size=9){
   text(page,label,x,y,size,font,soft);
   const vx=x+labelW;
   rule(page,vx,y+2.5,vx+valueW);
-  if(value!==''&&value!=null) text(page,String(value),vx+2,y-0.5,size,font,ink);
+  if(value===''||value==null) return;
+  const raw=String(value);
+  const {lines,clipped}=wrapText(raw,s=>font.widthOfTextAtSize(s,size),Math.max(20,valueW-4),2);
+  lines.forEach((line,i)=>text(page,line,vx+2,y-0.5+i*(size+3),size,font,ink));
+  if(A){
+    A.printed.push(label);
+    if(clipped){ A.clipped.push(label); A.warnings.push(`${label}: value clipped to field width`); }
+  }
 }
 function box(page,x,y,checked,label,font){
   const s=8;
   page.drawRectangle({x,y:yOf(page,y+ s),width:s,height:s,borderColor:ink,borderWidth:0.8,color:paper});
-  if(checked) page.drawRectangle({x:x+1.4,y:yOf(page,y+s-1.4),width:s-2.8,height:s-2.8,color:red});
+  if(checked){
+    page.drawRectangle({x:x+1.4,y:yOf(page,y+s-1.4),width:s-2.8,height:s-2.8,color:red});
+    if(A&&label) A.ticked.push(label);
+  }
   if(label) text(page,label,x+s+4,y,8.5,font,ink);
+}
+// Match a selected value to a printed option. Keys beginning with ^ are
+// anchored regexes; other keys match on word boundaries. The longest matched
+// key wins, so "non conforme" beats "conforme" and "gii" beats "gi".
+function matchesOption(value,key){
+  if(value==null||value===''||key==='') return false;
+  const s=String(value).toLowerCase().trim();
+  const k=String(key);
+  if(k.startsWith('^')){ try{ return new RegExp(k,'i').test(s); }catch(e){ return false; } }
+  const esc=k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`).test(s);
+}
+function selectionFor(items,selected){
+  if(selected==null||selected==='') return [];
+  const hits=items.filter(([,k])=>matchesOption(selected,k));
+  if(!hits.length){
+    // A generic first option ("Technicien agréé") is ticked when a value was
+    // selected but no specific option matched it.
+    return items.some(([,k])=>k==='')?['']:[];
+  }
+  const longest=Math.max(...hits.map(([,k])=>String(k).length));
+  return hits.filter(([,k])=>String(k).length===longest).map(([,k])=>k);
 }
 function options(page,title,y,items,selected,font,startX=M+110){
   text(page,title,M,y,8.5,font,soft);
   let x=startX;
-  const s=selected==null?'':String(selected).toLowerCase().trim();
-  // Exact matches win (e.g. "présent et conforme" must not tick "non conforme").
-  const exact=items.find(([,k])=>s===String(k).toLowerCase());
+  const chosen=selectionFor(items,selected);
   for(const [label,key,xw] of items){
-    const hit=!!s && (exact ? exact[1]===key : s.includes(String(key).toLowerCase()));
+    const hit=chosen.includes(key);
     box(page,x,y,hit,label,font);
     x+=xw;
   }
 }
 function verdict(page,x,y,value,font){
   const v=String(value||'');
-  const ok=/^ok$|oui|conforme/i.test(v), bad=/non ok|non conforme|niet/i.test(v);
+  if(A) A.printed.push(`verdict:${v||'non déterminé'}`);
+  const ok=/^(ok|oui|conforme)$/i.test(v), bad=/^(non ok|non conforme|niet ok)$/i.test(v);
   if(!ok&&!bad){ text(page,'non déterminé',x,y,8,font,soft); return; }
   text(page,ok?'OK':'NON OK',x,y,8.5,font,ok?green:red);
 }
@@ -59,6 +92,7 @@ export async function renderWallonia(data,fontBytes,audit){
   if(globalThis.window?.fontkit) doc.registerFontkit(globalThis.window.fontkit);
   const font=await doc.embedFont(fontBytes,{subset:true});
   fontRef.regular=font; fontRef.bold=font;
+  A=audit||{printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
   const d=data;
 
   /* ---------------- page 1 ---------------- */
@@ -67,7 +101,7 @@ export async function renderWallonia(data,fontBytes,audit){
   text(p,"Attestation de contrôle d’un générateur de chaleur",M,42,15,font,ink);
   rule(p,M,48,RIGHT,ink,1);
   let y=64;
-  field(p,'Date du contrôle',M,y,95,90,fmt(d.controlDate),font);
+  field(p,'Date du contrôle',M,y,95,90,fmtDate(d.controlDate),font);
   field(p,'N° attestation',300,y,80,140,d.attestNumber||'',font); y+=18;
 
   band(p,'Technicien',y); y+=20;
@@ -116,8 +150,8 @@ export async function renderWallonia(data,fontBytes,audit){
   options(p,'Évacuation des gaz',y,[['OUI','oui',90],['NON','non',90]],d.flue,font);
   field(p,'Permis d’urbanisme',300,y,110,160,d.permisDate,font); y+=18;
   options(p,'Orifices de mesure',y,[['Dispensé','dispens',70],['Présent et conforme','conforme',100],['Présent et non conforme','non conforme',115],['Absent / non réalisable','absent',110]],d.orifices,font); y+=20;
-  field(p,'Causes / actions',M,y,100,460,d.causes,font); y+=20;
-  field(p,'Première mise en service',M,y,150,120,fmt(d.commissioningDate),font); y+=18;
+  field(p,'Causes / actions',M,y,100,RIGHT-142,d.defects,font); y+=20;
+  field(p,'Première mise en service',M,y,150,120,fmtDate(d.commissioningDate),font); y+=18;
   field(p,'Entretien conseillé (mois)',300,y,160,100,d.maintenanceIntervalMonths,font);
   text(p,'1 / 4',RIGHT-28,H-24,8.5,font,soft);
 
@@ -150,8 +184,12 @@ export async function renderWallonia(data,fontBytes,audit){
   }
   for(const [label,key] of [['Allure 2','load2'],['Allure 3','load3']]){
     if(!d[key]) continue;
+    const parsed=parseLoad(String(d[key]));
+    const ev=evaluateCriteria({...d,...parsed});
     text(p,label,cols[0],yy,9,font,ink);
-    text(p,String(d[key]),cols[1],yy,8.5,font,ink);
+    text(p,'selon catégorie',cols[1],yy,8,font,soft);
+    text(p,compactLoad(parsed),cols[2],yy,8,font,ink);
+    verdict(p,cols[3],yy,ev.globalResult,font);
     rule(p,M,yy+12,RIGHT,line);
     yy+=18;
   }
@@ -168,9 +206,11 @@ export async function renderWallonia(data,fontBytes,audit){
   options(p,'Fumée (solide)',yy,[['OUI','oui',90],['NON','non',90]],d.solidSmoke,font); yy+=20;
   options(p,'Évacuation (solide)',yy,[['OUI','oui',90],['NON','non',90]],d.solidFlue,font); yy+=26;
   band(p,'Déclaration de conformité',yy); yy+=24;
-  options(p,'',yy,[['OUI','oui',100],['NON','non',100]],d.conformity,font); yy+=24;
-  verdict(p,M,yy,evaluation.globalResult,font); yy+=20;
-  field(p,'Causes et actions',M,yy,100,460,d.defects,font);
+  const declaration=/^non/i.test(d.conformity||'')?'NON':/^(conforme|ok)/i.test(d.conformity||'')?'OUI':d.conformity;
+  options(p,'',yy,[['OUI','oui',100],['NON','non',100]],declaration,font); yy+=24;
+  const solidSelected=/solide/i.test(d.fuel||'')||/pellets|bûches|plaquettes|céréales|charbon/i.test(d.fuelDetail||'');
+  verdict(p,M,yy,solidSelected?(d.solidResult||evaluation.globalResult):evaluation.globalResult,font); yy+=20;
+  field(p,'Causes et actions',M,yy,100,RIGHT-142,d.defects,font);
   text(p,'2 / 4',RIGHT-28,H-24,8.5,font,soft);
 
   /* ---------------- page 3 ---------------- */
@@ -204,14 +244,14 @@ export async function renderWallonia(data,fontBytes,audit){
   p=doc.addPage([W,H]);
   text(p,'Prochaines interventions',M,30,13,font,ink);
   rule(p,M,38,RIGHT,ink,1);
-  const follow=[['Inspection périodique',d.nextFrom,d.nextTo],
-    ['Mise en conformité',d.remedyDate,null],
-    ['Remise en service',null,null],
-    ['Entretien conseillé',d.maintenanceDate,null],
-    ['Diagnostic approfondi',d.diagnosticFrom,d.diagnosticTo]];
+  const follow=[['Inspection périodique','prochaine inspection',d.nextFrom,d.nextTo],
+    ['Mise en conformité','mise en conformité',d.remedyDate,null],
+    ['Remise en service','remise en service',null,null],
+    ['Entretien conseillé','entretien',d.maintenanceDate,null],
+    ['Diagnostic approfondi','diagnostic',d.diagnosticFrom,d.diagnosticTo]];
   yy=52;
-  for(const [label,a,b] of follow){
-    box(p,M,yy+4,false,'',font);
+  for(const [label,key,a,b] of follow){
+    box(p,M,yy+4,matchesOption(d.followUp,key),label,font);
     text(p,label,M+16,yy,9,font,ink);
     text(p,a||'',300,yy,9,font,ink);
     if(b) text(p,`au ${b}`,400,yy,9,font,ink);
@@ -220,13 +260,13 @@ export async function renderWallonia(data,fontBytes,audit){
   }
   yy+=10;
   text(p,'Attestation établie par',M,yy,9,font,soft);
-  text(p,d.techName||'',M,yy+18,9,font,ink);
+  text(p,d.techSignatureName||d.techName||'',M,yy+18,9,font,ink);
   rule(p,M,yy+22,280);
   text(p,'Signature du technicien',M,yy+30,8,font,soft);
   text(p,'Attestation reçue par',300,yy,9,font,soft);
-  text(p,d.clientName||'',300,yy+18,9,font,ink);
+  text(p,d.recipientName||d.clientName||'',300,yy+18,9,font,ink);
   rule(p,300,yy+22,RIGHT);
-  text(p,'Signature du destinataire',300,yy+30,8,font,soft);
+  text(p,`En qualité de ${d.recipientCapacity||''}`,300,yy+30,8,font,soft);
   // No ATTENTION / emergency block: it belongs to the instructions, not the form.
   text(p,'4 / 4',RIGHT-28,H-24,8.5,font,soft);
 
@@ -235,7 +275,25 @@ export async function renderWallonia(data,fontBytes,audit){
   return doc.save();
 }
 
-function fmt(v){
+function parseLoad(s){
+  const out={};
+  const pats={co2:/\bco2?\s*[=:]?\s*([\d.,]+)/i,o2:/\bo2\s*[=:]?\s*([\d.,]+)/i,
+    co:/\bco\b\s*[=:]?\s*([\d.,]+)/i,efficiency:/rendement\s*[=:]?\s*([\d.,]+)/i};
+  for(const [key,re] of Object.entries(pats)){
+    const m=re.exec(s);
+    if(m) out[key]=m[1].replace(',','.');
+  }
+  return out;
+}
+function compactLoad(v){
+  const parts=[];
+  if(v.co2) parts.push(`CO₂ ${v.co2}`);
+  if(v.o2) parts.push(`O₂ ${v.o2}`);
+  if(v.co) parts.push(`CO ${v.co}`);
+  if(v.efficiency) parts.push(`η ${v.efficiency}`);
+  return parts.join(' · ');
+}
+function fmtDate(v){
   if(!v) return '';
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v));
   return m?`${m[3]}/${m[2]}/${m[1]}`:String(v);
