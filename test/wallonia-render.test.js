@@ -50,7 +50,7 @@ test('solid fuel uses its own global result',async()=>{
   const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
   await renderWallonia({controlDate:'2026-03-15',fuel:'Solide',fuelDetail:'Pellets bois',
     solidSmoke:'OUI',solidFlue:'OUI',solidResult:'OK'},fontBytes,audit);
-  assert.ok(audit.printed.includes('verdict:OK'));
+  assert.ok(audit.printed.includes('verdict:global:OK'));
 });
 
 test('parseLoad handles the documented CO₂/O₂ input without cross-capturing CO',()=>{
@@ -59,6 +59,15 @@ test('parseLoad handles the documented CO₂/O₂ input without cross-capturing 
   assert.equal(p.o2,'4');
   assert.equal(p.co,'100');
   assert.equal(p.efficiency,'91');
+});
+
+test('additional load verdict uses the appliance category, not "non déterminé"',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  await renderWallonia({controlDate:'2026-03-15',fuel:'Gazeux',fuelDetail:'Gaz nat. G20',
+    unitOrPulsed:'air pulsé',year:2020,powerKw:'80',
+    load2:'CO₂ 12 / O₂ 4 / CO 100 / rendement 92'},fontBytes,audit);
+  assert.ok(audit.printed.includes('verdict:load2:OK'),
+    `load verdict missing: ${JSON.stringify(audit.printed.filter(x=>x.startsWith('verdict')))}`);
 });
 
 test('requester and solid-technician selection tick exactly one correct box',async()=>{

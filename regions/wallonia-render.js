@@ -77,9 +77,9 @@ function options(page,title,y,items,selected,font,startX=M+110){
     x+=xw;
   }
 }
-function verdict(page,x,y,value,font){
+function verdict(page,x,y,value,font,label='global'){
   const v=String(value||'');
-  recordPrinted(`verdict:${v||'non déterminé'}`);
+  recordPrinted(`verdict:${label}:${v||'non déterminé'}`);
   const ok=/^(ok|oui|conforme)$/i.test(v), bad=/^(non ok|non conforme|niet ok)$/i.test(v);
   if(!ok&&!bad){ text(page,'non déterminé',x,y,8,font,soft); return; }
   text(page,ok?'OK':'NON OK',x,y,8.5,font,ok?green:red);
@@ -183,12 +183,15 @@ export async function renderWallonia(data,fontBytes,audit){
   for(const [label,key] of [['Allure 2','load2'],['Allure 3','load3']]){
     if(!d[key]) continue;
     const parsed=parseLoad(String(d[key]));
-    const ev=evaluateCriteria(parsed); // load row alone, never inherit the main run
+    // Category context from the appliance, values from this load only.
+    const ctx={fuel:d.fuel,fuelDetail:d.fuelDetail,unitOrPulsed:d.unitOrPulsed,
+      year:d.year,premix:d.premix,controlDate:d.controlDate};
+    const ev=evaluateCriteria({...ctx,...parsed});
     text(p,label,cols[0],yy,9,font,ink);
     text(p,'selon catégorie',cols[1],yy,8,font,soft);
     const {lines,clipped}=wrapText(compactLoad(parsed),s=>font.widthOfTextAtSize(s,8),72,2);
     lines.forEach((line,i)=>text(p,line,cols[2],yy+i*10,8,font,ink));
-    verdict(p,cols[3],yy,ev.globalResult,font);
+    verdict(p,cols[3],yy,ev.globalResult,font,key);
     if(A&&clipped){ A.clipped.push(label); A.warnings.push(`${label}: load values clipped`); }
     rule(p,M,yy+20,RIGHT,line);
     yy+=26;
