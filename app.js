@@ -498,7 +498,11 @@ function renderFinal(){
       }else if(c.id==='wallonia'){
         // Wallonia uses the data-driven HTML/CSS print view: real A4 layout,
         // logos, tables and checkboxes. The browser print dialog saves the PDF.
-        await openWalloniaPrint(state);
+        const printHtml=await openWalloniaPrint(state);
+        const w=window.open('','_blank');
+        if(!w) throw new Error('print popup blocked');
+        w.document.open(); w.document.write(printHtml); w.document.close();
+        w.addEventListener('load',()=>{ w.focus(); w.print(); },{once:true});
       }else{
         const blob=await buildAttestation(state,attachmentFiles);
         if(blob.audit) audits.push(blob.audit);
