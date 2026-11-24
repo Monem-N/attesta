@@ -27,7 +27,7 @@ function rule(page,x1,y,x2,color=line,thickness=0.6){
   page.drawRectangle({x:x1,y:yOf(page,y),width:x2-x1,height:thickness,color});
 }
 function band(page,label,y){
-  text(page,label,M,y,10.5,fontRef.regular,red);
+  text(page,label,M,y,10.5,fontRef.regular,red,RIGHT-M);
   rule(page,M,y+14,RIGHT,red,1);
 }
 // The embedded font is stored here so the pure helpers can use it.
@@ -172,7 +172,7 @@ export async function renderWallonia(data,fontBytes,audit){
   /* ---------------- page 2 ---------------- */
   p=doc.addPage([W,H]);
   text(p,'Respect des critères de bon fonctionnement',M,30,13,font,ink);
-  text(p,`Catégorie : ${d.waCategory||'non déterminée'}`,M,46,9,font,soft);
+  text(p,`Catégorie : ${d.waCategory||'non déterminée'}`,M,46,9,font,soft,240);
   rule(p,M,54,RIGHT,ink,1);
   const evaluation=evaluateCriteria(d);
   const cols=[M,M+185,M+275,M+350];
@@ -193,7 +193,7 @@ export async function renderWallonia(data,fontBytes,audit){
     const shown=(d[cmpKey]==='OK'||d[cmpKey]==='non OK')?d[cmpKey]:r.verdict;
     text(p,label,cols[0],yy,9,font,ink);
     text(p,limitText(r.rule),cols[1],yy,8.5,font,soft);
-    text(p,val??'',cols[2],yy,9,font,ink);
+    text(p,val??'',cols[2],yy,9,font,ink,65);
     verdict(p,cols[3],yy,shown,font,key);
     rule(p,M,yy+12,RIGHT,line);
     yy+=18;
@@ -280,20 +280,20 @@ export async function renderWallonia(data,fontBytes,audit){
   for(const [label,key,a,b] of follow){
     box(p,M,yy+4,matchesOption(d.followUp,key),label,font,true);
     text(p,label,M+16,yy,9,font,ink);
-    text(p,a||'',300,yy,9,font,ink);
-    if(b) text(p,`au ${b}`,400,yy,9,font,ink);
+    text(p,a||'',300,yy,9,font,ink,100);
+    if(b) text(p,`au ${b}`,400,yy,9,font,ink,RIGHT-402);
     rule(p,M,yy+16,RIGHT,line);
     yy+=24;
   }
   yy+=10;
   text(p,'Attestation établie par',M,yy,9,font,soft);
-  text(p,d.techSignatureName||d.techName||'',M,yy+18,9,font,ink);
+  text(p,d.techSignatureName||d.techName||'',M,yy+18,9,font,ink,238);
   rule(p,M,yy+22,280);
   text(p,'Signature du technicien',M,yy+30,8,font,soft);
   text(p,'Attestation reçue par',300,yy,9,font,soft);
-  text(p,d.recipientName||d.clientName||'',300,yy+18,9,font,ink);
+  text(p,d.recipientName||d.clientName||'',300,yy+18,9,font,ink,RIGHT-302);
   rule(p,300,yy+22,RIGHT);
-  text(p,d.recipientCapacity?`En qualité de ${d.recipientCapacity}`:'',300,yy+30,8,font,soft);
+  text(p,d.recipientCapacity?`En qualité de ${d.recipientCapacity}`:'',300,yy+30,8,font,soft,RIGHT-302);
   yy+=58;
   // Mandatory danger notice and emergency contacts (AWAC model, page 9).
   const notice=[
@@ -338,18 +338,25 @@ function compactLoad(v){
 }
 // Split a legacy combined address into street + number so an old draft never
 // loses its number when the user starts editing only the new street field.
+// Split a legacy combined address. The number can be multi-token
+// ("12 bis", "boîte 4"): the first token that starts with a digit begins the
+// number, so "Rue de la Gare 12 bis" -> ["Rue de la Gare", "12 bis"].
+function splitLegacyAddress(value){
+  const tokens=String(value||'').trim().split(/\s+/).filter(Boolean);
+  const at=tokens.findIndex(t=>/^\d/.test(t));
+  if(at<1) return [tokens.join(' '),''];
+  return [tokens.slice(0,at).join(' '),tokens.slice(at).join(' ')];
+}
+export function splitLegacyAddressForTest(value){ return splitLegacyAddress(value); }
 function streetParts(d){
   const legacy=String(d.clientStreet||'').trim();
   if(d.clientStreetName){
-    let num=String(d.clientStreetNumber||'').trim();
-    if(!num && legacy){
-      const m=/^(.*?)\s+(\S+)$/.exec(legacy);
-      if(m) num=m[2];
-    }
-    return [String(d.clientStreetName),num];
+    const num=String(d.clientStreetNumber||'').trim();
+    return num?[String(d.clientStreetName),num]:splitLegacyAddress(legacy)[1]
+      ?[String(d.clientStreetName),splitLegacyAddress(legacy)[1]]
+      :[String(d.clientStreetName),''];
   }
-  const m=/^(.*?)\s+(\S+)$/.exec(legacy);
-  return m?[m[1],m[2]]:[legacy,''];
+  return splitLegacyAddress(legacy);
 }
 function fmtDate(v){
   if(!v) return '';

@@ -14,7 +14,7 @@ fs.copyFileSync(new URL('../vendor/pdf-lib.min.js',import.meta.url),libPath);
 fs.copyFileSync(new URL('../vendor/fontkit.umd.min.js',import.meta.url),fkPath);
 globalThis.window={PDFLib:require(libPath),fontkit:require(fkPath)};
 
-const {renderWallonia,parseLoad}=await import('../regions/wallonia-render.js');
+const {renderWallonia,parseLoad,splitLegacyAddressForTest}=await import('../regions/wallonia-render.js');
 const fontBytes=new Uint8Array(fs.readFileSync(new URL('../vendor/DejaVuSans.ttf',import.meta.url)));
 
 test('Wallonia output is a clean four-page generated attestation',async()=>{
@@ -96,6 +96,28 @@ test('requester and solid-technician selection tick exactly one correct box',asy
   assert.ok(!audit.ticked.includes('Propriétaire'));
   assert.ok(audit.ticked.includes('Technicien spécialisé en combustibles solides'));
   assert.ok(!audit.ticked.some(x=>/^(L|GI|GII)$/.test(x)),'solid specialist is not agréé');
+});
+
+test('legacy multi-token house numbers stay in the number field',async()=>{
+  assert.deepEqual(splitLegacyAddressForTest('Rue de la Gare 12 bis'),
+    ['Rue de la Gare','12 bis']);
+  assert.deepEqual(splitLegacyAddressForTest('Avenue du Parc 4 boîte 9'),
+    ['Avenue du Parc','4 boîte 9']);
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  const bytes=await renderWallonia({controlDate:'2026-03-15',
+    clientStreetName:'Rue de la Gare',clientStreet:'Rue de la Gare 12 bis'},fontBytes,audit);
+  const doc=await globalThis.window.PDFLib.PDFDocument.load(bytes);
+  assert.equal(doc.getPageCount(),4);
+  assert.ok(audit.printed.includes('text:12 bis'),'number preserved from legacy value');
+});
+
+test('long dynamic names raise an overflow warning',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  await renderWallonia({controlDate:'2026-03-15',
+    techSignatureName:'Jean-Baptiste Constantin de la Chapelle-Vandermeulen',
+    recipientName:'Owale Jeanine'},fontBytes,audit);
+  assert.ok(audit.warnings.some(w=>w.includes('overflow')),
+    `no overflow warning: ${JSON.stringify(audit.warnings)}`);
 });
 
 test('street and number print in separate fields with legacy fallback',async()=>{
