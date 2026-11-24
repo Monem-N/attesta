@@ -27,6 +27,9 @@
   .sign{display:flex;justify-content:space-between;margin-top:8mm;font-size:9.5px}
   .sign .line{border-bottom:.6pt solid #333;width:70mm;height:10mm}
   .small{font-size:8px;color:#555}
+  .kgrid{width:100%}.kgrid td{border:.5pt solid #ddd;font-size:8px;padding:.7mm 1mm}
+  .kgrid .ksec td{background:#eee;font-weight:700;font-size:8px}
+  .kgrid .ki{color:#333}.kgrid .kn{text-align:right;white-space:nowrap}
 </style></head>
 <body>
 
@@ -138,30 +141,60 @@
 
 <!-- ============ PAGE 2 — KEURINGSRAPPORT ============ -->
 <div class="sheet" data-page="2" data-doc="keuring">
-  <div class="head"><b>KEURINGSRAPPORT</b><div class="sub">volgnummer rapport: <span class="v">{{attestNumber}}</span></div></div>
+  <div class="head"><b>KEURINGSRAPPORT</b><div class="sub">volgnummer rapport: <span class="v">{{attestNumber}}</span> · {{controlDate}}</div></div>
   <table>
-    <tr><td class="k">Datum keuring</td><td class="v">{{controlDate}}</td><td class="k">Arbeidsduur</td><td>{{workDuration}}</td></tr>
     <tr><td class="k">Firma</td><td class="v">{{company}}</td><td class="k">Ondernemingsnummer</td><td class="v">{{bce}}</td></tr>
     <tr><td class="k">Technicus</td><td class="v">{{techName}}</td><td class="k">Erkenningsnummer</td><td class="v">{{techAgrement}}</td></tr>
     <tr><td class="k">Klant</td><td class="v">{{clientName}}</td><td class="k">Adres</td><td class="v">{{clientStreet}} {{clientCity}}</td></tr>
   </table>
-  <div class="h2">Conformiteitscontrole (OK / Niet OK)</div>
-  <table>
-    <tr><td>Rookgasafvoer — materiaal / diameter / hoogte</td><td><span class="opt"><span class="cb" data-tick="keuring:rookgas">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:rookgasng">☐</span>Niet OK</span></td></tr>
-    <tr><td>Brander — ingeregeld vermogen / lengte</td><td><span class="opt"><span class="cb" data-tick="keuring:brander">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:branderng">☐</span>Niet OK</span></td></tr>
-    <tr><td>Ketel — mantel / isolatie / stabiliteit</td><td><span class="opt"><span class="cb" data-tick="keuring:ketel">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:ketelng">☐</span>Niet OK</span></td></tr>
-    <tr><td>Ventilatie stookplaats</td><td><span class="opt"><span class="cb" data-tick="keuring:vent">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:ventng">☐</span>Niet OK</span></td></tr>
-    <tr><td>Hydraulische installatie — lekken</td><td><span class="opt"><span class="cb" data-tick="keuring:hyd">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:hydng">☐</span>Niet OK</span></td></tr>
-    <tr><td>Elektrische installatie — zekering / aarding</td><td><span class="opt"><span class="cb" data-tick="keuring:elec">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:elecng">☐</span>Niet OK</span></td></tr>
-  </table>
+  <div class="h2">Conformiteitscontrole — OK / Niet OK</div>
+  <table class="kgrid"><tr>
+    <td style="width:50%;vertical-align:top;padding:0;border:none">
+      <table class="kgrid">
+        <tr class="ksec"><td colspan="2">Gebruikers- en onderhoudsinstructies</td></tr>
+        <tr><td class="ki">Aanwezigheid instructies</td><td class="kn"><span class="cb" data-tick="keuringInstructions:OK">☐</span>OK <span class="cb" data-tick="keuringInstructions:Niet OK">☐</span>Niet OK</td></tr>
+        <tr class="ksec"><td colspan="2">Rookgasafvoerkanaal</td></tr>
+        <tr><td class="ki">Materiaal</td><td class="kn"><span class="cb" data-tick="keuringInstructions:OK">☐</span>OK <span class="cb" data-tick="keuringInstructions:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Diameter</td><td class="kn"><span class="cb" data-tick="keuringInstructions:OK">☐</span>OK <span class="cb" data-tick="keuringInstructions:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Hoogte</td><td class="kn"><span class="cb" data-tick="keuringInstructions:OK">☐</span>OK <span class="cb" data-tick="keuringInstructions:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Bochten</td><td class="kn"><span class="cb" data-tick="keuringInstructions:OK">☐</span>OK <span class="cb" data-tick="keuringInstructions:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Uitmonding</td><td class="kn"><span class="cb" data-tick="keuringInstructions:OK">☐</span>OK <span class="cb" data-tick="keuringInstructions:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Bereikbaarheid</td><td class="kn"><span class="cb" data-tick="keuringInstructions:OK">☐</span>OK <span class="cb" data-tick="keuringInstructions:Niet OK">☐</span>Niet OK</td></tr>
+        <tr class="ksec"><td colspan="2">Ketel</td></tr>
+        <tr><td class="ki">Mantel</td><td class="kn"><span class="cb" data-tick="keuringKetel:OK">☐</span>OK <span class="cb" data-tick="keuringKetel:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Isolatie</td><td class="kn"><span class="cb" data-tick="keuringKetel:OK">☐</span>OK <span class="cb" data-tick="keuringKetel:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Stabiliteit</td><td class="kn"><span class="cb" data-tick="keuringKetel:OK">☐</span>OK <span class="cb" data-tick="keuringKetel:Niet OK">☐</span>Niet OK</td></tr>
+      </table>
+    </td>
+    <td style="width:50%;vertical-align:top;padding:0;border:none">
+      <table class="kgrid">
+        <tr class="ksec"><td colspan="2">Brander</td></tr>
+        <tr><td class="ki">Ingeregeld vermogen</td><td class="kn"><span class="cb" data-tick="keuringBurner:OK">☐</span>OK <span class="cb" data-tick="keuringBurner:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Lengte</td><td class="kn"><span class="cb" data-tick="keuringBurner:OK">☐</span>OK <span class="cb" data-tick="keuringBurner:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Voorfilter (stookolie)</td><td class="kn"><span class="cb" data-tick="keuringBurner:OK">☐</span>OK <span class="cb" data-tick="keuringBurner:Niet OK">☐</span>Niet OK</td></tr>
+        <tr class="ksec"><td colspan="2">Ventilatie stookplaats</td></tr>
+        <tr><td class="ki">Staat trekregelaar</td><td class="kn"><span class="cb" data-tick="keuringVentilation:OK">☐</span>OK <span class="cb" data-tick="keuringVentilation:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Ventilatie (direct/indirect)</td><td class="kn"><span class="cb" data-tick="keuringVentilation:OK">☐</span>OK <span class="cb" data-tick="keuringVentilation:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Isolatie (condensatie)</td><td class="kn"><span class="cb" data-tick="keuringVentilation:OK">☐</span>OK <span class="cb" data-tick="keuringVentilation:Niet OK">☐</span>Niet OK</td></tr>
+        <tr class="ksec"><td colspan="2">Hydraulische installatie</td></tr>
+        <tr><td class="ki">Lekken</td><td class="kn"><span class="cb" data-tick="keuringHydraulic:OK">☐</span>OK <span class="cb" data-tick="keuringHydraulic:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Veiligheidsklep</td><td class="kn"><span class="cb" data-tick="keuringHydraulic:OK">☐</span>OK <span class="cb" data-tick="keuringHydraulic:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Expansievat</td><td class="kn"><span class="cb" data-tick="keuringHydraulic:OK">☐</span>OK <span class="cb" data-tick="keuringHydraulic:Niet OK">☐</span>Niet OK</td></tr>
+        <tr class="ksec"><td colspan="2">Elektrische installatie</td></tr>
+        <tr><td class="ki">Zekering</td><td class="kn"><span class="cb" data-tick="keuringElectrical:OK">☐</span>OK <span class="cb" data-tick="keuringElectrical:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Schakelaar</td><td class="kn"><span class="cb" data-tick="keuringElectrical:OK">☐</span>OK <span class="cb" data-tick="keuringElectrical:Niet OK">☐</span>Niet OK</td></tr>
+        <tr><td class="ki">Aarding (visuele controle)</td><td class="kn"><span class="cb" data-tick="keuringElectrical:OK">☐</span>OK <span class="cb" data-tick="keuringElectrical:Niet OK">☐</span>Niet OK</td></tr>
+      </table>
+    </td>
+  </tr></table>
   <div class="h2">Eindbeoordeling</div>
   <table>
-    <tr><td>Stooktoestel conform</td><td><span class="opt"><span class="cb" data-tick="conformStooktoestel:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformStooktoestel:Niet OK">☐</span>Niet OK</span></td></tr>
-    <tr><td>Rookgasafvoerkanaal conform</td><td><span class="opt"><span class="cb" data-tick="conformRookgas:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformRookgas:Niet OK">☐</span>Niet OK</span></td></tr>
-    <tr><td>Stookplaats conform</td><td><span class="opt"><span class="cb" data-tick="conformStookplaats:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformStookplaats:Niet OK">☐</span>Niet OK</span></td></tr>
-    <tr><td>Verbrandingscontrole (verbrandingsattest toegevoegd)</td><td><span class="opt"><span class="cb" data-tick="conformVerbranding:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformVerbranding:Niet OK">☐</span>Niet OK</span></td></tr>
-    <tr><td class="k">Gebreken / maatregelen</td><td>{{defects}}</td></tr>
-    <tr><td class="k">Eerstvolgende onderhoud vóór</td><td class="v">{{nextDueDate}}</td></tr>
+    <tr><td>Stooktoestel conform</td><td><span class="opt"><span class="cb" data-tick="conformStooktoestel:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformStooktoestel:Niet OK">☐</span>Niet OK</span></td>
+      <td>Rookgasafvoerkanaal conform</td><td><span class="opt"><span class="cb" data-tick="conformRookgas:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformRookgas:Niet OK">☐</span>Niet OK</span></td></tr>
+    <tr><td>Stookplaats conform</td><td><span class="opt"><span class="cb" data-tick="conformStookplaats:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformStookplaats:Niet OK">☐</span>Niet OK</span></td>
+      <td>Verbrandingscontrole</td><td><span class="opt"><span class="cb" data-tick="conformVerbranding:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformVerbranding:Niet OK">☐</span>Niet OK</span></td></tr>
+    <tr><td class="k">Gebreken / maatregelen</td><td colspan="3">{{defects}}</td></tr>
+    <tr><td class="k">Eerstvolgende onderhoud vóór</td><td class="v">{{nextDueDate}}</td><td class="k">VEKA referentie</td><td class="v">{{vekaRef}}</td></tr>
   </table>
   <div class="sign"><div>Handtekening erkende technicus<div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
   <div class="foot"><span>Keuringsrapport — veiligverwarmen.be</span><span>2 / 2</span></div>
