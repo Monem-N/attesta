@@ -32,7 +32,7 @@ function field(page,label,x,y,labelW,valueW,value,font,size=9){
   const vx=x+labelW;
   rule(page,vx,y+2.5,vx+valueW);
   if(value===''||value==null) return;
-  const raw=String(value);
+  const raw=fmtDate(value);
   const {lines,clipped}=wrapText(raw,s=>font.widthOfTextAtSize(s,size),Math.max(20,valueW-4),2);
   lines.forEach((line,i)=>text(page,line,vx+2,y-0.5+i*(size+3),size,font,ink));
   if(A){
@@ -82,7 +82,8 @@ function options(page,title,y,items,selected,font,startX=M+110){
   }
 }
 function verdict(page,x,y,value,font,label='global'){
-  const v=String(value||'');
+  if(value==null||value==='') return; // empty row stays blank (as on the approved form)
+  const v=String(value);
   recordPrinted(`verdict:${label}:${v||'non déterminé'}`);
   const ok=/^(ok|oui|conforme)$/i.test(v), bad=/^(non ok|non conforme|niet ok)$/i.test(v);
   if(!ok&&!bad){ text(page,'non déterminé',x,y,8,font,soft); return; }
@@ -177,10 +178,12 @@ export async function renderWallonia(data,fontBytes,audit){
   let yy=82;
   for(const [label,key,val] of rows){
     const r=evaluation.results[key];
+    const cmpKey=`cmp${key[0].toUpperCase()}${key.slice(1)}`;
+    const shown=(d[cmpKey]==='OK'||d[cmpKey]==='non OK')?d[cmpKey]:r.verdict;
     text(p,label,cols[0],yy,9,font,ink);
     text(p,limitText(r.rule),cols[1],yy,8.5,font,soft);
     text(p,val??'',cols[2],yy,9,font,ink);
-    verdict(p,cols[3],yy,r.verdict,font);
+    verdict(p,cols[3],yy,shown,font,key);
     rule(p,M,yy+12,RIGHT,line);
     yy+=18;
   }
@@ -279,8 +282,18 @@ export async function renderWallonia(data,fontBytes,audit){
   text(p,'Attestation reçue par',300,yy,9,font,soft);
   text(p,d.recipientName||d.clientName||'',300,yy+18,9,font,ink);
   rule(p,300,yy+22,RIGHT);
-  text(p,`En qualité de ${d.recipientCapacity||''}`,300,yy+30,8,font,soft);
-  // No ATTENTION / emergency block: it belongs to the instructions, not the form.
+  text(p,d.recipientCapacity?`En qualité de ${d.recipientCapacity}`:'',300,yy+30,8,font,soft);
+  yy+=58;
+  // Mandatory danger notice and emergency contacts (AWAC model, page 9).
+  text(p,'ATTENTION : en cas de constatation d’un danger pour les utilisateurs du générateur',M,yy,8.5,font,red);
+  text(p,'contrôlé ou pour toute autre personne, le technicien agréé est tenu de prévenir',M,yy+11,8.5,font,red);
+  text(p,'l’utilisateur et le propriétaire : écrit signé si présents, courrier recommandé',M,yy+22,8.5,font,red);
+  text(p,'avec accusé de réception si absents.',M,yy+33,8.5,font,red);
+  yy+=52;
+  text(p,'Secours d’urgence : 100 ou 112',M,yy,9,font,ink);
+  text(p,'SOS odeurs de gaz :',M,yy+16,9,font,ink);
+  text(p,'ORES : 0800 87 087   |   RESA / NETHYS : 04 362 98 38 (fr) – 087 74 20 18 (de)',M,yy+30,8.5,font,ink);
+  text(p,'EANDIS / GASELWEST : 0800 65 0 65',M,yy+43,8.5,font,ink);
   text(p,'4 / 4',RIGHT-28,H-24,8.5,font,soft);
 
   if(audit){ audit.template={model:'wallonia-clean-4p',src:'generated'};

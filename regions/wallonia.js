@@ -122,6 +122,15 @@ export const wallonia = {
       {key:'co',label:'Teneur en CO',type:'measure',unit:'mg/kWh'},
       {key:'efficiency',label:'Rendement combustion',type:'measure',unit:'%'},
       {key:'waterTemp',label:'Température de l’eau',type:'measure',unit:'°C'},
+      // The comparison row is the technician's own judgement. The computed
+      // verdict is offered as a default, but these fields are authoritative.
+      F('cmpSmoke','Comparaison — indice de fumée','select',{options:['','OK','non OK']}),
+      F('cmpFlueTemp','Comparaison — température gaz','select',{options:['','OK','non OK']}),
+      F('cmpCo2','Comparaison — CO₂','select',{options:['','OK','non OK']}),
+      F('cmpO2','Comparaison — O₂','select',{options:['','OK','non OK']}),
+      F('cmpCo','Comparaison — CO','select',{options:['','OK','non OK']}),
+      F('cmpEfficiency','Comparaison — rendement','select',{options:['','OK','non OK']}),
+      F('globalResult','Résultat global','select',{options:['','OK','non OK']}),
       F('chimneyPressure','Pression cheminée (type B)','number'),
       F('pumpPressure','Pression pompe (bar)','number'),
       F('load2','Allure 2 — valeurs','text',{hint:'Facultatif, brûleurs multiples/modulants. Ex. : CO₂ 11 / O₂ 4 / CO 100 / rendement 91'}),

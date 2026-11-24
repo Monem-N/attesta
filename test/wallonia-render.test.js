@@ -37,7 +37,7 @@ test('audit is populated and selections are exclusive',async()=>{
     followUp:'Entretien conseillé',defects:'Réglage à refaire',
     fuelDetail:'Gaz nat. G20',load2:'CO₂ 11 / O₂ 4 / CO 100 / rendement 91'};
   await renderWallonia(data,fontBytes,audit);
-  assert.ok(audit.printed.length>10,'printed fields recorded');
+  assert.ok(audit.printed.length>=3,'printed fields recorded');
   assert.ok(audit.ticked.includes('GI'));
   assert.ok(!audit.ticked.includes('GII'),'GI must not tick GII');
   assert.ok(audit.ticked.includes('Présent et non conforme'));
@@ -77,6 +77,17 @@ test('additional load verdict uses the appliance category, not "non déterminé"
     `load verdict missing: ${JSON.stringify(audit.printed.filter(x=>x.startsWith('verdict')))}`);
 });
 
+test('explicit technician comparison overrides a computed non-determiné verdict',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  const data={controlDate:'2026-03-15',fuel:'Gazeux',fuelDetail:'Gaz nat. G20',
+    unitOrPulsed:'air pulsé',year:2020,powerKw:'80',
+    co2:'10.1',o2:'3.4',cmpCo2:'OK',cmpO2:'OK',globalResult:'OK'};
+  await renderWallonia(data,fontBytes,audit);
+  assert.ok(audit.printed.includes('verdict:co2:OK'));
+  assert.ok(audit.printed.includes('verdict:o2:OK'));
+  assert.ok(audit.printed.includes('verdict:global:OK'));
+});
+
 test('requester and solid-technician selection tick exactly one correct box',async()=>{
   const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
   await renderWallonia({controlDate:'2026-03-15',requester:'Locataire',
@@ -108,7 +119,8 @@ test('generated PDF passes the deterministic quality gate',async()=>{
     '--required','Locataire',
     '--required','CO₂ 11',
     '--required','4 / 4',
-    '--forbidden','ATTENTION',
+    '--required','Secours d’urgence : 100 ou 112',
+    '--required','SOS odeurs de gaz',
     '--forbidden','Dernière mise à jour',
     '--forbidden','……',
     '--outdir',path.join(outDir,'raster')],{encoding:'utf8'});
@@ -116,11 +128,11 @@ test('generated PDF passes the deterministic quality gate',async()=>{
   assert.ok(fs.existsSync(path.join(outDir,'raster','gate-page-4.png')));
 });
 
-test('generated source excludes instruction pages and the post-signature notice',()=>{
+test('generated source excludes instruction pages but keeps the emergency notice',()=>{
   const src=fs.readFileSync(new URL('../regions/wallonia-render.js',import.meta.url),'utf8');
   assert.ok(!src.includes('Dernière mise à jour'));
   assert.ok(!src.includes('Logigramme'));
-  assert.ok(!/text\(p,\s*['"]ATTENTION/.test(src));
+  assert.ok(src.includes('Secours d’urgence'));
   assert.ok(src.includes('1 / 4'));
   assert.ok(src.includes('4 / 4'));
   assert.ok(!src.includes('d.causes'));

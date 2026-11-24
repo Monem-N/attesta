@@ -157,9 +157,15 @@ export function walloniaComputed(data){
   // with no printed rule for this category gets no tick and no OK text.
   const evaluation=evaluateCriteria(data);
   for(const [key,result] of Object.entries(evaluation.results)){
-    if(result.verdict) out[`cmp${key[0].toUpperCase()}${key.slice(1)}`]=result.verdict;
+    const k=`cmp${key[0].toUpperCase()}${key.slice(1)}`;
+    // The technician's explicit comparison wins; computed verdict is a default.
+    const explicit=data[k];
+    if(explicit==='OK'||explicit==='non OK') out[k]=explicit;
+    else if(result.verdict) out[k]=result.verdict;
   }
-  if(evaluation.globalResult) out.globalResult=evaluation.globalResult;
+  const explicitGlobal=data.globalResult;
+  if(explicitGlobal==='OK'||explicitGlobal==='non OK') out.globalResult=explicitGlobal;
+  else if(evaluation.globalResult) out.globalResult=evaluation.globalResult;
   else delete out.globalResult;
   if(evaluation.category) out.waCategory=evaluation.category.code;
   // Never carry a stale computed date from a reloaded draft.

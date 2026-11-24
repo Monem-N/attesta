@@ -185,7 +185,9 @@ The cycle is anchored to the generator's **first commissioning date** (`commissi
 
 ## Automated PDF quality gate
 
-`tools/check-pdf.py` validates a generated PDF against pinned expectations: page count, A4 portrait geometry, the embedded DejaVuSans font, required text, forbidden instruction/placeholder text, and text staying within page bounds. It also rasterizes every page for visual snapshots. It is invoked from `test/wallonia-render.test.js`, so `node --test` fails if the generated document is structurally wrong. This gate does **not** establish legal equivalence with the AWAC model — the omitted emergency content still needs AWAC confirmation.
+`tools/check-pdf.py` validates a generated PDF against pinned expectations: page count, A4 portrait geometry, the embedded DejaVuSans font, required text, forbidden instruction/placeholder text, and text staying within page bounds. It also rasterizes every page for visual snapshots. It is invoked from `test/wallonia-render.test.js`, so `node --test` fails if the generated document is structurally wrong.
+
+The comparator document is `Zied.pdf` (accepted reference, in Downloads). Parity items covered: next-control window advanced past the completed cycle, accredited-technician companion box, technician-entered comparison verdicts (computed value is only a default), and the mandatory ATTENTION notice + emergency contacts on page 4. An empty measurement row stays blank, as in the reference. The separate street/number slots from the reference are still represented as one `Rue et numéro` field.
 
 ## Status
 
