@@ -1,0 +1,23 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<script type="module">
+import { renderWalloniaPrintHtml } from './print-wallonia.js';
+const state = { region:'wallonia', data:{
+  controlDate:'2026-10-15', attestNumber:'0510', techCategory:'Technicien agréé GII',
+  techName:'Zied BEN AMARA', techAgrement:'05431', company:'Joffage', bce:'BE0773.540.950',
+  techPhone:'0486797724', techEmail:'Info@joffage.be', requester:'Propriétaire',
+  clientName:'Owale Jeanine', clientStreetName:'Rue de Liessies', clientStreetNumber:'17 Bte3',
+  clientCity:'7800 Ath', fuel:'Gazeux', fuelDetail:'Gaz nat. G20', unitOrPulsed:'air pulsé',
+  genCount:'1', powerKw:'24', raccordement:'B', condensation:'non', burnerType:'1 allure',
+  premix:'non-premix', year:'2024', make:'Junkers', serial:'8290518031908', fluid:'Eau',
+  production:'Chauff. + ECS', permisDate:'Avant le 29/05/2009', ventLocal:'oui', airSupply:'oui',
+  flue:'oui', orifices:'Présent et conforme', plaque:'Présente',
+  measureDate:'2026-10-15', measureTime:'16:45', analyzerMake:'BLUELYZER ST', analyzerSerial:'06-44-01189',
+  waterTemp:'', flueTemp:'46.1', co2:'10.1', o2:'3.4', co:'28', efficiency:'98,9',
+  conformity:'OUI', globalResult:'OK', commissioningDate:'2026-10-15', maintenanceIntervalMonths:24,
+  followUp:'Prochaine inspection périodique', recipientName:'Owale Jeanine', recipientCapacity:'Locataire'
+}};
+const tpl = await (await fetch('wallonia.html')).text();
+const html = renderWalloniaPrintHtml(state, tpl);
+document.open(); document.write(html); document.close();
+</script>
+</body></html>
