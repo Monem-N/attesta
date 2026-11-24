@@ -42,17 +42,21 @@ class Sheet{
   }
   // components advance the cursor
   title(s){
-    this.need(24); this.text(s,M,this.y,15,INK); this.rule(M,this.y+8,RIGHT,INK,1);
-    this.y+=26;
+    this.need(38);
+    this.text(s,M,this.y,12,INK,RIGHT-M);
+    const w=this.font.widthOfTextAtSize(String(s),12);
+    const lines=w>RIGHT-M?2:1;
+    this.rule(M,this.y+lines*12+2,RIGHT,INK,1);
+    this.y+=lines*12+14;
   }
   section(label){
-    this.need(20); this.rule(M,this.y,RIGHT,RED,1.1);
-    this.text(label,M,this.y+4,10,RED); this.y+=20;
+    this.need(18); this.rule(M,this.y,RIGHT,RED,1.1);
+    this.text(label,M,this.y+4,10,RED); this.y+=18;
   }
   note(s){ this.need(12); this.text(s,M,this.y,8,SOFT,RIGHT-M); this.y+=12; }
   fields(rows){
     for(const r of rows){
-      this.need(17);
+      this.need(15);
       const [label,value,x2,label2,value2]=r;
       this.text(label,M,this.y,9,SOFT,118);
       const vx=M+122; this.rule(vx,this.y+2,vx+120);
@@ -62,11 +66,11 @@ class Sheet{
         const vx2=x2+122; this.rule(vx2,this.y+2,Math.min(vx2+120,RIGHT));
         if(value2!=''&&value2!=null) this.text(value2,vx2+2,this.y,9,INK,Math.min(118,RIGHT-vx2-4));
       }
-      this.y+=17;
+      this.y+=15;
     }
   }
   optionRow(label,items,selected){
-    this.need(18);
+    this.need(16);
     this.text(label,M,this.y,8.5,SOFT,100);
     let x=M+110;
     const s=String(selected||'').toLowerCase().trim();
@@ -76,12 +80,12 @@ class Sheet{
       this.box(x,this.y-1,hit,text,8);
       x+=width;
     }
-    this.y+=18;
+    this.y+=16;
   }
   table(headers,rows,widths){
     this.need(20+rows.length*16);
     let x=M;
-    headers.forEach((h,i)=>{ this.text(h,x,this.y,8,SOFT,widths[i]-4); x+=widths[i]; });
+    headers.forEach((h,i)=>{ this.text(h,x,this.y,7,SOFT,widths[i]-3); x+=widths[i]; });
     this.y+=6; this.rule(M,this.y,RIGHT,INK,0.9);
     for(const row of rows){
       let rx=M;
@@ -127,6 +131,11 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
     return d[k]==='OK'||d[k]==='non OK'?d[k]:ev.results[key].verdict;
   };
   const fmt=v=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v||'')); return m?`${m[3]}.${m[2]}.${m[1]}`:String(v||''); };
+  const limit=key=>{
+    const r=ev.results[key].rule; if(!r) return '—';
+    const parts=[]; if(r.min!=null) parts.push(`min ${r.min}`); if(r.max!=null) parts.push(`max ${r.max}`);
+    return parts.join(' / ');
+  };
 
   // page 1
   sheet.newPage(); await masthead(doc,sheet,logoBytes);
@@ -157,7 +166,12 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
   sheet.optionRow('Brûleur',[['unit','unit',100],['air pulsé','air pulsé',130]],d.unitOrPulsed);
   sheet.optionRow('Prémixage',[['prémix','^prémix',110],['non-premix','non-premix',140]],d.premix);
   sheet.optionRow('Plaque signalétique',[['Absente','absente',100],['Présente','présente',110]],d.plaque);
-  sheet.section('Ventilation, amenée d’air, évacuation des gaz');
+  sheet.section('Ventilation du local de chauffe – Amenée d’air comburant – Évacuation des gaz de combustion');
+  sheet.paragraph([
+    'Introduction de la demande initiale de permis d’urbanisme du bâtiment contenant le local de chauffe :',
+    'Avant le 29/05/2009 → Respect de la norme ou du code de bonne pratique applicable au moment du placement.',
+    'Après le 29/05/2009 → Respect, selon les cas, des normes NBN B 61-001, B 61-002, D 51-003, D 51-004, D 51-006.'
+  ],SOFT,7.5);
   sheet.optionRow('Ventilation du local',[['OUI','oui',90],['NON','non',90]],d.ventLocal);
   sheet.optionRow('Amenée d’air',[['OUI','oui',90],['NON','non',90]],d.airSupply);
   sheet.optionRow('Évacuation des gaz',[['OUI','oui',90],['NON','non',90]],d.flue);
@@ -167,15 +181,17 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
 
   // page 2 — measurements
   sheet.newPage(); await masthead(doc,sheet,logoBytes);
-  sheet.title('Respect des critères de bon fonctionnement');
-  sheet.table(['Paramètre','Exigence','Mesure','Verdict'],[
-    ['Indice de fumée',ev.results.smoke.rule?'selon catégorie':'—',d.smoke,{box:cmp('smoke')==='OK'}],
-    ['Température gaz',ev.results.flueTemp.rule?'selon catégorie':'—',d.flueTemp,{box:cmp('flueTemp')==='OK'}],
-    ['CO₂',ev.results.co2.rule?'selon catégorie':'—',d.co2,{box:cmp('co2')==='OK'}],
-    ['O₂',ev.results.o2.rule?'selon catégorie':'—',d.o2,{box:cmp('o2')==='OK'}],
-    ['CO (mg/kWh)',ev.results.co.rule?'selon catégorie':'—',d.co,{box:cmp('co')==='OK'}],
-    ['Rendement',ev.results.efficiency.rule?'selon catégorie':'—',d.efficiency,{box:cmp('efficiency')==='OK'}],
-  ],[150,120,120,100]);
+  sheet.title('Respect des critères de bon fonctionnement (installations alimentées en combustibles liquides ou gazeux)');
+  sheet.table(['Indice de fumée','t° nette gaz','Teneur CO₂','Teneur O₂','Teneur CO','Rendement'],[
+    ['Performances minimales',limit('smoke'),limit('flueTemp'),limit('co2'),limit('o2'),limit('co'),limit('efficiency')],
+    ['Valeurs mesurées',d.smoke||'',d.flueTemp||'',d.co2||'',d.o2||'',d.co||'',d.efficiency||''],
+    ['Puissance maximale',d.smoke||'',d.flueTemp||'',d.co2||'',d.o2||'',d.co||'',d.efficiency||''],
+    ['Allure 1 / Pmin',d.load1||'','','','','',''],
+    ['Allure 2 (25 %)',d.load2||'','','','','',''],
+    ['Allure 3 (50 %)',d.load3||'','','','','',''],
+    ['Allure 4 (75 %)',d.load4||'','','','','',''],
+    ['Comparaison',cmp('smoke')||'—',cmp('flueTemp')||'—',cmp('co2')||'—',cmp('o2')||'—',cmp('co')||'—',cmp('efficiency')||'—'],
+  ],[145,68,68,68,68,68,68]);
   sheet.paragraph([
     'ATTENTION : les tickets sur lesquels figurent les résultats des mesures, mentionnant l’heure et la date,',
     'doivent être agrafés sur cette attestation.',
@@ -194,6 +210,16 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
   sheet.section('Déclaration de conformité');
   sheet.optionRow('',[['OUI','oui',100],['NON','non',100]],/^oui|conforme/i.test(d.conformity||'')?'oui':'non');
   sheet.fields([['Causes et actions',d.defects]]);
+  sheet.section('Remarque importante');
+  sheet.paragraph([
+    'Les paramètres mesurés permettant d’établir la conformité de fonctionnement du générateur sont représentatifs',
+    'des conditions prévalant au moment de la mesure. Certains facteurs peuvent modifier le fonctionnement du',
+    'générateur et conduire à des résultats différents. Pour les générateurs de type atmosphérique, c’est notamment',
+    'le cas : en cas de conditions atmosphériques défavorables à la dispersion des polluants, réduisant la dépression',
+    'de la cheminée ; en cas d’obstruction des orifices d’amenée d’air ; en cas d’installation d’appareils induisant',
+    'une dépression dans le local (hotte, ventilation mécanique, séchoir…) ; en cas de perturbation liée à la mise en',
+    'fonctionnement d’un appareil situé dans une autre unité d’habitation raccordé sur le même conduit collectif.'
+  ],SOFT,7.5);
 
   // page 3 — diagnostic
   sheet.newPage(); await masthead(doc,sheet,logoBytes);
@@ -206,9 +232,18 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
       ['D. Au moins 2 ans depuis la modification ?','diagTwoYears','Si OUI → Effectuer le diagnostic. Sinon → Attendre le 1er contrôle après 2 ans.'],
       ['E. Le diagnostic a-t-il déjà été reporté ?','diagDeferred','Un seul report est admis.'],
     ];
-    for(const [label,key,route] of diag){
+    const routes={
+      diagReport:['Si OUI → Passer au point B.','Si NON → Passer au point C.'],
+      diagModified:['Si OUI → Passer au point D.','Si NON → L’installation est déclarée en ordre de diagnostic jusqu’à la prochaine inspection périodique. Sortie du tableau.'],
+      diagAfter2015:['Si OUI → Passer au point D.','Si NON → Passer au point E.'],
+      diagTwoYears:['Si OUI → Effectuer un diagnostic ; l’installation est déclarée en ordre jusqu’à la prochaine inspection périodique. Sortie du tableau.',
+        'Si NON → Attendre le 1er contrôle périodique après ces 2 ans pour faire réaliser le diagnostic ; installation en ordre jusqu’au prochain contrôle.'],
+      diagDeferred:['Si OUI → Effectuer le diagnostic ; installation en ordre jusqu’au prochain contrôle.',
+        'Si NON → Effectuer un diagnostic ; dans le cas où il ne serait pas faisable, report toléré une seule fois, lors du prochain contrôle périodique. Note : un seul report est admis.'],
+    };
+    for(const [label,key] of diag){
       sheet.optionRow(label,[['OUI','oui',90],['NON','non',90]],d[key]);
-      sheet.note(route);
+      for(const line of routes[key]) sheet.note(line);
     }
     sheet.section('Régulation et pompes de circulation');
     sheet.optionRow('Mode de régulation',[['AUTO','auto',90],['MAN','man',90]],d.regulationMode);

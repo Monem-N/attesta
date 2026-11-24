@@ -209,3 +209,196 @@ export function drawOrificesBlock(page, d, y) {
   y = fieldLine(page, 'Remarque – Cause de non-conformité:', d.remarks || '', y, RIGHT - M - 10);
   return y + 10;
 }
+
+export function drawMeasurementTable(page, d, y) {
+  y = band(page, 'Respect des critères de bon fonctionnement (installations alimentées en combustibles liquides ou gazeux)', y);
+  const cols = [
+    { key: 'waterTemp', label: 'Température d\'eau (°C)', w: 70 },
+    { key: 'measureDt', label: 'Date – heure mesure', w: 80 },
+    { key: 'smoke', label: 'Indice de fumée Max. (Bacharach)', w: 90 },
+    { key: 'flueTemp', label: 't° nette gaz Max. (°C)', w: 75 },
+    { key: 'co2', label: 'Teneur CO2 Min. (%)', w: 70 },
+    { key: 'o2', label: 'Teneur en O2 Max. (%)', w: 65 },
+    { key: 'co', label: 'Teneur CO Max. (mg/kWh)', w: 80 },
+    { key: 'efficiency', label: 'Rend. de combustion Min. (%)', w: 80 },
+  ];
+  text(page, 'Valeurs mesurées', M, y, 8, fontRef.bold, INK);
+  let colX = M + 130;
+  cols.forEach((c) => { text(page, c.label, colX, y, 6.5, fontRef.regular, SOFT, c.w); colX += c.w + 8; });
+  y += 12;
+  rule(page, M, y + 1, RIGHT, LINE, 0.6);
+  y += 6;
+  const rows = [
+    { label: 'Appareil', value: d.analyzerMake || 'BLUELYZER ST', extra: `S/N: ${d.analyzerSerial || ''}` },
+    { label: 'Puissance maximale', value: String(d.powerKw || ''), unit: 'kW' },
+    { label: 'Température d\'eau', value: d.waterTemp || '', unit: '°C' },
+    { label: 'Indice de fumée', value: d.smoke || '', unit: '' },
+    { label: 'T° gaz', value: d.flueTemp || '', unit: '°C' },
+    { label: 'CO2', value: d.co2 || '', unit: '%' },
+    { label: 'O2', value: d.o2 || '', unit: '%' },
+    { label: 'CO', value: d.co || '', unit: 'mg/kWh' },
+    { label: 'Rendement', value: d.efficiency || '', unit: '%' },
+  ];
+  rows.forEach((row) => {
+    text(page, row.label, M, y, 7.5, fontRef.regular, INK, 120);
+    colX = M + 130;
+    cols.forEach((c) => { text(page, row.value || '', colX, y, 7.5, fontRef.regular, INK, c.w); colX += c.w + 8; });
+    y += 16;
+  });
+  text(page, 'Comparaison', M, y, 7.5, fontRef.bold, INK, 120);
+  colX = M + 130;
+  const cmpKeys = ['cmpSmoke', 'cmpFlueTemp', 'cmpCo2', 'cmpO2', 'cmpCo', 'cmpEfficiency'];
+  cols.slice(2).forEach((c, i) => {
+    const verdict = (d[cmpKeys[i]] || 'OK');
+    const isOK = verdict === 'OK';
+    page.drawRectangle({ x: colX, y: yOf(page, y + 2), width: 22, height: 8, borderColor: INK, borderWidth: 0.6, color: PAPER });
+    text(page, 'OK', colX + 2, y, 7, fontRef.regular, isOK ? GREEN : SOFT, 20);
+    page.drawRectangle({ x: colX + 26, y: yOf(page, y + 2), width: 22, height: 8, borderColor: INK, borderWidth: 0.6, color: PAPER });
+    text(page, 'non OK', colX + 28, y, 7, fontRef.regular, !isOK ? RED : SOFT, 30);
+    if (A) A.ticked.push(`${cmpKeys[i]}:${verdict}`);
+    colX += c.w + 8;
+  });
+  y += 16;
+  const gVerdict = d.globalResult || 'OK';
+  text(page, 'Résultat global', M, y, 8, fontRef.bold, INK, 120);
+  page.drawRectangle({ x: M + 130, y: yOf(page, y + 2), width: 22, height: 8, borderColor: INK, borderWidth: 0.6, color: PAPER });
+  text(page, 'OK', M + 132, y, 7, fontRef.regular, gVerdict === 'OK' ? GREEN : SOFT, 20);
+  page.drawRectangle({ x: M + 156, y: yOf(page, y + 2), width: 26, height: 8, borderColor: INK, borderWidth: 0.6, color: PAPER });
+  text(page, 'non OK', M + 158, y, 7, fontRef.regular, gVerdict === 'non OK' ? RED : SOFT, 26);
+  y += 22;
+  text(page, 'ATTENTION: les tickets sur lesquels figurent les résultats des mesures, mentionnant en outre l\'heure et la date à laquelle la mesure a été réalisée doivent être agrafés sur cette attestation.', M, y, 7.5, fontRef.regular, RED, RIGHT - M);
+  y += 14;
+  text(page, 'Dérogation: en cas d\'utilisation d\'un système de transmission électronique des paramètres mesurés vers une application informatique générant l\'attestation, via un protocole fermé sur lequel l\'opérateur ne peut modifier les valeurs, le ticket agrafé n\'est pas obligatoire.', M, y, 7.5, fontRef.regular, SOFT, RIGHT - M);
+  return y + 24;
+}
+export function drawTechInfoBlock(page, d, y) {
+  y = band(page, 'Informations techniques complémentaires', y);
+  y = fieldLine(page, 'Date de mesure', d.measureDate || '', y, 100);
+  text(page, 'Heure', M + 240, y - 14, 8, fontRef.regular, SOFT);
+  text(page, d.measureTime || '', M + 280, y - 14, 8, fontRef.regular, INK);
+  y += 16;
+  y = fieldLine(page, 'Analyseur', d.analyzerMake || 'BLUELYZER ST', y, 140);
+  y = fieldLine(page, 'N° série analyseur', d.analyzerSerial || '06-44-01189', y, 140);
+  y = fieldLine(page, 'Pression cheminée (Pa)', d.chimneyPressure || '', y, 100);
+  y = fieldLine(page, 'Pression pompe (bar)', d.pumpPressure || '', y, 100);
+  y = fieldLine(page, 'Température d\'eau', d.waterTemp || '', y, 100);
+  y = fieldLine(page, 'Gicleur — marque & type', d.nozzleMake || '', y, 140);
+  y = fieldLine(page, 'Gicleur — débit (gal/h)', d.nozzleFlow || '', y, 100);
+  y = fieldLine(page, 'Gicleur — angle (degré)', d.nozzleAngle || '', y, 100);
+  y = fieldLine(page, 'Fumée (solide)', d.solidSmoke || 'OUI', y, 80);
+  y = fieldLine(page, 'Évacuation (solide)', d.solidFlue || 'OUI', y, 80);
+  return y + 10;
+}
+export function drawDeclarationBlock(page, d, y) {
+  y = band(page, 'Déclaration de conformité', y);
+  const conf = d.conformity === 'NON CONFORME' ? 'NON CONFORME' : 'CONFORME';
+  text(page, 'L\'ensemble générateur de chaleur – ventilation du local de chauffe – amenée d\'air comburant – dispositif d\'évacuation des gaz de combustion est-il conforme aux dispositions de l\'AGW du 29/01/2009(12)?', M, y, 7.5, fontRef.regular, SOFT, RIGHT - M);
+  y += 12;
+  y = checkboxRow(page, `OUI   NON   (${conf})`, conf === 'CONFORME', y);
+  text(page, 'En cas de non-conformité → Causes de non-conformité et actions à entreprendre:', M, y, 7.5, fontRef.regular, SOFT, RIGHT - M);
+  y += 8;
+  y = fieldLine(page, '', d.defects || '', y, RIGHT - M - 10);
+  return y + 14;
+}
+
+export function drawDiagnosticTree(page, d, y, pnomKw) {
+  const applies = Number(pnomKw) > 20;
+  y = band(page, 'Réalisation d\'un diagnostic approfondi dans le cadre d\'une inspection périodique (si Pnom > 20 kW)', y);
+  if (!applies) { text(page, 'Diagnostic approfondi non requis (Pnom ≤ 20 kW).', M, y, 8.5, fontRef.regular, SOFT, RIGHT - M); return y + 20; }
+  const diag = (label, branch, yy) => {
+    text(page, label, M, yy, 8, fontRef.regular, INK, RIGHT - M);
+    yy += 10;
+    text(page, `Si réponse = « OUI » → ${branch.yes}`, M + 15, yy, 7.5, fontRef.regular, SOFT, RIGHT - M - 20);
+    yy += 9;
+    text(page, `Si réponse = « NON » → ${branch.no}`, M + 15, yy, 7.5, fontRef.regular, SOFT, RIGHT - M - 20);
+    return yy + 14;
+  };
+  const checked = (k) => d[k] === 'OUI';
+  y = diag(page, 'A. Un rapport de diagnostic approfondi est-il présent? (en présence de plusieurs rapports, considérer le plus récent)', { yes: 'Passer au point B.', no: 'Passer au point C.' }, y);
+  y = checkboxRow(page, `OUI   NON   (${checked('diagReport') ? 'OUI' : 'NON'})`, checked('diagReport'), y); y += 16;
+  y = diag(page, 'B. Y a-t-il eu une modification du système de chauffage ou des exigences en matière de chauffage du bâtiment réalisée depuis la date du rapport de diagnostic le plus récent?', { yes: 'Passer au point D.', no: "L'installation est déclarée en ordre de diagnostic jusqu'à la prochaine inspection périodique. Sortie du tableau." }, y);
+  y = checkboxRow(page, `OUI   NON   (${checked('diagModified') ? 'OUI' : 'NON'})`, checked('diagModified'), y); y += 16;
+  y = diag(page, 'C. Y a-t-il eu une modification du système de chauffage ou des exigences en matière de chauffage du bâtiment réalisée après le 30 avril 2015?', { yes: 'Passer au point D.', no: 'Passer au point E.' }, y);
+  y = checkboxRow(page, `OUI   NON   (${checked('diagAfter2015') ? 'OUI' : 'NON'})`, checked('diagAfter2015'), y); y += 16;
+  y = diag(page, 'D. Y a-t-il au moins 2 ans que les modifications ont été réalisées?', { yes: 'Effectuer un diagnostic et l\'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.', no: 'Attendre le 1er contrôle périodique après ces 2 ans pour faire réaliser le diagnostic. L\'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.' }, y);
+  y = checkboxRow(page, `OUI   NON   (${checked('diagTwoYears') ? 'OUI' : 'NON'})`, checked('diagTwoYears'), y); y += 16;
+  y = diag(page, 'E. Le diagnostic a-t-il déjà été reporté?', { yes: 'Effectuer le diagnostic. Dans ce cas, l\'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.', no: 'Effectuer un diagnostic. Dans le cas où le diagnostic ne serait pas faisable, il est toléré de reporter une seule fois. Il devra alors être réalisé lors du prochain contrôle périodique. Sortie du tableau.' }, y);
+  y = checkboxRow(page, `OUI   NON   (${checked('diagDeferred') ? 'OUI' : 'NON'})`, checked('diagDeferred'), y); y += 14;
+  text(page, 'Note : un seul report est admis.', M, y, 7.5, fontRef.regular, SOFT, RIGHT - M);
+  return y + 18;
+}
+export function drawRegulationBlock(page, d, y) {
+  y = band(page, 'Inspection périodique du système de régulation et de la (des) pompe(s) de circulation (13)', y);
+  text(page, 'Vérification à effectuer sur la (les) pompe(s) de circulation du(des) circuit(s) de chauffage, facultativement sur les autres pompes (ECS…).', M, y, 7.5, fontRef.regular, SOFT, RIGHT - M);
+  y += 10;
+  const regRows = [
+    ['La régulation fonctionne-t-elle en AUTO ou MAN ?', d.regulationMode || 'AUTO', ['AUTO', 'MAN']],
+    ['Le thermostat d\'ambiance fonctionne-t-il ?', d.thermostat || 'OUI', ['OUI', 'NON']],
+    ['L\'horloge est-elle correctement réglée ?', d.clock || 'OUI', ['OUI', 'NON']],
+    ['Le chauffage est-il programmé en mode réduit la nuit ?', d.night || 'OUI', ['OUI', 'NON']],
+    ['Indices de dysfonctionnement de la pompe ?', d.pumpIssue || 'NON', ['OUI', 'NON']],
+  ];
+  regRows.forEach(([label, sel, opts]) => {
+    text(page, label, M, y, 8, fontRef.regular, INK, 240);
+    let x = M + 250;
+    opts.forEach((o) => { x = radioOption(page, x, y, o === sel); text(page, o, x, y, 8, fontRef.regular, INK); x += 10; });
+    y += 14;
+  });
+  y = fieldLine(page, 'Remarques:', d.regulationRemarks || '', y, RIGHT - M - 100);
+  return y + 10;
+}
+
+export function drawFollowUpBlock(page, d, y) {
+  y = band(page, 'Prochaines interventions', y);
+  const followUps = [
+    { key: 'Prochaine inspection périodique', label: 'En cas de conformité: prochaine inspection périodique réglementaire à réaliser entre le {from} et le (14) {to}' },
+    { key: 'Contrôle de mise en conformité', label: 'En cas de non-conformité sans mise à l\'arrêt, au plus tard le(15):' },
+    { key: 'Remise en service', label: 'De contrôle en vue d\'une remise en fonctionnement:' },
+    { key: 'Entretien conseillé', label: "D'entretien conseillé par le constructeur au plus tard le(16):" },
+    { key: 'Diagnostic approfondi', label: 'De diagnostic approfondi dans le cadre de l\'inspection réglementaire, à réaliser entre le {from} et le... {to} (17)' },
+  ];
+  const sel = d.followUp || 'Prochaine inspection périodique';
+  followUps.forEach((f) => {
+    const checked = f.key === sel;
+    const lbl = f.label.replace('{from}', d.nextFrom || '').replace('{to}', d.nextTo || '');
+    y = checkboxRow(page, lbl, y, checked);
+  });
+  y = fieldLine(page, 'Date de mise en conformité:', d.remedyDate || '', y, 120);
+  y = fieldLine(page, 'Entretien conseillé (mois):', d.maintenanceDate || '', y, 120);
+  if (d.diagnosticFrom) {
+    y = fieldLine(page, 'Diagnostic approfondi entre:', `${d.diagnosticFrom} et le ${d.diagnosticTo || ''}`, y, 200);
+  }
+  return y + 10;
+}
+export function drawSignatureBlock(page, d, y) {
+  y = band(page, 'Attestation de contrôle établie', y);
+  text(page, 'Attestation établie par', M, y, 9, fontRef.bold, INK, 150);
+  text(page, d.techSignatureName || 'Zied BEN AMARA', M, y + 14, 8.5, fontRef.regular, INK, 200);
+  text(page, '(signature du technicien)', M, y + 26, 7.5, fontRef.regular, SOFT, 120);
+  text(page, 'Attestation reçue par', M + 260, y, 9, fontRef.bold, INK, 150);
+  text(page, d.recipientName || 'Owale Jeanine', M + 260, y + 14, 8.5, fontRef.regular, INK, 150);
+  text(page, `En qualité de ${d.recipientCapacity || 'Rit'}`, M + 260, y + 26, 7.5, fontRef.regular, INK, 120);
+  text(page, '(signature de cette personne)', M + 260, y + 36, 7.5, fontRef.regular, SOFT, 120);
+  return y + 52;
+}
+export function drawAttentionNotice(page, y) {
+  text(page, 'ATTENTION: En cas de constatation d\'un danger pour les utilisateurs du générateur contrôlé ou pour toute autre personne, le technicien agréé est tenu de prévenir l\'utilisateur et le propriétaire du générateur ; soit, s\'ils sont présents par un écrit signé par les parties concernées, chacune en recevant une copie, soit, s\'ils sont absents, par l\'envoi d\'un courrier recommandé avec accusé de réception avertissant du danger potentiel.', M, y, 7.5, fontRef.regular, RED, RIGHT - M);
+  y += 22;
+  text(page, 'Secours d\'urgence: 100 ou 112.', M, y, 8, fontRef.bold, INK, 120);
+  y += 10;
+  text(page, 'SOS odeurs de gaz:', M, y, 8, fontRef.bold, INK, 80);
+  text(page, '- clients ORES: 0800 87 087   |   clients RESA / NETHYS: 04 362 98 38 (fr) – 087 74 20 18 (de)', M, y + 10, 7.5, fontRef.regular, INK, RIGHT - M);
+  text(page, '- clients EANDIS / GASELWEST: 0800 65 0 65', M, y + 18, 7.5, fontRef.regular, INK, RIGHT - M);
+  return y + 32;
+}
+
+// Export surface
+export const walloniaPieces = {
+  W, H, M, RIGHT, INK, SOFT, RED, GREEN, LINE, PAPER,
+  drawMasthead, drawControlId, drawTechnicianBlock, drawDemandeurBlock,
+  drawCombustiblesBlock, drawGeneratorBlock, drawVentilationBlock,
+  drawOrificesBlock, drawMeasurementTable, drawTechInfoBlock,
+  drawDeclarationBlock, drawDiagnosticTree, drawRegulationBlock,
+  drawFollowUpBlock, drawSignatureBlock, drawAttentionNotice,
+  footer, band, fieldLine, checkboxRow, text, rule,
+};
