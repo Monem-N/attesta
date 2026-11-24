@@ -183,6 +183,10 @@ The official AWAC model remains authoritative. Only its separate instruction pag
 
 The cycle is anchored to the generator's **first commissioning date** (`commissioningDate` wizard field), not to the last control. The printed window runs from the anniversary (+1 year for liquid/solid, +2 or +3 years for gas depending on power) to three months after it. When no commissioning date is given, the control date is used as a fallback but the UI marks the date as provisional and the printed note says "à défaut de date de mise en service". Transitional rules for existing installations and the 2023 AGW diagnostic exemptions are **not** encoded — legal review still required.
 
+## Automated PDF quality gate
+
+`tools/check-pdf.py` validates a generated PDF against pinned expectations: page count, A4 portrait geometry, the embedded DejaVuSans font, required text, forbidden instruction/placeholder text, and text staying within page bounds. It also rasterizes every page for visual snapshots. It is invoked from `test/wallonia-render.test.js`, so `node --test` fails if the generated document is structurally wrong. This gate does **not** establish legal equivalence with the AWAC model — the omitted emergency content still needs AWAC confirmation.
+
 ## Status
 
 - [x] All 6 model files downloaded and converted

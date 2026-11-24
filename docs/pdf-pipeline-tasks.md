@@ -65,7 +65,7 @@ Status legend: **DONE** (verified), **WIP** (being worked on), **TODO** (not sta
 | ID | Task | Status | Note |
 |---|---|---|---|
 | P4-1 | Unit tests for maps, boxes, steps, formatting, coverage | DONE | 31 tests passing |
-| P4-2 | Snapshot-style PDF tests (rendered pages, text positions, page counts) | TODO |
+| P4-2 | Snapshot-style PDF tests (rendered pages, text positions, page counts) | DONE | `tools/check-pdf.py` checks page count, A4 geometry, embedded font, required/forbidden text and text bounds, and rasterizes pages; invoked by `test/wallonia-render.test.js` |
 | P4-3 | Template hash assertions | DONE | runtime check + `assets/template-hashes.json` |
 | P4-4 | CI command that runs all PDF-related tests | TODO | `npm test` works |
 

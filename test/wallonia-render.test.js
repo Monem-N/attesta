@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createRequire} from 'node:module';
+import {spawnSync} from 'node:child_process';
 const require=createRequire(import.meta.url);
 
 const tmp=os.tmpdir();
@@ -68,6 +69,35 @@ test('requester and solid-technician selection tick exactly one correct box',asy
   assert.ok(!audit.ticked.includes('Propriétaire'));
   assert.ok(audit.ticked.includes('Technicien spécialisé en combustibles solides'));
   assert.ok(!audit.ticked.some(x=>/^(L|GI|GII)$/.test(x)),'solid specialist is not agréé');
+});
+
+test('generated PDF passes the deterministic quality gate',async()=>{
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  const data={controlDate:'2026-03-15',commissioningDate:'2020-03-15',powerKw:'80',
+    fuel:'Gazeux',fuelDetail:'Gaz nat. G20',techCategory:'Technicien agréé GI',
+    requester:'Locataire',conformity:'NON CONFORME',followUp:'Entretien conseillé',
+    defects:'Réglage à refaire',co2:'12',o2:'3',co:'100',efficiency:'92',
+    load2:'CO₂ 11 / O₂ 4 / CO 100 / rendement 91',
+    techSignatureName:'Élise Laurent',recipientName:'Albert Dupont',recipientCapacity:'Propriétaire'};
+  const bytes=await renderWallonia(data,fontBytes,audit);
+  const outDir=path.join(os.tmpdir(),'attesta-gate');
+  const pdfPath=path.join(outDir,'gate.pdf');
+  fs.mkdirSync(outDir,{recursive:true});
+  fs.writeFileSync(pdfPath,bytes);
+  const checker=new URL('../tools/check-pdf.py',import.meta.url).pathname.replace(/^\/([A-Z]:)/,'$1');
+  const py=process.platform==='win32'?'python':'python3';
+  const r=spawnSync(py,[checker,pdfPath,'--pages','4',
+    '--required','Attestation de contrôle',
+    '--required','Élise Laurent',
+    '--required','Locataire',
+    '--required','CO₂ 11',
+    '--required','4 / 4',
+    '--forbidden','ATTENTION',
+    '--forbidden','Dernière mise à jour',
+    '--forbidden','……',
+    '--outdir',path.join(outDir,'raster')],{encoding:'utf8'});
+  assert.equal(r.status,0,`PDF gate failed:\n${r.stdout||''}\n${r.stderr||''}`);
+  assert.ok(fs.existsSync(path.join(outDir,'raster','gate-page-4.png')));
 });
 
 test('generated source excludes instruction pages and the post-signature notice',()=>{
