@@ -1,0 +1,24 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<script type="module">
+import { renderFlandersPrintHtml } from './print-flanders.js';
+const keuring = new URLSearchParams(location.search).get('doc') === 'keuring';
+const state = { region:'flanders', data:{
+  intervention:'Periodiek onderhoud', controlDate:'2026-10-15', attestNumber:'0510',
+  document: keuring ? 'Keuringsrapport + verbrandingsattest' : 'Verbrandingsattest + reinigingsattest',
+  techCategory:'Erkend technicus gasvormige brandstof (GV)', techName:'Jan Peeters', techAgrement:'GV12345',
+  company:'Verwarmingsbedrijf BVBA', bce:'BE0123.456.789', techPhone:'jan@example.be', workDuration:'08:00 tot 10:00',
+  clientName:'Anna Janssens', clientStreet:'Kerkstraat 12', clientCity:'2000 Antwerpen', clientPhone:'0470 12 34 56',
+  applianceLocation:'', fuel:'Gasvormig', powerKw:'24', central:'Ja', type:'C', condensation:'Ja', year:'2020',
+  make:'Vaillant', model:'ecoTEC', serial:'SN123456', unitOrPulsed:'air pulsed',
+  o2:{i:'3.1',f:'3.0'}, co2:{i:'9.5',f:'9.8'}, co:{i:'20',f:'18'}, flueTemp:{i:'45',f:'44'},
+  netTemp:{i:'30',f:'29'}, efficiency:{i:'91',f:'92'}, smoke:'1', draft:'2',
+  conformity:'Goed en veilig', defects:'', remarks:'', vekaRef:'VEKA-2026-001',
+  keuringInstructions:'OK', keuringBurner:'OK', keuringKetel:'OK', keuringVentilation:'OK',
+  keuringHydraulic:'OK', keuringElectrical:'OK',
+  conformStooktoestel:'OK', conformRookgas:'OK', conformStookplaats:'OK', conformVerbranding:'OK'
+}};
+const tpl = await (await fetch('flanders.html')).text();
+const html = renderFlandersPrintHtml(state, tpl);
+document.open(); document.write(html); document.close();
+</script>
+</body></html>

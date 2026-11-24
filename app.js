@@ -3,6 +3,7 @@ import {flanders} from './regions/flanders.js';
 import {brussels} from './regions/brussels.js';
 import {buildAttestation} from './output.js';
 import {openWalloniaPrint} from './print-wallonia.js';
+import {openFlandersPrint} from './print-flanders.js';
 import {saveAttachmentBytes,loadAttachmentBytes,clearAttachmentBytes} from './attachments.js';
 import {limitsForField} from './regions/wallonia-criteria.js';
 import {diagHelperHTML,wireDiagHelper} from './regions/diag-helper.js';
@@ -499,19 +500,10 @@ function renderFinal(){
         return;
       }
       const audits=[];
-      if(c.id==='flanders'){
-        const chosen=$('flDoc')?.value||'both';
-        const selected=chosen==='both'?flDocuments(d):[chosen];
-        for(const document of selected){
-          const documentState={...state,data:{...d,document}};
-          const blob=await buildAttestation(documentState,attachmentFiles);
-          if(blob.audit) audits.push(blob.audit);
-          download(blob,`attesta-flanders-${document.toLowerCase().replaceAll(/[^a-z0-9]+/gi,'-')}.pdf`);
-        }
-      }else if(c.id==='wallonia'){
-        // Wallonia uses the data-driven HTML/CSS print view: real A4 layout,
-        // logos, tables and checkboxes. The browser print dialog saves the PDF.
-        const printHtml=await openWalloniaPrint(state);
+      if(c.id==='flanders'||c.id==='wallonia'){
+        // Data-driven HTML/CSS print view: real A4 layout, tables and checkboxes.
+        // The browser print dialog saves the PDF.
+        const printHtml=c.id==='flanders'?await openFlandersPrint(state):await openWalloniaPrint(state);
         const w=window.open('','_blank');
         if(!w) throw new Error('print popup blocked');
         w.document.open(); w.document.write(printHtml); w.document.close();

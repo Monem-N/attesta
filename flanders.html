@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="utf-8">
+<title>Verbrandingsattest — Vlaanderen</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  @page{size:A4;margin:0}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#e9e9e9;font-family:"Roboto",Arial,Helvetica,sans-serif;color:#111;line-height:1.3}
+  .sheet{width:210mm;height:297mm;background:#fff;margin:0;padding:11mm 13mm 12mm;position:relative;page-break-after:always;overflow:hidden}
+  .sheet:last-child{page-break-after:auto}
+  @media screen{.sheet{margin:6mm auto}}
+  .head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.4pt solid #111;padding-bottom:2mm;margin-bottom:3mm}
+  .head b{font-size:15px}.head .sub{font-size:9px;color:#555}
+  .h2{font-size:11px;font-weight:700;background:#eee;border:.6pt solid #111;padding:1mm 2mm;margin:3mm 0 1.5mm}
+  table{border-collapse:collapse;width:100%}
+  td{border:.6pt solid #cfcfcf;padding:1.6mm 2mm;vertical-align:middle;font-size:9.5px}
+  td.k{color:#555;width:34%}.v{font-weight:600;font-variant-numeric:tabular-nums}
+  .fill{display:inline-block;border-bottom:.6pt solid #999;min-width:30mm;height:4mm}
+  .opt{display:inline-flex;align-items:center;gap:1.4mm;margin-right:4mm;font-size:9.5px;white-space:nowrap}
+  .cb{width:3.2mm;height:3.2mm;border:.6pt solid #333;display:inline-flex;align-items:center;justify-content:center;font-size:8px;color:#b23a2b;font-weight:700;flex:none}
+  .perf th,.perf td{border:.6pt solid #cfcfcf;font-size:8.5px;padding:1.2mm 1mm;text-align:center;font-variant-numeric:tabular-nums}
+  .perf th{background:#f3f3f3;font-weight:600}
+  .perf td.l{text-align:left;font-weight:600}
+  .ok{color:#1f6b3a;font-weight:700}
+  .foot{position:absolute;left:13mm;right:13mm;bottom:5mm;display:flex;justify-content:space-between;font-size:7.5px;color:#777;border-top:.4pt solid #999;padding-top:1mm}
+  .sign{display:flex;justify-content:space-between;margin-top:8mm;font-size:9.5px}
+  .sign .line{border-bottom:.6pt solid #333;width:70mm;height:10mm}
+  .small{font-size:8px;color:#555}
+</style></head>
+<body>
+
+<!-- ============ PAGE 1 — VERBRANDINGSATTEST ============ -->
+<div class="sheet" data-page="1">
+  <div class="head"><b>VERBRANDINGSATTEST</b>
+    <div class="sub">onderhoud · keuring voor eerste ingebruikname<br>volgnummer attest: <span class="v">{{attestNumber}}</span></div></div>
+
+  <table>
+    <tr><td class="k">Datum uitvoering</td><td class="v">{{controlDate}}</td>
+      <td class="k">Arbeidsduur van — tot</td><td>{{workDuration}}</td></tr>
+  </table>
+
+  <div class="h2">Firma / Technicus</div>
+  <table>
+    <tr><td class="k">Firma</td><td class="v">{{company}}</td><td class="k">Ondernemingsnummer</td><td class="v">{{bce}}</td></tr>
+    <tr><td class="k">Naam</td><td class="v">{{techName}}</td><td class="k">Erkenningsnummer</td><td class="v">{{techAgrement}}</td></tr>
+    <tr><td class="k">Erkenning</td><td colspan="3">
+      <span class="opt"><span class="cb" data-tick="techCategory:GV">☐</span>GV</span>
+      <span class="opt"><span class="cb" data-tick="techCategory:TV">☐</span>TV</span>
+      <span class="opt"><span class="cb" data-tick="techCategory:VA">☐</span>VA+</span>
+      <span class="opt"><span class="cb" data-tick="techCategory:geschoold">☐</span>Geschoold vakman (vaste brandstof)</span></td></tr>
+    <tr><td class="k">E-mail</td><td class="v">{{techPhone}}</td><td class="k">Telefoon</td><td></td></tr>
+  </table>
+
+  <div class="h2">Klant</div>
+  <table>
+    <tr><td class="k">Voornaam en achternaam</td><td class="v">{{clientName}}</td><td class="k">Telefoon / e-mail</td><td class="v">{{clientPhone}}</td></tr>
+    <tr><td class="k">Straat en nummer</td><td class="v">{{clientStreet}}</td><td class="k">Postnummer en gemeente</td><td class="v">{{clientCity}}</td></tr>
+    <tr><td class="k">Adres stooktoestel (indien verschillend)</td><td colspan="3">{{applianceLocation}}</td></tr>
+  </table>
+
+  <div class="h2">Kenmerken van het stooktoestel</div>
+  <table>
+    <tr><td class="k">Brandstof</td><td colspan="3">
+      <span class="opt"><span class="cb" data-tick="fuel:gasvormig">☐</span>Gasvormig</span>
+      <span class="opt"><span class="cb" data-tick="fuel:vloeibaar">☐</span>Vloeibaar</span>
+      <span class="opt"><span class="cb" data-tick="fuel:vast">☐</span>Vast</span></td></tr>
+    <tr><td class="k">Centraal toestel</td><td><span class="opt"><span class="cb" data-tick="central:ja">☐</span>Ja</span><span class="opt"><span class="cb" data-tick="central:nee">☐</span>Nee</span></td>
+      <td class="k">Type</td><td><span class="opt"><span class="cb" data-tick="type:b">☐</span>B</span><span class="opt"><span class="cb" data-tick="type:c">☐</span>C</span></td></tr>
+    <tr><td class="k">Condensatie</td><td><span class="opt"><span class="cb" data-tick="condensation:ja">☐</span>Ja</span><span class="opt"><span class="cb" data-tick="condensation:nee">☐</span>Nee</span></td>
+      <td class="k">Bouwjaar</td><td class="v">{{year}}</td></tr>
+    <tr><td class="k">Merk / Type</td><td class="v">{{make}} {{model}}</td><td class="k">Fabricatienummer</td><td class="v">{{serial}}</td></tr>
+    <tr><td class="k">Nominaal vermogen (kW)</td><td class="v">{{powerKw}}</td><td class="k">Brander</td><td><span class="opt"><span class="cb" data-tick="unitOrPulsed:unit">☐</span>unit</span><span class="opt"><span class="cb" data-tick="unitOrPulsed:air pulsed">☐</span>air pulsed</span></td></tr>
+  </table>
+
+  <div class="h2">Goede staat van werking — metingen (Proef I initiële / Proef II eindmeting)</div>
+  <table class="perf">
+    <tr><th style="text-align:left">Parameter</th><th>Eenheid</th><th>Brandstof</th><th>Proef I</th><th>OK/Niet OK</th><th>Proef II</th><th>OK/Niet OK</th></tr>
+    <tr><td class="l">Zuurstof (O₂)</td><td>%</td><td>2</td><td class="v">{{o2_1}}</td><td><span class="cb" data-tick="v_o2_1:OK">☐</span>OK <span class="cb" data-tick="v_o2_1:Niet OK">☐</span>Niet OK</td><td class="v">{{o2_2}}</td><td><span class="cb" data-tick="v_o2_2:OK">☐</span>OK <span class="cb" data-tick="v_o2_2:Niet OK">☐</span>Niet OK</td></tr>
+    <tr><td class="l">Koolstofdioxide (CO₂)</td><td>%</td><td>2</td><td class="v">{{co2_1}}</td><td><span class="cb" data-tick="v_co2_1:OK">☐</span>OK <span class="cb" data-tick="v_co2_1:Niet OK">☐</span>Niet OK</td><td class="v">{{co2_2}}</td><td><span class="cb" data-tick="v_co2_2:OK">☐</span>OK <span class="cb" data-tick="v_co2_2:Niet OK">☐</span>Niet OK</td></tr>
+    <tr><td class="l">Koolstofmonoxide (CO)</td><td>mg/kWh</td><td>1,2</td><td class="v">{{co_1}}</td><td><span class="cb" data-tick="v_co_1:OK">☐</span>OK <span class="cb" data-tick="v_co_1:Niet OK">☐</span>Niet OK</td><td class="v">{{co_2}}</td><td><span class="cb" data-tick="v_co_2:OK">☐</span>OK <span class="cb" data-tick="v_co_2:Niet OK">☐</span>Niet OK</td></tr>
+    <tr><td class="l">Rookgastemperatuur (tg)</td><td>°C</td><td>1,2</td><td class="v">{{flueTemp_1}}</td><td><span class="cb" data-tick="v_flueTemp_1:OK">☐</span>OK <span class="cb" data-tick="v_flueTemp_1:Niet OK">☐</span>Niet OK</td><td class="v">{{flueTemp_2}}</td><td><span class="cb" data-tick="v_flueTemp_2:OK">☐</span>OK <span class="cb" data-tick="v_flueTemp_2:Niet OK">☐</span>Niet OK</td></tr>
+    <tr><td class="l">Nettotemperatuur (tg−ta)</td><td>°C</td><td>1,2</td><td class="v">{{netTemp_1}}</td><td>—</td><td class="v">{{netTemp_2}}</td><td>—</td></tr>
+    <tr><td class="l">Verbrandingsrendement (Hi)</td><td>%</td><td>1,2</td><td class="v">{{efficiency_1}}</td><td><span class="cb" data-tick="v_efficiency_1:OK">☐</span>OK <span class="cb" data-tick="v_efficiency_1:Niet OK">☐</span>Niet OK</td><td class="v">{{efficiency_2}}</td><td><span class="cb" data-tick="v_efficiency_2:OK">☐</span>OK <span class="cb" data-tick="v_efficiency_2:Niet OK">☐</span>Niet OK</td></tr>
+    <tr><td class="l">Rookindex Bacharach</td><td>—</td><td>1</td><td class="v">{{smoke}}</td><td>—</td><td></td><td>—</td></tr>
+    <tr><td class="l">Druk rookgasafvoerkanaal</td><td>Pa</td><td>1,2,3</td><td class="v">{{draft}}</td><td>—</td><td></td><td>—</td></tr>
+  </table>
+
+  <div class="h2">Veilige staat van werking</div>
+  <table>
+    <tr><td>Druk rookgasafvoerkanaal</td><td><span class="opt"><span class="cb" data-tick="safe_draft:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="safe_draft:Niet OK">☐</span>Niet OK</span></td>
+      <td>Verluchting en ventilatie stooklokaal</td><td><span class="opt"><span class="cb" data-tick="safe_vent:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="safe_vent:Niet OK">☐</span>Niet OK</span></td></tr>
+  </table>
+
+  <div class="h2">Eindbeoordeling</div>
+  <table>
+    <tr><td colspan="4">Het stooktoestel werkt:
+      <span class="opt"><span class="cb" data-tick="conformity:goed">☐</span>goed</span>
+      <span class="opt"><span class="cb" data-tick="conformity:veilig">☐</span>veilig</span>
+      <span class="opt"><span class="cb" data-tick="conformity:niet goed">☐</span>niet goed</span>
+      <span class="opt"><span class="cb" data-tick="conformity:niet veilig">☐</span>niet veilig</span></td></tr>
+    <tr><td class="k">Eerstvolgende verbrandingscontrole vóór</td><td class="v">{{nextDueDate}}</td><td class="k">VEKA referentie</td><td class="v">{{vekaRef}}</td></tr>
+    <tr><td class="k">Gebreken en maatregelen</td><td colspan="3">{{defects}}</td></tr>
+    <tr><td class="k">Andere opmerkingen</td><td colspan="3">{{remarks}}</td></tr>
+  </table>
+
+  <div class="sign"><div>Handtekening erkende technicus<div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
+  <div class="foot"><span>Attest — besluit Vlaamse Regering 8 december 2006 · veiligverwarmen.be</span><span>1 / 2</span></div>
+</div>
+
+<!-- ============ PAGE 2 — REINIGINGSATTEST ============ -->
+<div class="sheet" data-page="2" data-doc="reiniging">
+  <div class="head"><b>REINIGINGSATTEST</b><div class="sub">volgnummer attest: <span class="v">{{attestNumber}}</span></div></div>
+  <table>
+    <tr><td class="k">Datum reiniging</td><td class="v">{{controlDate}}</td><td class="k">Arbeidsduur</td><td>{{workDuration}}</td></tr>
+    <tr><td class="k">Firma</td><td class="v">{{company}}</td><td class="k">Ondernemingsnummer</td><td class="v">{{bce}}</td></tr>
+    <tr><td class="k">Technicus</td><td class="v">{{techName}}</td><td class="k">Erkenningsnummer</td><td class="v">{{techAgrement}}</td></tr>
+    <tr><td class="k">Klant</td><td class="v">{{clientName}}</td><td class="k">Adres</td><td class="v">{{clientStreet}} {{clientCity}}</td></tr>
+  </table>
+  <div class="h2">Reiniging en controle rookgasafvoerkanaal</div>
+  <table>
+    <tr><td><span class="cb" data-tick="clean_flue:vegen">☐</span>Vegen rookgasafvoerkanaal en verbindingsstukken</td></tr>
+    <tr><td><span class="cb" data-tick="clean_flue:nazicht">☐</span>Nazicht goede werking</td></tr>
+    <tr><td><span class="cb" data-tick="clean_flue:terugslag">☐</span>Controle terugslag (terugslagmelder)</td></tr>
+  </table>
+  <div class="h2">Reiniging van het stooktoestel</div>
+  <table>
+    <tr><td><span class="cb" data-tick="clean_appliance:ontstoffing">☐</span>Ontstoffing</td></tr>
+    <tr><td><span class="cb" data-tick="clean_appliance:filter">☐</span>Reiniging filters</td></tr>
+    <tr><td><span class="cb" data-tick="clean_appliance:ketel">☐</span>Reiniging ketel / warmtewisselaar</td></tr>
+    <tr><td><span class="cb" data-tick="clean_appliance:brander">☐</span>Reiniging brander</td></tr>
+    <tr><td class="k">Andere opmerkingen</td><td>{{remarks}}</td></tr>
+  </table>
+  <div class="sign"><div>Handtekening technicus / schoorsteenveger<div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
+  <div class="foot"><span>Reiniging — veiligverwarmen.be</span><span>2 / 2</span></div>
+</div>
+
+<!-- ============ PAGE 2 — KEURINGSRAPPORT ============ -->
+<div class="sheet" data-page="2" data-doc="keuring">
+  <div class="head"><b>KEURINGSRAPPORT</b><div class="sub">volgnummer rapport: <span class="v">{{attestNumber}}</span></div></div>
+  <table>
+    <tr><td class="k">Datum keuring</td><td class="v">{{controlDate}}</td><td class="k">Arbeidsduur</td><td>{{workDuration}}</td></tr>
+    <tr><td class="k">Firma</td><td class="v">{{company}}</td><td class="k">Ondernemingsnummer</td><td class="v">{{bce}}</td></tr>
+    <tr><td class="k">Technicus</td><td class="v">{{techName}}</td><td class="k">Erkenningsnummer</td><td class="v">{{techAgrement}}</td></tr>
+    <tr><td class="k">Klant</td><td class="v">{{clientName}}</td><td class="k">Adres</td><td class="v">{{clientStreet}} {{clientCity}}</td></tr>
+  </table>
+  <div class="h2">Conformiteitscontrole (OK / Niet OK)</div>
+  <table>
+    <tr><td>Rookgasafvoer — materiaal / diameter / hoogte</td><td><span class="opt"><span class="cb" data-tick="keuring:rookgas">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:rookgasng">☐</span>Niet OK</span></td></tr>
+    <tr><td>Brander — ingeregeld vermogen / lengte</td><td><span class="opt"><span class="cb" data-tick="keuring:brander">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:branderng">☐</span>Niet OK</span></td></tr>
+    <tr><td>Ketel — mantel / isolatie / stabiliteit</td><td><span class="opt"><span class="cb" data-tick="keuring:ketel">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:ketelng">☐</span>Niet OK</span></td></tr>
+    <tr><td>Ventilatie stookplaats</td><td><span class="opt"><span class="cb" data-tick="keuring:vent">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:ventng">☐</span>Niet OK</span></td></tr>
+    <tr><td>Hydraulische installatie — lekken</td><td><span class="opt"><span class="cb" data-tick="keuring:hyd">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:hydng">☐</span>Niet OK</span></td></tr>
+    <tr><td>Elektrische installatie — zekering / aarding</td><td><span class="opt"><span class="cb" data-tick="keuring:elec">☐</span>OK</span><span class="opt"><span class="cb" data-tick="keuring:elecng">☐</span>Niet OK</span></td></tr>
+  </table>
+  <div class="h2">Eindbeoordeling</div>
+  <table>
+    <tr><td>Stooktoestel conform</td><td><span class="opt"><span class="cb" data-tick="conformStooktoestel:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformStooktoestel:Niet OK">☐</span>Niet OK</span></td></tr>
+    <tr><td>Rookgasafvoerkanaal conform</td><td><span class="opt"><span class="cb" data-tick="conformRookgas:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformRookgas:Niet OK">☐</span>Niet OK</span></td></tr>
+    <tr><td>Stookplaats conform</td><td><span class="opt"><span class="cb" data-tick="conformStookplaats:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformStookplaats:Niet OK">☐</span>Niet OK</span></td></tr>
+    <tr><td>Verbrandingscontrole (verbrandingsattest toegevoegd)</td><td><span class="opt"><span class="cb" data-tick="conformVerbranding:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="conformVerbranding:Niet OK">☐</span>Niet OK</span></td></tr>
+    <tr><td class="k">Gebreken / maatregelen</td><td>{{defects}}</td></tr>
+    <tr><td class="k">Eerstvolgende onderhoud vóór</td><td class="v">{{nextDueDate}}</td></tr>
+  </table>
+  <div class="sign"><div>Handtekening erkende technicus<div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
+  <div class="foot"><span>Keuringsrapport — veiligverwarmen.be</span><span>2 / 2</span></div>
+</div>
+
+</body></html>
