@@ -2,6 +2,7 @@ import {wallonia,fmt as wFmt} from './regions/wallonia.js';
 import {flanders} from './regions/flanders.js';
 import {brussels} from './regions/brussels.js';
 import {buildAttestation} from './output.js';
+import {openWalloniaPrint} from './print-wallonia.js';
 import {saveAttachmentBytes,loadAttachmentBytes,clearAttachmentBytes} from './attachments.js';
 import {limitsForField} from './regions/wallonia-criteria.js';
 
@@ -494,6 +495,10 @@ function renderFinal(){
           if(blob.audit) audits.push(blob.audit);
           download(blob,`attesta-flanders-${document.toLowerCase().replaceAll(/[^a-z0-9]+/gi,'-')}.pdf`);
         }
+      }else if(c.id==='wallonia'){
+        // Wallonia uses the data-driven HTML/CSS print view: real A4 layout,
+        // logos, tables and checkboxes. The browser print dialog saves the PDF.
+        await openWalloniaPrint(state);
       }else{
         const blob=await buildAttestation(state,attachmentFiles);
         if(blob.audit) audits.push(blob.audit);

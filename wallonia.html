@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Attestation de contrôle — Wallonie</title>
+<style>
+  @page { size: A4; margin: 0; }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#e9e9e9;font-family:"Segoe UI",Roboto,Arial,sans-serif;color:#111}
+  .page{width:210mm;height:297mm;background:#fff;margin:6mm auto;padding:11mm 13mm 12mm;position:relative;page-break-after:always;overflow:hidden}
+  .page:last-child{page-break-after:auto}
+  .mast{display:flex;align-items:flex-start;justify-content:space-between;height:60px}
+  .mast img{height:100%;width:auto;object-fit:contain}
+  .mast .logo-w{height:56px}.mast .logo-d{height:40px;margin-top:6px}.mast .logo-a{height:48px;margin-top:4px}
+  h1.title{font-size:17px;font-weight:700;margin:6px 0 2px;text-align:center}
+  .rule{height:1.4px;background:#111;margin:3px 0 6px}
+  .rule.red{background:#b23a2b;height:1.2px}
+  table{border-collapse:collapse;width:100%}
+  td{border:1px solid #cfcfcf;padding:2.5px 5px;vertical-align:top;font-size:10px}
+  .lbl{color:#555;font-size:9.5px}
+  .val{font-weight:600}
+  .sec{color:#b23a2b;font-weight:700;font-size:11.5px;margin:8px 0 2px;border-bottom:1.2px solid #b23a2b;padding-bottom:1px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  .row{display:flex;align-items:center;gap:6px;border-bottom:1px solid #d8d8d8;padding:3px 0;font-size:10px;min-height:20px}
+  .row .k{color:#555;width:150px;flex:none}
+  .row .v{flex:1;font-weight:600}
+  .opts{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:10px}
+  .cb{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+  .box{width:11px;height:11px;border:1px solid #333;display:inline-flex;align-items:center;justify-content:center;font-size:9px;line-height:1;color:#b23a2b;font-weight:700}
+  .box.on{background:#fff}
+  .muted{color:#666;font-size:8.5px}
+  .red{color:#b23a2b}
+  .b{font-weight:700}
+  .foot{position:absolute;left:13mm;right:13mm;bottom:6mm;display:flex;justify-content:space-between;font-size:8px;color:#777}
+  .meas th,.meas td{border:1px solid #cfcfcf;font-size:9px;padding:3px 4px;text-align:center}
+  .meas th{background:#f3f3f3;font-weight:600;font-size:8.5px}
+  .meas td.l{text-align:left;font-weight:600}
+  .ok{color:#1f6b3a;font-weight:700}.nonok{color:#b23a2b;font-weight:700}
+  .diag .q{border-bottom:1px solid #d8d8d8;padding:4px 0;font-size:10px}
+  .diag .route{font-size:8.5px;color:#666;padding-left:10px}
+  .sign{display:flex;justify-content:space-between;margin-top:26px;font-size:10px}
+  .sign .line{border-bottom:1px solid #333;width:70mm;height:26px}
+  .notice{color:#b23a2b;font-size:9.5px;margin-top:16px;line-height:1.35}
+  .small{font-size:8.5px;color:#555}
+</style></head>
+<body>
+
+<!-- ================= PAGE 1 ================= -->
+<div class="page">
+  <div class="mast">
+    <img class="logo-w" src="assets/logos/wallonie.jpg" alt="">
+    <img class="logo-d" src="assets/logos/dgo4.png" alt="">
+    <img class="logo-a" src="assets/logos/air-climat.jpg" alt="">
+  </div>
+  <h1 class="title">Attestation de contrôle d’un générateur de chaleur</h1>
+  <div class="rule"></div>
+
+  <table>
+    <tr>
+      <td style="width:50%"><span class="lbl">Date du contrôle :</span> <span class="val">{{controlDate}}</span></td>
+      <td><span class="lbl">N° attestation(1) :</span> <span class="val">{{attestNumber}}</span></td>
+    </tr>
+  </table>
+
+  <div class="sec">Technicien</div>
+  <table>
+    <tr><td style="width:50%">
+      <span class="b">Technicien agréé</span>
+      <span class="opts" style="display:inline-flex;margin-left:8px">
+        <span class="cb"><span class="box" data-tick="techCategory:agréé"></span>L</span>
+        <span class="cb"><span class="box" data-tick="techCategory:l"></span>GI</span>
+        <span class="cb"><span class="box on" data-tick="techCategory:gi">✓</span>GII</span>
+      </span>
+      <br><span class="cb"><span class="box" data-tick="techCategory:gii"></span>Technicien spécialisé en combustibles solides</span>
+    </td><td>
+      <span class="b">Le demandeur du contrôle</span><br>
+      <span class="cb"><span class="box on">✓</span>Propriétaire de l’installation de chauffage central.</span><br>
+      <span class="cb"><span class="box" data-tick="requester:propri"></span>{{recipientCapacity}} du bâtiment contenant l’installation de cc.</span><br>
+      <span class="cb"><span class="box"></span>Autre (préciser)</span>
+    </td></tr>
+  </table>
+  <table>
+    <tr><td style="width:50%"><span class="lbl">Nom et prénom :</span> <span class="val">{{techName}}</span></td>
+      <td><span class="lbl">Nom et prénom :</span> <span class="val">{{clientName}}</span></td></tr>
+    <tr><td><span class="lbl">N° d’agrément (si CL ou CG) :</span> <span class="val">{{techAgrement}}</span></td>
+      <td><span class="lbl">Entreprise (si pertinent) :</span></td></tr>
+    <tr><td><span class="lbl">Nom entreprise :</span> <span class="val">{{company}}</span></td>
+      <td><span class="lbl">Rue :</span> <span class="val">{{clientStreet}}</span> &nbsp;<span class="lbl">N° :</span> <span class="val">{{clientNumber}}</span></td></tr>
+    <tr><td><span class="lbl">Tél :</span> <span class="val">{{techPhone}}</span></td>
+      <td><span class="lbl">Code postal &amp; localité :</span> <span class="val">{{clientCity}}</span></td></tr>
+    <tr><td><span class="lbl">Fax ou courriel :</span> <span class="val">{{techEmail}}</span></td>
+      <td><span class="lbl">Tél :</span></td></tr>
+    <tr><td><span class="lbl">N° Entreprise (BCE) :</span> <span class="val">{{bce}}</span></td>
+      <td><span class="lbl">Fax ou courriel :</span></td></tr>
+    <tr><td colspan="2"><span class="lbl">Localisation du générateur si différente :</span></td></tr>
+  </table>
+
+  <div class="sec">Combustibles <span class="muted" style="font-weight:400">(si multicombustible, mentionner les différents combustibles)</span></div>
+  <div class="row"><span class="k">Solide</span><span class="opts">
+    <span class="cb"><span class="box"></span>Pellets bois</span><span class="cb"><span class="box"></span>Bûches</span>
+    <span class="cb"><span class="box"></span>Plaquettes</span><span class="cb"><span class="box"></span>Céréales</span>
+    <span class="cb"><span class="box"></span>Charbon</span></span></div>
+  <div class="row"><span class="k">Liquide</span><span class="opts">
+    <span class="cb"><span class="box"></span>Gasoil</span><span class="cb"><span class="box" data-tick="fuelDetail:gasoil"></span>Gasoil extra</span>
+    <span class="cb"><span class="box"></span>Fuel lourd</span></span></div>
+  <div class="row"><span class="k">Gazeux</span><span class="opts">
+    <span class="cb"><span class="box on">✓</span>Gaz nat. G20</span><span class="cb"><span class="box"></span>Gaz nat.G25</span>
+    <span class="cb"><span class="box" data-tick="fuelDetail:g25"></span>Propane</span><span class="cb"><span class="box"></span>Butane</span>
+    <span class="cb"><span class="box"></span>Biogaz</span></span></div>
+
+  <div class="sec">Générateur de chaleur &nbsp;·&nbsp; Brûleur</div>
+  <table>
+    <tr><td style="width:50%"><span class="lbl">Nb de générateurs dans le local :</span> <span class="val">1</span></td>
+      <td><span class="opts"><span class="cb"><span class="box on">✓</span>1 allure</span>
+        <span class="cb"><span class="box" data-tick="burnerType:1 allure"></span>plusieurs allures nombre :</span>
+        <span class="cb"><span class="box"></span>modulant</span></span></td></tr>
+    <tr><td><span class="lbl">Identification du générateur :</span></td>
+      <td><span class="lbl">si gaz :</span> <span class="cb"><span class="box" data-tick="burnerType:modulant"></span>unit</span>
+        <span class="cb"><span class="box on" data-tick="unitOrPulsed:unit">✓</span>air pulsé (séparable)</span></td></tr>
+    <tr><td><span class="lbl">Raccordement :</span> <span class="val">B</span>(3), <span class="cb"><span class="box"></span>C</span>(3) &nbsp; <span class="lbl">Type brûleur :</span> <span class="val">{{raccordementDetail}}</span></td>
+      <td><span class="cb"><span class="box"></span>prémix(5)</span> <span class="cb"><span class="box on" data-tick="premix:prémix">✓</span>non-premix</span></td></tr>
+    <tr><td><span class="lbl">A condensation :</span> <span class="cb"><span class="box" data-tick="premix:non-premix"></span>oui</span> <span class="cb"><span class="box on">✓</span>non</span>
+      &nbsp; <span class="lbl">Plaque signalétique :</span> <span class="cb"><span class="box"></span>Absente</span> <span class="cb"><span class="box" data-tick="plaque:absente"></span>Présente</span></td>
+      <td><span class="lbl">Marque :</span> <span class="val">Junkers</span></td></tr>
+    <tr><td><span class="lbl">Année de construction(4) :</span> <span class="val">{{year}}</span>
+      &nbsp; <span class="lbl">Type :</span> <span class="val">{{burnerModel}}</span></td>
+      <td><span class="lbl">N° série :</span> <span class="val">{{serial}}</span></td></tr>
+    <tr><td><span class="lbl">Puissance nominale utile :</span> <span class="val">{{powerKw}}</span> kW</td>
+      <td><span class="lbl">Fluide caloporteur :</span>
+        <span class="cb"><span class="box" data-tick="fluid:eau"></span>Eau</span>
+        <span class="cb"><span class="box" data-tick="fluid:vapeur"></span>Vapeur basse pression</span>
+        <span class="cb"><span class="box" data-tick="fluid:huile"></span>Huile thermique</span></td></tr>
+    <tr><td><span class="lbl">Production de chaleur :</span></td>
+      <td><span class="cb"><span class="box" data-tick="production:chauffage"></span>Chauffage</span>
+        <span class="cb"><span class="box" data-tick="production:ecs"></span>ECS</span>
+        <span class="cb"><span class="box" data-tick="production:chauffage+ecs"></span>Chauff. + ECS</span></td></tr>
+  </table>
+
+  <div class="sec">Ventilation local – Amenée d’air comburant – Évacuation des gaz de combustion</div>
+  <p class="small" style="margin:2px 0">Introduction de la demande initiale de permis d’urbanisme du bâtiment contenant le local de chauffe(6) :
+    <span class="cb"><span class="box on">✓</span>Avant le 29/05/2009(7)</span> ·
+    <span class="cb"><span class="box" data-tick="permisDate:avant"></span>Après le 29/05/2009</span></p>
+  <table>
+    <tr><td>Conformité de la ventilation du local de chauffe :</td><td style="width:120px"><span class="cb"><span class="box on" data-tick="permisDate:après">✓</span>OUI</span> <span class="cb"><span class="box" data-tick="ventLocal:oui"></span>NON</span></td></tr>
+    <tr><td>Conformité du dispositif d’amenée d’air comburant :</td><td><span class="cb"><span class="box on" data-tick="airSupply:oui">✓</span>OUI</span> <span class="cb"><span class="box"></span>NON</span></td></tr>
+    <tr><td>Conformité du dispositif d’évacuation des gaz de combustion :</td><td><span class="cb"><span class="box on" data-tick="flue:oui">✓</span>OUI</span> <span class="cb"><span class="box"></span>NON</span></td></tr>
+  </table>
+  <div class="sec">Orifices de mesure</div>
+  <p class="small" style="margin:2px 0">Le générateur est-il dispensé de l’obligation d’être équipé d’orifices de mesure(8) ?
+    <span class="cb"><span class="box"></span>OUI</span> <span class="cb"><span class="box on">✓</span>NON</span> →
+    <span class="cb"><span class="box on">✓</span>Présent et conforme</span>
+    <span class="cb"><span class="box" data-tick="orifices:conforme"></span>Présent et non conforme</span>
+    <span class="cb"><span class="box" data-tick="orifices:non conforme"></span>Absent et techniquement non réalisable</span></p>
+
+  <div class="foot"><span>1 / 9</span><span>Dernière mise à jour : 29/10/2015</span></div>
+</div>
+
+<!-- ================= PAGE 2 ================= -->
+<div class="page">
+  <div class="mast">
+    <img class="logo-w" src="assets/logos/wallonie.jpg" alt=""><img class="logo-d" src="assets/logos/dgo4.png" alt=""><img class="logo-a" src="assets/logos/air-climat.jpg" alt="">
+  </div>
+  <h1 class="title" style="text-align:left;font-size:14px">Respect des critères de bon fonctionnement <span class="muted" style="font-weight:400">(installations alimentées en combustibles liquides ou gazeux)</span></h1>
+  <div class="rule"></div>
+  <table class="meas">
+    <tr><th style="width:24%">Paramètre</th><th>Indice de fumée<br>Max. (Bacharach)</th><th>t° nette gaz<br>Max. (°C)</th><th>Teneur CO₂<br>Min. (%)</th><th>Teneur O₂<br>Max. (%)</th><th>Teneur CO<br>Max. (mg/kWh)</th><th>Rend. combustion<br>Min. (%)</th></tr>
+    <tr><td class="l">Performances minimales (10)</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="l">Valeurs mesurées</td><td></td><td class="val">{{flueTemp}}</td><td class="val">{{co2}}</td><td class="val">{{o2}}</td><td class="val">{{co}}</td><td class="val">{{efficiency}}</td></tr>
+    <tr><td class="l">Puissance maximale</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="l">Allure 1 / Pmin</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="l">Allure 2 (25 %)</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="l">Allure 3 (50 %)</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="l">Allure 4 (75 %)</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    <tr><td class="l">Comparaison</td><td class="ok">OK</td><td class="ok">OK</td><td class="ok">OK</td><td class="ok">OK</td><td class="ok">OK</td><td class="ok">OK</td></tr>
+    <tr><td class="l">Résultat global</td><td colspan="6" class="ok" style="text-align:left">OK</td></tr>
+  </table>
+  <div class="row" style="border:none;margin-top:4px"><span class="k">Appareil :</span><span class="v">{{analyzerMake}}</span><span class="k" style="width:60px">S/N :</span><span class="v">{{analyzerSerial}}</span><span class="k" style="width:90px">Date – heure :</span><span class="v">15/10/26 · 16:45</span></div>
+  <p class="small">ATTENTION : les tickets sur lesquels figurent les résultats des mesures, mentionnant l’heure et la date, doivent être agrafés sur cette attestation.</p>
+
+  <div class="sec">Informations techniques complémentaires</div>
+  <table>
+    <tr><td><span class="lbl">Pression cheminée (Pa) :</span></td><td><span class="lbl">Pression pompe (bar) :</span></td></tr>
+    <tr><td><span class="lbl">Température d’eau (°C) :</span></td><td><span class="lbl">Gicleur — marque &amp; type :</span></td></tr>
+    <tr><td><span class="lbl">Gicleur — débit (gal/h) :</span></td><td><span class="lbl">Gicleur — angle (°) :</span></td></tr>
+  </table>
+
+  <div class="sec">Déclaration de conformité vis-à-vis de l’acte de contrôle</div>
+  <span class="cb"><span class="box on">✓</span>OUI</span> <span class="cb"><span class="box"></span>NON</span>
+  &nbsp; <span class="lbl">En cas de non conformité → Causes et actions :</span>
+  <div class="foot"><span>2 / 9</span><span>Dernière mise à jour : 29/10/2015</span></div>
+</div>
+
+<!-- ================= PAGE 3 ================= -->
+<div class="page">
+  <div class="mast">
+    <img class="logo-w" src="assets/logos/wallonie.jpg" alt=""><img class="logo-d" src="assets/logos/dgo4.png" alt=""><img class="logo-a" src="assets/logos/air-climat.jpg" alt="">
+  </div>
+  <h1 class="title" style="text-align:left;font-size:14px">Réalisation d’un diagnostic approfondi dans le cadre d’une inspection périodique (si Pnom &gt; 20 kW)</h1>
+  <div class="rule"></div>
+  <div class="diag">
+    <div class="q">A. Un rapport de diagnostic approfondi est-il présent ? <span style="float:right"><span class="cb"><span class="box"></span>OUI</span> <span class="cb"><span class="box on">✓</span>NON</span></span></div>
+    <div class="route">Si réponse = « OUI » → Passer au point B. Si réponse = « NON » → Passer au point C.</div>
+    <div class="q">B. Modification du système ou des exigences depuis le rapport ? <span style="float:right"><span class="cb"><span class="box"></span>OUI</span> <span class="cb"><span class="box"></span>NON</span></span></div>
+    <div class="route">Si OUI → Passer au point D. Si NON → Installation en ordre. Sortie du tableau.</div>
+    <div class="q">C. Modification après le 30/04/2015 ? <span style="float:right"><span class="cb"><span class="box"></span>OUI</span><span class="cb"><span class="box on">✓</span>NON</span></span></div>
+    <div class="route">Si OUI → Passer au point D. Si NON → Passer au point E.</div>
+    <div class="q">D. Au moins 2 ans depuis la modification ? <span style="float:right"><span class="cb"><span class="box"></span>OUI</span><span class="cb"><span class="box"></span>NON</span></span></div>
+    <div class="route">Si OUI → Effectuer un diagnostic ; installation en ordre. Sortie du tableau.</div>
+    <div class="q">E. Le diagnostic a-t-il déjà été reporté ? <span style="float:right"><span class="cb"><span class="box"></span>OUI</span><span class="cb"><span class="box on">✓</span>NON</span></span></div>
+    <div class="route">Si NON → Effectuer un diagnostic ; report toléré une seule fois.</div>
+  </div>
+  <div class="sec">Inspection périodique du système de régulation et des pompes de circulation (13)</div>
+  <table>
+    <tr><td>La régulation fonctionne-t-elle en mode automatique ou manuel ?</td><td style="width:150px"><span class="cb"><span class="box on">✓</span>AUTO</span> <span class="cb"><span class="box" data-tick="regulationMode:auto"></span>MAN</span></td></tr>
+    <tr><td>Le thermostat d’ambiance fonctionne-t-il ?</td><td><span class="cb"><span class="box on" data-tick="regulationMode:man">✓</span>OUI</span> <span class="cb"><span class="box"></span>NON</span></td></tr>
+    <tr><td>L’horloge est-elle correctement réglée ?</td><td><span class="cb"><span class="box on">✓</span>OUI</span> <span class="cb"><span class="box"></span>NON</span></td></tr>
+    <tr><td>Chauffage programmé en mode réduit la nuit ?</td><td><span class="cb"><span class="box on">✓</span>OUI</span> <span class="cb"><span class="box"></span>NON</span></td></tr>
+    <tr><td>Indices de dysfonctionnement de la pompe ?</td><td><span class="cb"><span class="box"></span>OUI</span> <span class="cb"><span class="box on">✓</span>NON</span></td></tr>
+  </table>
+  <div class="foot"><span>3 / 9</span><span>Dernière mise à jour : 29/10/2015</span></div>
+</div>
+
+<!-- ================= PAGE 4 ================= -->
+<div class="page">
+  <div class="mast">
+    <img class="logo-w" src="assets/logos/wallonie.jpg" alt=""><img class="logo-d" src="assets/logos/dgo4.png" alt=""><img class="logo-a" src="assets/logos/air-climat.jpg" alt="">
+  </div>
+  <h1 class="title" style="text-align:left;font-size:14px">Prochaines interventions</h1>
+  <div class="rule"></div>
+  <table>
+    <tr><td style="width:55%"><span class="cb"><span class="box on">✓</span>En cas de conformité — prochaine inspection périodique</span></td><td>entre le <span class="val">{{nextFrom}}</span> et le <span class="val">{{nextTo}}</span></td></tr>
+    <tr><td><span class="cb"><span class="box" data-tick="followUp:prochaine inspection"></span>En cas de non-conformité — mise en conformité</span></td><td>au plus tard le …</td></tr>
+    <tr><td><span class="cb"><span class="box" data-tick="followUp:mise en conformité"></span>Remise en service après mise à l’arrêt</span></td><td></td></tr>
+    <tr><td><span class="cb"><span class="box on" data-tick="followUp:remise en service">✓</span>Entretien conseillé par le constructeur</span></td><td>au plus tard le <span class="val">15/10/20{{co}}</span></td></tr>
+    <tr><td><span class="cb"><span class="box on" data-tick="followUp:entretien">✓</span>Diagnostic approfondi</span></td><td>entre le <span class="val">{{nextFrom}}</span> et le <span class="val">{{nextTo}}</span></td></tr>
+  </table>
+  <div class="sign">
+    <div>Attestation de contrôle établie<br><span class="b">{{techName}}</span><div class="line"></div><span class="small">(signature du technicien)</span></div>
+    <div>Attestation reçue par<br><span class="b">{{clientName}}</span><div class="line"></div><span class="small">en qualité de {{recipientCapacity}}</span></div>
+  </div>
+  <div class="notice">
+    <span class="b">ATTENTION :</span> En cas de constatation d’un danger pour les utilisateurs du générateur contrôlé ou pour toute autre personne, le technicien agréé est tenu de prévenir l’utilisateur et le propriétaire du générateur ; soit, s’ils sont présents, par un écrit signé par les parties concernées, chacune en recevant une copie, soit, s’ils sont absents, par l’envoi d’un courrier recommandé avec accusé de réception avertissant du danger potentiel.
+    <br><span class="b">Secours d’urgence :</span> 100 ou 112.
+    <br><span class="b">SOS odeurs de gaz :</span> ORES 0800 87 087 · RESA / NETHYS 04 362 98 38 (fr) – 087 74 20 18 (de) · EANDIS / GASELWEST 0800 65 0 65.
+  </div>
+  <div class="foot"><span>4 / 9</span><span>Dernière mise à jour : 29/10/2015</span></div>
+</div>
+
+<!-- ============ PAGES 5–9 : official reference pages (footnotes, logigrammes, category table) ============ -->
+<div class="page" style="padding:0"><img src="assets/wa-reference-p5.png" style="width:210mm;height:297mm;object-fit:contain"></div>
+<div class="page" style="padding:0"><img src="assets/wa-reference-p6.png" style="width:210mm;height:297mm;object-fit:contain"></div>
+<div class="page" style="padding:0"><img src="assets/wa-reference-p7.png" style="width:210mm;height:297mm;object-fit:contain"></div>
+<div class="page" style="padding:0"><img src="assets/wa-reference-p8.png" style="width:210mm;height:297mm;object-fit:contain"></div>
+<div class="page" style="padding:0"><img src="assets/wa-reference-p9.png" style="width:210mm;height:297mm;object-fit:contain"></div>
+
+</body></html>
