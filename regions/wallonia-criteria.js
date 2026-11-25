@@ -111,7 +111,7 @@ export function limitsForField(data){
 
 function verdictOf(value, rule){
   if(value==='' || value==null || !rule) return null;
-  const n = Number(value);
+  const n = Number(String(value).replace(',', '.'));
   if(!Number.isFinite(n)) return null;
   const ok = (rule.max!=null ? n<=rule.max : true) && (rule.min!=null ? n>=rule.min : true);
   return ok ? 'OK' : 'non OK';
