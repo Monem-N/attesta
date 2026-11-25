@@ -14,7 +14,7 @@ const KEY = 'attesta.draft.v1';
 const $ = id => document.getElementById(id);
 
 const T = {
-  fr:{back:'Retour',next:'Continuer',download:'Télécharger',downloadPdf:'Imprimer / enregistrer en PDF',
+  fr:{back:'Retour',next:'Continuer',download:'Télécharger',downloadPdf:'Imprimer / enregistrer en PDF',changeRegion:'Changer de région',progress:'Progression',
     chooseTitle:'Attesta',chooseHint:'Choisissez la région de cette intervention.',
     chooseHead:'Un assistant. Trois régions.',
     chooseBody:'Attesta remplit le modèle officiel de votre région et télécharge le bon document — ou vous dit exactement quoi faire ensuite.',
@@ -60,7 +60,7 @@ const T = {
     flDocChoice:'Document à télécharger', flDocBoth:'Les deux documents',
     auditSummary:'Champs écrits', auditWarnings:'Avertissements de mise en page',
     saved:'Brouillon enregistré'},
-  nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'Print / Save as PDF',
+  nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'Afdrukken / opslaan als PDF',changeRegion:'Regio wijzigen',progress:'Voortgang',
     chooseTitle:'Attesta',chooseHint:'Kies de regio van deze interventie.',
     chooseHead:'Eén wizard. Drie regio’s.',
     chooseBody:'Attesta vult het officiële model voor uw regio in en downloadt het juiste document — of zegt precies wat u daarna moet doen.',
@@ -184,8 +184,11 @@ function renderChrome(){
   document.documentElement.lang = c?c.lang:'fr';
   const t=tr();
   $('changeRegion').hidden=!c;
+  $('changeRegion').textContent = t.changeRegion;
+  $('progress').setAttribute('aria-label', t.progress);
   $('back').hidden=!c||state.step===0;
   $('back').disabled = !c||state.step===0;
+  $('back').textContent = t.back;
   $('next').hidden=!c||state.step>=c.steps.length;
   $('next').textContent = t.next;
 
