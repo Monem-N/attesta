@@ -25,7 +25,7 @@ export const wallonia = {
   output: 'pdf',
   background: 'assets/wa-attestation-bg.pdf',
   // AWAC prints a numeric registration number (e.g. 05431), never a category prefix.
-  recognition: [/^\d{1,7}$/],
+  recognition: [/^(?:(?:GII|GI|L)[\s-]?)?\d{1,7}$/i],
 
   rules: {
     nextDue(date, data) {

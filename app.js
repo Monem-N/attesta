@@ -667,7 +667,9 @@ function recognitionPattern(){
     if(state.data.techCategory?.includes('RESCERT')) return /^RESCERT$/i;
   }
   if(c.id==='wallonia'){
-    if(agrementRequired()) return /^\d{1,7}$/;
+    // AWAC prints a numeric registration number. Accept it bare (05431) or
+    // with an optional L/GI/GII prefix separated by a space or hyphen.
+    if(agrementRequired()) return /^(?:(?:GII|GI|L)[\s-]?)?\d{1,7}$/i;
   }
   return null;
 }

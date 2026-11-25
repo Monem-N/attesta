@@ -11,13 +11,12 @@ test('AWAC category list matches the official model', () => {
   assert.deepEqual(field.options, categories);
 });
 
-test('agrément is a numeric registration number, never a category prefix', () => {
-  assert.ok(wallonia.recognition.some(r=>r.test('05431')));
-  assert.ok(wallonia.recognition.some(r=>r.test('1234567')));
-  assert.ok(!wallonia.recognition.some(r=>r.test('GII05431')));
-  assert.ok(!wallonia.recognition.some(r=>r.test('L05431')));
-  assert.ok(!wallonia.recognition.some(r=>r.test('GI05431')));
-  assert.ok(!wallonia.recognition.some(r=>r.test('abc')));
+test('agrément accepts bare digits and an optional spaced/hyphenated prefix', () => {
+  const ok = v => wallonia.recognition.some(r=>r.test(v));
+  for (const v of ['05431','12345','1234567','L 12345','GI-12345','GII05431','GII 05431'])
+    assert.ok(ok(v), `${v} should be accepted`);
+  for (const v of ['abc','L','GI-','12345678','X12345','L/GI 12345'])
+    assert.ok(!ok(v), `${v} should be rejected`);
 });
 
 test('each category ticks exactly one exclusive box', () => {
