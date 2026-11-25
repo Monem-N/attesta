@@ -60,7 +60,12 @@ const RULES={
   cmpSmoke:[['non OK',/non ok/i],['OK',/^ok/i]], cmpFlueTemp:[['non OK',/non ok/i],['OK',/^ok/i]],
   cmpCo2:[['non OK',/non ok/i],['OK',/^ok/i]], cmpO2:[['non OK',/non ok/i],['OK',/^ok/i]],
   cmpCo:[['non OK',/non ok/i],['OK',/^ok/i]], cmpEfficiency:[['non OK',/non ok/i],['OK',/^ok/i]],
-  orifices:[['non conforme',/non conforme/i],['conforme',/conforme/i],['absent',/absent/i],['dispensé',/dispens/i]],
+  // "Dispensé" answers the OUI question on the printed form; the other values
+  // select one of the three boxes shown when the answer is NON.
+  orifices:[['oui',/dispens/i],['non conforme',/non conforme/i],['conforme',/conforme/i],['absent',/absent/i]],
+  solidSmoke:[['oui',/^oui/i],['non',/^non/i]],
+  solidFlue:[['oui',/^oui/i],['non',/^non/i]],
+  solidResult:[['non OK',/non ok/i],['OK',/^ok/i]],
   conformity:[['non',/^non/i],['oui',/^oui|^conforme/i]],
   regulationMode:[['auto',/auto/i],['man',/man/i]],
   followUp:[['non conformité',/mise en conformit/i],['remise en service',/remise en service/i],

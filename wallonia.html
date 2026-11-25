@@ -189,7 +189,7 @@ table.cat td.code{font-weight:bold;white-space:nowrap}
       <table class="f">
         <tr><td class="k w55">Nb de générateurs dans le local de chauffe :</td><td>{{genCount}}</td></tr>
         <tr><td class="k">Identification du générateur (si plusieurs) :</td><td><span class="fill xl"></span></td></tr>
-        <tr><td class="k">Raccordement<span class="sup">(3)</span> :</td><td>B <span class="fill s"></span>, C <span class="fill s"></span></td></tr>
+        <tr><td class="k">Raccordement<span class="sup">(3)</span> :</td><td><span class="opt"><span class="cb" data-tick="raccordement:b">☐</span>B</span> <span class="opt"><span class="cb" data-tick="raccordement:c">☐</span>C</span> <span class="fill m">{{raccordementDetail}}</span></td></tr>
         <tr><td class="k">À condensation :</td><td><span class="opt"><span class="cb" data-tick="condensation:oui">☐</span>oui</span><span class="opt"><span class="cb" data-tick="condensation:non">☐</span>non</span></td></tr>
         <tr><td class="k">Plaque signalétique :</td><td><span class="opt"><span class="cb" data-tick="plaque:absente">☐</span>Absente</span><span class="opt"><span class="cb" data-tick="plaque:présente">☐</span>Présente</span></td></tr>
         <tr><td class="k">Année de construction<span class="sup">(4)</span> :</td><td>{{year}}</td></tr>
@@ -204,7 +204,7 @@ table.cat td.code{font-weight:bold;white-space:nowrap}
         <tr><td colspan="2">
           <div class="optrow">
             <span class="opt"><span class="cb" data-tick="burnerType:1 allure">☐</span>1 allure</span>
-            <span class="opt"><span class="cb">☐</span>plusieurs allures (nombre : <span class="fill s"></span>)</span>
+            <span class="opt"><span class="cb" data-tick="burnerType:plusieurs allures">☐</span>plusieurs allures (nombre : <span class="fill s"></span>)</span>
             <span class="opt"><span class="cb" data-tick="burnerType:modulant">☐</span>modulant</span>
           </div>
         </td></tr>
@@ -395,11 +395,11 @@ table.cat td.code{font-weight:bold;white-space:nowrap}
   <div class="h2">Respect des critères de bon fonctionnement <span class="sm" style="font-weight:normal">(installations alimentées par des combustibles solides)</span></div>
   <table class="f nobreak">
     <tr><td class="k w62">L'installation n'émet-elle que très brièvement de la fumée ?</td>
-      <td class="nw"><span class="opt"><span class="cb">☐</span>OUI</span><span class="opt"><span class="cb">☐</span>NON</span></td></tr>
+      <td class="nw"><span class="opt"><span class="cb" data-tick="solidSmoke:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="solidSmoke:non">☐</span>NON</span></td></tr>
     <tr><td class="k">L'évacuation des gaz de combustion s'effectue-t-elle correctement ?</td>
-      <td class="nw"><span class="opt"><span class="cb">☐</span>OUI</span><span class="opt"><span class="cb">☐</span>NON</span></td></tr>
+      <td class="nw"><span class="opt"><span class="cb" data-tick="solidFlue:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="solidFlue:non">☐</span>NON</span></td></tr>
     <tr><td class="k">Résultat global</td>
-      <td class="nw"><span class="opt"><span class="cb">☐</span>OK</span><span class="opt"><span class="cb">☐</span>non OK</span></td></tr>
+      <td class="nw"><span class="opt"><span class="cb" data-tick="solidResult:OK">☐</span>OK</span><span class="opt"><span class="cb" data-tick="solidResult:non OK">☐</span>non OK</span></td></tr>
   </table>
 
   <div class="h2">Déclaration de conformité</div>
