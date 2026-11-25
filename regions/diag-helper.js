@@ -29,25 +29,25 @@ export function diagOutcome(d) {
 }
 
 const STYLE = `<style>
-.dh{border:1px solid var(--border,#d8d8d8);border-radius:10px;padding:10px 12px;margin:0 0 14px;background:var(--card,#fff)}
+.dh{border:1px solid var(--border,#d8d8d8);padding:10px 12px;margin:0 0 14px;background:var(--card,#fff)}
 .dh-head{font-weight:700;font-size:13px;margin-bottom:8px;color:var(--foreground,#111)}
 .dh-note{font-weight:400;font-size:11px;color:var(--muted-foreground,#666)}
 .dh-q{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--border,#eee)}
 .dh-l{font-weight:700;color:var(--muted-foreground,#666)}
 .dh-t{font-size:12.5px}.dh-r{font-size:10.5px;color:var(--muted-foreground,#666);margin-top:1px}
 .dh-b{display:flex;gap:6px}
-.dh-btn{border:1px solid var(--border,#ccc);background:var(--secondary,#f5f5f5);border-radius:7px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--foreground,#111)}
-.dh-btn.on{background:var(--primary,#13315C);color:var(--primary-foreground,#fff);border-color:transparent}
-.dh-out{margin-top:10px;padding:9px 11px;border-radius:8px;border:1px solid var(--border,#ddd);background:var(--secondary,#f7f7f7);font-size:12.5px}
-.dh-out.ok{border-color:var(--success,#2E7D32);background:rgba(46,125,50,.08)}
-.dh-out.warn{border-color:var(--warning,#B8860B);background:rgba(184,134,11,.10)}
+.dh-btn{border:1px solid var(--border,#ccc);background:var(--secondary,#f5f5f5);padding:4px 10px;min-height:24px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--foreground,#111)}
+.dh-btn.on{background:var(--ink,#111);color:var(--paper,#fff);border-color:transparent}
+.dh-out{margin-top:10px;padding:9px 11px;border:1px solid var(--border,#ddd);background:transparent;font-size:12.5px}
+.dh-out.ok{border-color:var(--ink,#111)}
+.dh-out.warn{border-color:var(--red,#b23a2b)}
 .dh-out div{font-size:11.5px;color:var(--muted-foreground,#555);margin-top:2px}
 </style>`;
 
 export function diagHelperHTML(d) {
   const rows = QUESTIONS.map(([L, k, q, route]) => {
     const v = d[k];
-    const btn = val => `<button type="button" class="dh-btn ${v === val ? 'on' : ''}" data-dk="${k}" data-dv="${val}">${val}</button>`;
+    const btn = val => `<button type="button" class="dh-btn ${v === val ? 'on' : ''}" aria-pressed="${v === val}" data-dk="${k}" data-dv="${val}">${val}</button>`;
     return `<div class="dh-q"><div class="dh-l">${L}</div>
       <div><div class="dh-t">${q}</div><div class="dh-r">${route}</div></div>
       <div class="dh-b">${btn('OUI')}${btn('NON')}</div></div>`;

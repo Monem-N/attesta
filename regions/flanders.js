@@ -58,7 +58,7 @@ export const flanders = {
       F('techAgrement','Erkenningsnummer (GV##### / TV##### / VA+#####)'),
       req(F('company','Firma')),
       req(F('bce','Ondernemingsnummer')),
-      F('techPhone','E-mail'),
+      F('techPhone','Tél / e-mail'),
       F('workDuration','Arbeidsduur van — tot'),
     ]},
     {title:'Klant',hint:'Klant en adres van het stooktoestel indien verschillend.',fields:[

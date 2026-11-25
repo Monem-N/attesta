@@ -22,8 +22,9 @@
         <button type="button" class="change-region" id="changeRegion" hidden>Change region</button>
       </div>
     </div>
-    <div class="progress" id="progress" aria-label="Progress"></div>
+    <div class="progress" id="progress" role="group" aria-label="Progress"></div>
     <div class="step-count" id="stepCount"></div>
+    <span id="saveStatus" class="save-status" role="status" aria-live="polite"></span>
   </header>
 
   <main class="stage">
@@ -45,8 +46,6 @@
     <button type="button" class="btn next" id="next">Continue</button>
   </footer>
 </div>
-<script src="vendor/pdf-lib.min.js"></script>
-<script src="vendor/fontkit.umd.min.js"></script>
 <script type="module" src="app.js"></script>
 </body>
 </html>

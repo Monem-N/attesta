@@ -14,7 +14,7 @@ const KEY = 'attesta.draft.v1';
 const $ = id => document.getElementById(id);
 
 const T = {
-  fr:{back:'Retour',next:'Continuer',download:'Télécharger',downloadPdf:'Télécharger le PDF',
+  fr:{back:'Retour',next:'Continuer',download:'Télécharger',downloadPdf:'Imprimer / enregistrer en PDF',
     chooseTitle:'Attesta',chooseHint:'Choisissez la région de cette intervention.',
     chooseHead:'Un assistant. Trois régions.',
     chooseBody:'Attesta remplit le modèle officiel de votre région et télécharge le bon document — ou vous dit exactement quoi faire ensuite.',
@@ -60,7 +60,7 @@ const T = {
     flDocChoice:'Document à télécharger', flDocBoth:'Les deux documents',
     auditSummary:'Champs écrits', auditWarnings:'Avertissements de mise en page',
     saved:'Brouillon enregistré'},
-  nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'PDF downloaden',
+  nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'Print / Save as PDF',
     chooseTitle:'Attesta',chooseHint:'Kies de regio van deze interventie.',
     chooseHead:'Eén wizard. Drie regio’s.',
     chooseBody:'Attesta vult het officiële model voor uw regio in en downloadt het juiste document — of zegt precies wat u daarna moet doen.',
@@ -156,8 +156,19 @@ function save(){
     if(state.region) localStorage.setItem(`${KEY}.${state.region}`,JSON.stringify(state));
   }
   catch(e){ console.warn('Could not save draft',e); }
+  const el=$('saveStatus');
+  if(el){ el.textContent=tr().saved; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),1600); }
 }
 function cfg(){ return REGIONS[state.region]; }
+// pdf-lib + fontkit are heavy (~1.3 MB); load them only when a PDF is generated.
+let pdfLibsPromise=null;
+function ensurePdfLibs(){
+  if(window.PDFLib && window.fontkit) return Promise.resolve();
+  if(pdfLibsPromise) return pdfLibsPromise;
+  const load=src=>new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('lib-load-failed')); document.head.appendChild(s); });
+  pdfLibsPromise=Promise.all([load('vendor/pdf-lib.min.js'),load('vendor/fontkit.umd.min.js')]).catch(e=>{ pdfLibsPromise=null; throw e; });
+  return pdfLibsPromise;
+}
 // A field can be shown only for a given document choice (e.g. keuring checks).
 const fieldVisible = f => typeof f.when!=='function' || f.when(state.data);
 
@@ -226,7 +237,8 @@ function fieldHTML(f){
     const isCode=f.key==='techAgrement'||f.key==='bce';
     input=`<input id="${id}"${name} type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.key}" value="${esc(v)}" ${f.required?'required':''} spellcheck="false" autocomplete="off">`;
   }
-  return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}${f.hint?`<div class="fhint">${esc(f.hint)}</div>`:''}<div class="err" id="${id}-error">${f._err||''}</div></div>`;
+  if(bad) input=input.replace(/^<(\w+)/,`<$1 aria-invalid="true" aria-describedby="${id}-error"`);
+  return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}${f.hint?`<div class="fhint">${esc(f.hint)}</div>`:''}<div class="err" id="${id}-error" role="alert">${f._err||''}</div></div>`;
 }
 // Wallonia thresholds come from the official category table, not from hard-coded
 // min/max on the field definition. No resolved category means no rule and no OK.
@@ -279,8 +291,9 @@ function measureVerdict(f,value){
 function esc(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
 function wireAcks(){
-  $('warning').querySelectorAll('[data-ack]').forEach(b=>b.onclick=()=>{
-    acks[b.dataset.ack]=true; saveAcks(); render();
+  $('warning').querySelectorAll('[data-ack]').forEach(b=>{
+    b.setAttribute('aria-pressed','true');
+    b.onclick=()=>{ acks[b.dataset.ack]=true; saveAcks(); render(); };
   });
 }
 
@@ -524,6 +537,7 @@ function renderFinal(){
         w.document.open(); w.document.write(printHtml); w.document.close();
         w.addEventListener('load',()=>{ w.focus(); w.print(); },{once:true});
       }else{
+        await ensurePdfLibs();
         const blob=await buildAttestation(state,attachmentFiles);
         if(blob.audit) audits.push(blob.audit);
         download(blob,`attesta-${c.id}.pdf`);
