@@ -102,7 +102,7 @@ export const wallonia = {
       F('clientEmail','Courriel'),
       F('applianceLocation','Localisation du générateur si différente'),
     ]},
-    { title:'Générateur', hint:'Identification de l’appareil et du brûleur.', fields:[
+    { title:'Générateur', hint:'Identification de l’appareil.', fields:[
       req(F('fuel','Combustible','select',{options:['Liquide','Gazeux','Solide']})),
       F('fuelDetail','Détail combustible','select',{options:['Gasoil','Gasoil extra','Fuel lourd','Gaz nat. G20','Gaz nat. G25','Propane','Butane','Biogaz','Pellets bois','Bûches','Plaquettes','Céréales','Charbon']}),
       req(F('powerKw','Puissance nominale utile (kW)','number')),
@@ -111,12 +111,14 @@ export const wallonia = {
       F('condensation','À condensation','select',{options:['oui','non']}),
       F('year','Année de construction','number'),
       F('make','Marque'), F('model','Type'), F('serial','N° série'),
+      F('raccordementDetail','Détail raccordement (ex. C 53)'),
+    ]},
+    { title:'Brûleur & fluide', hint:'Brûleur et circuit.', fields:[
       F('burnerType','Brûleur','select',{options:['1 allure','plusieurs allures','modulant']}),
       F('unitOrPulsed','Type','select',{options:['unit','air pulsé']}),
       F('premix','Prémix','select',{options:['prémix','non-premix']}),
       F('fluid','Fluide caloporteur','select',{options:['Eau','Vapeur basse pression','Huile thermique']}),
       F('production','Production','select',{options:['Chauffage','ECS','Chauffage + ECS']}),
-      F('raccordementDetail','Détail raccordement (ex. C 53)'),
       F('burnerModel','Type du brûleur (ex. Top 22/28-3)'),
       F('plaque','Plaque signalétique','select',{options:['Absente','Présente']}),
     ]},
@@ -144,6 +146,8 @@ export const wallonia = {
       F('cmpCo','Comparaison — CO','select',{options:['','OK','non OK']}),
       F('cmpEfficiency','Comparaison — rendement','select',{options:['','OK','non OK']}),
       F('globalResult','Résultat global','select',{options:['','OK','non OK']}),
+    ]},
+    { title:'Compléments mesure', hint:'Ppressions, allures supplémentaires, gicleur, combustible solide.', fields:[
       F('chimneyPressure','Pression cheminée (type B)','number'),
       F('pumpPressure','Pression pompe (bar)','number'),
       F('load2','Allure 2 — valeurs','text',{hint:'Facultatif, brûleurs multiples/modulants. Ex. : CO₂ 11 / O₂ 4 / CO 100 / rendement 91'}),

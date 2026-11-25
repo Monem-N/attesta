@@ -38,6 +38,11 @@ input::placeholder{color:var(--soft);opacity:1}
 .step-count{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--soft);padding:0 20px 8px}
 .save-status{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--soft);padding:0 20px 6px;opacity:0;transition:opacity .2s}
 .save-status.show{opacity:1}
+.glossary{position:fixed;left:8px;bottom:8px;z-index:5;font-size:10px;background:var(--bg-head);border:1px solid var(--line);max-width:230px}
+.glossary summary{cursor:pointer;padding:4px 8px;font-family:var(--mono);font-size:10px;color:var(--soft)}
+.glossary dl{padding:6px 8px;margin:0}
+.glossary dt{font-weight:700;font-size:10px;color:var(--ink)}
+.glossary dd{margin:0 0 4px;color:var(--soft);font-size:10px;line-height:1.3}
 
 /* stage */
 .stage{flex:1;min-height:0;padding:22px 20px 8px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
