@@ -1,6 +1,6 @@
 const CACHE='attesta-v6';
 const ASSETS=[
-  './','./index.html','./styles.css','./app.js','./output.js','./manifest.webmanifest',
+  './','./index.html','./styles.css','./app.js','./lang.js','./output.js','./manifest.webmanifest',
   './regions/wallonia.js','./regions/flanders.js','./regions/flanders-pdf.js',
   './regions/pdf-render.js','./regions/wallonia-pdf.js','./regions/brussels.js',
   './vendor/pdf-lib.min.js','./vendor/fontkit.umd.min.js','./vendor/DejaVuSans.ttf',

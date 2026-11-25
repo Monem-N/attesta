@@ -1,5 +1,7 @@
 // pdf-lib is loaded lazily (app.js ensurePdfLibs); resolve it when generating,
 // not at import time, otherwise the wizard module fails to start.
+// Deliberately exposes only .load — the sole PDFDocument method used below.
+// Add other methods here only once they are actually needed lazily.
 const PDFDocument={load:(...a)=>window.PDFLib.PDFDocument.load(...a)};
 import {flanders as flandersRegion, fmt as fmtDate} from './regions/flanders.js';
 import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions/flanders-pdf.js';

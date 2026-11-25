@@ -153,7 +153,7 @@ function load(){
     s.step=Math.max(0,Math.min(Number(q.get('step'))||0,region?.steps.length||0));
   }
   const lang=q.get('lang');
-  if(s.region && (lang==='fr'||lang==='nl')) s.lang=lang;
+  if(s.region==='flanders' && (lang==='fr'||lang==='nl')) s.lang=lang;
   return s;
 }
 function isDraft(value,region){
@@ -707,14 +707,16 @@ $('changeRegion').onclick=()=>{
   syncURL();
   render();
 };
-function setLang(lang){
+function setLang(lang,button){
   if(!state.region || (lang!=='fr' && lang!=='nl')) return;
   state.lang=lang;
-  lastFocusKey=null;
+  // Keep the toggle focused: the header buttons are not re-rendered, so the
+  // step heading must not steal focus on a language-only change.
   save(); syncURL(); render();
+  button?.focus();
 }
-$('langFr').onclick=()=>setLang('fr');
-$('langNl').onclick=()=>setLang('nl');
+$('langFr').onclick=e=>setLang('fr',e.currentTarget);
+$('langNl').onclick=e=>setLang('nl',e.currentTarget);
 
 $('next').onclick=()=>{
   const c=cfg(); if(!c) return;
