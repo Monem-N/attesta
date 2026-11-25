@@ -24,7 +24,8 @@ export const wallonia = {
   lang: 'fr',
   output: 'pdf',
   background: 'assets/wa-attestation-bg.pdf',
-  recognition: [/^L\d*$/i,/^GI\d*$/i,/^GII\d*$/i],
+  // AWAC prints a numeric registration number (e.g. 05431), never a category prefix.
+  recognition: [/^\d{1,7}$/],
 
   rules: {
     nextDue(date, data) {
@@ -80,7 +81,7 @@ export const wallonia = {
       F('analyzerSerial','Appareil de mesure — n° de série'),
     ]},
     { title:'Technicien', hint:'Qui a réalisé le contrôle ?', fields:[
-      req(F('techCategory','Agrément','select',{options:['Technicien agréé L','Technicien agréé GI','Technicien agréé GII','Technicien spécialisé combustibles solides']})),
+      req(F('techCategory','Agrément','select',{options:['Technicien agréé L','Technicien agréé GI','Technicien agréé GII','Technicien spécialisé en combustibles solides']})),
       req(F('techName','Nom et prénom')),
       F('techAgrement','N° d’agrément'),
       req(F('company','Nom entreprise')),

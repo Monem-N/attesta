@@ -629,7 +629,7 @@ function validate(){
   if(agrem){
     const pattern=recognitionPattern();
     if(pattern){
-      if(!state.data.techAgrement && c.id==='flanders') agrem._err=t.required;
+      if(!state.data.techAgrement && agrementRequired()) agrem._err=t.required;
       else if(state.data.techAgrement && !pattern.test(state.data.techAgrement)) agrem._err=t.invalid;
     }
   }
@@ -646,6 +646,14 @@ function addressOk(d,c){
   if(c.id!=='wallonia') return true;
   return !!(d.clientStreetName&&d.clientStreetNumber) || !!d.clientStreet;
 }
+// On the AWAC model the agrément is a numeric registration number (e.g. 05431),
+// required for the L/GI/GII categories and not applicable to solid-fuel specialists.
+function agrementRequired(){
+  const c=cfg();
+  if(c?.id==='flanders') return true;
+  if(c?.id==='wallonia') return /agréé\s+(?:L|GI|GII)\b/i.test(state.data.techCategory||'');
+  return false;
+}
 function recognitionPattern(){
   const c=cfg();
   if(c.id==='flanders'){
@@ -659,10 +667,7 @@ function recognitionPattern(){
     if(state.data.techCategory?.includes('RESCERT')) return /^RESCERT$/i;
   }
   if(c.id==='wallonia'){
-    if(state.data.techCategory?.includes('L')) return /^L\d*$/i;
-    if(state.data.techCategory?.includes('GII')) return /^GII\d*$/i;
-    if(state.data.techCategory?.includes('GI')) return /^GI\d*$/i;
-    if(state.data.techCategory?.includes('solides')) return /^.+$/;
+    if(agrementRequired()) return /^\d{1,7}$/;
   }
   return null;
 }
@@ -682,7 +687,7 @@ function validateDraft(){
   const pattern=recognitionPattern();
   const field=c.steps.flatMap(step=>step.fields).find(f=>f.key==='techAgrement'&&fieldVisible(f));
   if(pattern&&field){
-    if(!state.data.techAgrement && c.id==='flanders') field._err=t.required;
+    if(!state.data.techAgrement && agrementRequired()) field._err=t.required;
     else if(state.data.techAgrement && !pattern.test(state.data.techAgrement)) field._err=t.invalid;
   }
   if(!addressOk(state.data,c)){
