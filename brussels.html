@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Attestation PEB — Bruxelles</title>
+<style>
+  @page{size:A4;margin:0}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#e9e9e9;font-family:Calibri,Carlito,"Liberation Sans",Arial,sans-serif;color:#111;line-height:1.28}
+  .sheet{width:210mm;height:297mm;background:#fff;margin:0;padding:9mm 11mm 11mm;position:relative;page-break-after:always;overflow:hidden}
+  .sheet:last-child{page-break-after:auto}
+  @media screen{.sheet{margin:6mm auto}}
+  .mast{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2mm}
+  .mast img{height:20mm;width:auto}
+  .mast .no{font-size:9px;text-align:right;color:#555}
+  .rule{height:1.2pt;background:#111;margin:1mm 0 2mm}
+  .h2{font-size:10.5px;font-weight:700;background:#eee;border:.6pt solid #111;padding:.8mm 1.6mm;margin:2.4mm 0 1.2mm}
+  .h3{font-size:9.5px;font-weight:700;margin:1.4mm 0 .8mm}
+  table{border-collapse:collapse;width:100%}
+  td{border:.6pt solid #cfcfcf;padding:1.2mm 1.6mm;vertical-align:middle;font-size:9px}
+  td.k{color:#555;width:30%}.v{font-weight:600;font-variant-numeric:tabular-nums}
+  .opt{display:inline-flex;align-items:center;gap:1.2mm;margin-right:3mm;font-size:9px;white-space:nowrap}
+  .cb{width:3mm;height:3mm;border:.6pt solid #333;display:inline-flex;align-items:center;justify-content:center;font-size:7.5px;color:#b23a2b;font-weight:700;flex:none}
+  .cols3{width:100%}.cols3 td{border:none;padding:0 1.5mm 0 0;vertical-align:top;width:33%}
+  .cols2{width:100%}.cols2 td{border:none;padding:0 1.5mm 0 0;vertical-align:top;width:50%}
+  .perf th,.perf td{border:.6pt solid #cfcfcf;font-size:8px;padding:1mm;text-align:center;font-variant-numeric:tabular-nums}
+  .perf th{background:#eee;font-weight:600}
+  .perf td.l{text-align:left;font-weight:600}
+  .small{font-size:8px;color:#555}
+  .sign{display:flex;justify-content:space-between;margin-top:6mm;font-size:9px}
+  .sign .line{border-bottom:.6pt solid #333;width:80mm;height:9mm}
+  .foot{position:absolute;left:11mm;right:11mm;bottom:4mm;display:flex;justify-content:space-between;font-size:7.5px;color:#777}
+</style></head>
+<body>
+
+<!-- ===== PAGE 1 ===== -->
+<div class="sheet">
+  <div class="mast"><img src="assets/br-logo-5.png" alt=""><div class="no">Date de l'acte : <b>{{controlDate}}</b><br>N° attestation : {{attestNumber}}</div></div>
+  <div class="rule"></div>
+  <table>
+    <tr><td class="k">Motif de l'acte</td><td colspan="3">
+      <span class="opt"><span class="cb" data-tick="motif:placement">☐</span>(rem)placement</span>
+      <span class="opt"><span class="cb" data-tick="motif:conformite">☐</span>Mise en conformité</span>
+      <span class="opt"><span class="cb" data-tick="motif:autre">☐</span>Autre raison</span>
+      <span class="opt"><span class="cb" data-tick="motif:delai">☐</span>Délai max entre 2 CP atteint</span>
+      <span class="opt"><span class="cb" data-tick="motif:combustion">☐</span>Intervention partie combustion</span></td></tr>
+  </table>
+
+  <table class="cols3"><tr>
+    <td><div class="h3">Adresse de l'unité PEB</div><table>
+      <tr><td class="k">rue/n°/BP</td><td class="v">{{applianceLocation}}</td></tr>
+      <tr><td class="k">CP/commune</td><td class="v">{{clientCity}}</td></tr>
+      <tr><td class="k">N° étage</td><td class="v">{{floor}}</td></tr>
+      <tr><td class="k">Réf. unité PEB</td><td class="v">{{pebUnitRef}}</td></tr>
+      <tr><td class="k">Bâtiment</td><td class="v">{{buildingName}}</td></tr></table></td>
+    <td><div class="h3">Propriétaire / titulaire</div><table>
+      <tr><td class="k">Type</td><td><span class="opt"><span class="cb" data-tick="ownerType:particulier">☐</span>Particulier</span><span class="opt"><span class="cb" data-tick="ownerType:copropriete">☐</span>Copropriété</span><span class="opt"><span class="cb" data-tick="ownerType:entreprise">☐</span>Entreprise</span></td></tr>
+      <tr><td class="k">prénom/nom</td><td class="v">{{clientName}}</td></tr>
+      <tr><td class="k">nom entreprise/ACP</td><td></td></tr>
+      <tr><td class="k">BCE</td><td></td></tr>
+      <tr><td class="k">rue/n°/BP</td><td class="v">{{clientStreet}}</td></tr></table></td>
+    <td><div class="h3">Personne de contact</div><table>
+      <tr><td class="k">Prénom/nom</td><td class="v">{{contactName}}</td></tr>
+      <tr><td class="k">tél/GSM</td><td class="v">{{contactPhone}}</td></tr>
+      <tr><td class="k">e-mail</td><td></td></tr></table></td>
+  </tr></table>
+
+  <div class="h2">Par rapport aux exigences PEB — la chaudière alimentée au combustible solide est :</div>
+  <div style="margin:1.5mm 0"><span class="opt"><span class="cb" data-tick="conformity:conforme">☐</span>CONFORME</span><span class="opt"><span class="cb" data-tick="conformity:non conforme">☐</span>NON - CONFORME</span>
+    &nbsp; <span class="small">Protocole d'injonction d'arrêt mis en œuvre :</span> <span class="opt"><span class="cb" data-tick="stopProtocol:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="stopProtocol:non">☐</span>NON</span></div>
+  <div class="small">Date prochain contrôle : <b class="v">{{nextDueDate}}</b> (= date de l'acte + 5 mois si non conforme; + 1 an si conforme)</div>
+
+  <div class="h2">Exigences de bon fonctionnement des appareils</div>
+  <table>
+    <tr><td class="k">CO dans l'air ambiant</td><td>CO max. mesuré (PPM): <b class="v">{{coAmbient}}</b></td><td style="width:120px"><span class="opt"><span class="cb" data-tick="safety:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="safety:non">☐</span>NON</span></td></tr>
+    <tr><td class="k">Dispositifs de sécurité</td><td></td><td><span class="opt"><span class="cb" data-tick="safety:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="safety:non">☐</span>NON</span></td></tr>
+    <tr><td class="k">État des conduits d'évacuation</td><td></td><td><span class="opt"><span class="cb" data-tick="flueState:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="flueState:non">☐</span>NON</span></td></tr>
+    <tr><td class="k">Orifices de mesure</td><td></td><td><span class="opt"><span class="cb" data-tick="orifices:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="orifices:non">☐</span>NON</span></td></tr>
+    <tr><td class="k">Ventilation du local</td><td></td><td><span class="opt"><span class="cb" data-tick="ventilation:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="ventilation:non">☐</span>NON</span></td></tr>
+    <tr><td class="k">Dépression dans le conduit</td><td></td><td><span class="opt"><span class="cb" data-tick="draught:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="draught:non">☐</span>NON</span></td></tr>
+    <tr><td class="k">Émissions des appareils</td><td></td><td><span class="opt"><span class="cb" data-tick="emissions:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="emissions:non">☐</span>NON</span></td></tr>
+    <tr><td class="k">Cheminée collective B1</td><td></td><td><span class="opt"><span class="cb" data-tick="collectiveFlue:oui">☐</span>OUI</span><span class="opt"><span class="cb" data-tick="collectiveFlue:non">☐</span>NON</span></td></tr>
+  </table>
+
+  <div class="h3">Société / indépendant qui a réalisé le contrôle</div>
+  <table>
+    <tr><td class="k">nom d'entreprise</td><td class="v">{{company}}</td><td class="k">BCE</td><td class="v">{{bce}}</td></tr>
+    <tr><td class="k">Professionnel agréé</td><td colspan="3">
+      <span class="opt"><span class="cb" data-tick="techCategory:gi">☐</span>GI</span><span class="opt"><span class="cb" data-tick="techCategory:gii">☐</span>GII</span><span class="opt"><span class="cb" data-tick="techCategory:l">☐</span>L</span><span class="opt"><span class="cb" data-tick="techCategory:rescert">☐</span>RESCERT biomasse</span></td></tr>
+    <tr><td class="k">prénom/nom</td><td class="v">{{techName}}</td><td class="k">n° agrément</td><td class="v">{{techAgrement}}</td></tr>
+    <tr><td class="k">tél / e-mail</td><td class="v">{{techPhone}}</td><td></td><td></td></tr>
+  </table>
+  <div class="sign"><div>Signature professionnel<div class="line"></div></div><div>Signature propriétaire / déclarant<div class="line"></div></div></div>
+  <div class="foot"><span>Attestation de contrôle périodique PEB — Bruxelles Environnement</span><span>Page 1 sur 4</span></div>
+</div>
+
+<!-- ===== PAGE 2 ===== -->
+<div class="sheet">
+  <div class="mast"><img src="assets/br-logo-5.png" alt=""><div class="no">N° attestation : {{attestNumber}}</div></div>
+  <div class="rule"></div>
+  <div class="h2">Système de chauffage</div>
+  <table>
+    <tr><td class="k">Type de système</td><td><span class="opt"><span class="cb" data-tick="systemType:type1">☐</span>Type 1 (1 chaudière ≤ 100 kW)</span><span class="opt"><span class="cb" data-tick="systemType:type2">☐</span>Type 2 (&gt; 100 kW ou plusieurs chaudières)</span></td></tr>
+    <tr><td class="k">Individuel / collectif</td><td><span class="opt"><span class="cb" data-tick="collective:individuel">☐</span>Individuel</span><span class="opt"><span class="cb" data-tick="collective:collectif">☐</span>Collectif</span></td><td class="k">Nombre de chaudières</td><td class="v">{{boilerCount}}</td></tr>
+  </table>
+  <div class="h2">Chaudière</div>
+  <table>
+    <tr><td class="k">Combustible</td><td><span class="opt"><span class="cb" data-tick="fuel:gazeux">☐</span>Gazeux</span><span class="opt"><span class="cb" data-tick="fuel:liquide">☐</span>Liquide</span><span class="opt"><span class="cb" data-tick="fuel:solid">☐</span>Solide</span></td><td class="k">Puissance (kW)</td><td class="v">{{powerKw}}</td></tr>
+    <tr><td class="k">Marque</td><td class="v">{{make}}</td><td class="k">Modèle</td><td class="v">{{model}}</td></tr>
+    <tr><td class="k">N° série</td><td class="v">{{serial}}</td><td class="k">Année</td><td class="v">{{year}}</td></tr>
+    <tr><td class="k">Condensation</td><td><span class="opt"><span class="cb" data-tick="condensation:cond">☐</span>À condensation</span><span class="opt"><span class="cb" data-tick="condensation:pas">☐</span>Pas à condensation</span></td><td class="k">Montage</td><td class="v">{{connection}}</td></tr>
+    <tr><td class="k">Utilisation</td><td class="v">{{usage}}</td><td class="k">EN 437</td><td class="v">{{en437}}</td></tr>
+  </table>
+  <div class="h2">Brûleur</div>
+  <table>
+    <tr><td class="k">Combustible</td><td class="v">{{fuel}}</td><td class="k">Conversion gaz</td><td class="v">{{gasConversion}}</td></tr>
+  </table>
+  <div class="foot"><span>Attestation PEB — Bruxelles</span><span>Page 2 sur 4</span></div>
+</div>
+
+<!-- ===== PAGE 3 ===== -->
+<div class="sheet">
+  <div class="mast"><img src="assets/br-logo-5.png" alt=""><div class="no">N° attestation : {{attestNumber}}</div></div>
+  <div class="rule"></div>
+  <div class="h2">Remarques</div>
+  <div class="h3">Remarques par rapport à d'autres réglementations</div>
+  <div class="small">{{remarks}}</div>
+  <div class="h3">Défauts éliminés pendant cette intervention</div>
+  <div class="small">{{defects}}</div>
+  <div class="h3">Défauts non éliminés / mesures à prendre</div>
+  <div class="small"></div>
+  <div class="h3">Autres remarques du professionnel</div>
+  <div class="small"></div>
+  <div class="h3">Pièces jointes</div>
+  <div class="small">Annexe ≥ 1000 kW : <b>{{annex1mw}}</b> · Carnet de bord (5 ans) : <b>{{logbook}}</b></div>
+  <div class="foot"><span>Attestation PEB — Bruxelles</span><span>Page 3 sur 4</span></div>
+</div>
+
+<!-- ===== PAGE 4 ===== -->
+<div class="sheet">
+  <div class="mast"><img src="assets/br-logo-5.png" alt=""><div class="no">N° attestation : {{attestNumber}}</div></div>
+  <div class="rule"></div>
+  <div class="h2">Mesures — exigences chaudières</div>
+  <table class="perf">
+    <tr><th style="text-align:left">Exigence</th><th>Unité</th><th>Mesure</th><th>OK / NON</th></tr>
+    <tr><td class="l">Température départ eau</td><td>°C</td><td class="v">{{flueTemp}}</td><td>—</td></tr>
+    <tr><td class="l">O₂</td><td>%</td><td class="v">{{o2}}</td><td>—</td></tr>
+    <tr><td class="l">CO₂</td><td>%</td><td class="v">{{co2}}</td><td>—</td></tr>
+    <tr><td class="l">CO</td><td>mg/kWh</td><td class="v">{{co}}</td><td>—</td></tr>
+    <tr><td class="l">Dépression conduit</td><td>Pa</td><td class="v">{{draught}}</td><td>—</td></tr>
+  </table>
+  <div class="small" style="margin-top:2mm">Consommation annuelle : {{annualConsumption}} · Temps de fonctionnement : {{operatingHours}} h/an</div>
+  <div class="foot"><span>Attestation PEB — Bruxelles</span><span>Page 4 sur 4</span></div>
+</div>
+
+</body></html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
+<script type="module">
+import { renderBrusselsPrintHtml } from './print-brussels.js';
+const state = { region:'brussels', data:{
+  intervention:'Contrôle périodique PEB', controlDate:'2026-10-15', motif:'(rem)placement', attestNumber:'0510',
+  techCategory:'Technicien chaudière PEB GII', techName:'Zied BEN AMARA', techAgrement:'05431',
+  company:'Joffage', bce:'BE0773.540.950', techPhone:'0486797724',
+  ownerType:'Particulier', clientName:'Owale Jeanine', clientStreet:'Rue de Liessies 17 Bte3', clientCity:'7800 Ath',
+  contactName:'Owale Jeanine', contactPhone:'0470 12 34 56', pebUnitRef:'PEB-001', floor:'3', buildingName:'',
+  applianceLocation:'Rue de Liessies 17 Bte3',
+  systemType:'Type 1 (1 chaudière ≤ 100 kW)', collective:'Individuel (1 unité PEB)', boilerCount:'1',
+  fuel:'Gazeux', powerKw:'24', condensation:'À condensation', usage:'Chauffage + ECS', connection:'Type B',
+  make:'Junkers', model:'Top 22/28-3', serial:'8290518031908', year:'2024', en437:'I2N', gasConversion:'I2N',
+  coAmbient:'0', o2:'3.4', co2:'10.1', co:'28', flueTemp:'46.1',
+  safety:'OUI', flueState:'OUI', orifices:'OUI', ventilation:'OUI', draught:'OUI', emissions:'OUI', collectiveFlue:'OUI',
+  conformity:'CONFORME', stopProtocol:'NON', derogation:'NON', defects:'', remarks:'',
+  annualConsumption:'1200', operatingHours:'1500', annex1mw:false, logbook:true
+}};
+const tpl = await (await fetch('brussels.html')).text();
+const html = renderBrusselsPrintHtml(state, tpl);
+document.open(); document.write(html); document.close();
+</script>
+</body></html>

@@ -4,6 +4,7 @@ import {brussels} from './regions/brussels.js';
 import {buildAttestation} from './output.js';
 import {openWalloniaPrint} from './print-wallonia.js';
 import {openFlandersPrint} from './print-flanders.js';
+import {openBrusselsPrint} from './print-brussels.js';
 import {saveAttachmentBytes,loadAttachmentBytes,clearAttachmentBytes} from './attachments.js';
 import {limitsForField} from './regions/wallonia-criteria.js';
 import {diagHelperHTML,wireDiagHelper} from './regions/diag-helper.js';
@@ -466,6 +467,7 @@ function renderFinal(){
     ${['Prepared','Issued','Registered'].includes(state.status)?'<button type="button" class="btn back" id="markSubmitted" style="margin-top:10px;width:100%">'+esc(t.markSubmitted)+'</button>':''}
     <p id="auditLine" class="audit-line" role="status"></p>
     <button type="button" class="btn next" id="go" style="margin-top:16px;width:100%" ${gateLocked?`disabled title="${esc(t.vekaDownloadError)}"`:''}>${goLabel}</button>
+    ${c.id==='brussels'?`<button type="button" class="btn back" id="goPrint" style="margin-top:10px;width:100%">${c.lang==='nl'?'Print / PDF (attestatie)':'Imprimer / PDF (attestatie)'}</button>`:''}
     <button type="button" class="btn back" id="newJob" style="margin-top:10px;width:100%">${t.startAnother}</button></div>`;
   $('newJob').onclick=()=>{
     if(!isComplete(state.status)&&!window.confirm(t.confirmNewJob)) return;
@@ -479,6 +481,19 @@ function renderFinal(){
     state.status='Submitted';
     state.data.submittedAt=new Date().toISOString();
     save(); render();
+  };
+  if($('goPrint')) $('goPrint').onclick=async()=>{
+    if(generating) return;
+    generating=true; const b=$('goPrint'); b.disabled=true;
+    try{
+      if(!validateDraft()){ render(); return; }
+      const printHtml=await openBrusselsPrint(state);
+      const w=window.open('','_blank');
+      if(!w) throw new Error('print popup blocked');
+      w.document.open(); w.document.write(printHtml); w.document.close();
+      w.addEventListener('load',()=>{ w.focus(); w.print(); },{once:true});
+    }catch(e){ showOutputError(e.message||'print-failed'); }
+    finally{ generating=false; if($('goPrint')){ $('goPrint').disabled=false; } }
   };
   $('go').onclick=async()=>{
     if(generating) return;
