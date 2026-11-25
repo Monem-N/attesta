@@ -1,4 +1,6 @@
-const {PDFDocument,rgb}=window.PDFLib;
+// pdf-lib is loaded lazily (app.js ensurePdfLibs); resolve it when generating,
+// not at import time, otherwise the wizard module fails to start.
+const PDFDocument={load:(...a)=>window.PDFLib.PDFDocument.load(...a)};
 import {flanders as flandersRegion, fmt as fmtDate} from './regions/flanders.js';
 import {FL_MAPS, anchorOf, isPaired, explicitBoxes, flTextValue} from './regions/flanders-pdf.js';
 import {formatValue, wrapText, fieldWidth, boundsWarnings, emptyAudit, toPdfY} from './regions/pdf-render.js';
@@ -42,7 +44,7 @@ const WAL={background:'assets/wa-attestation-bg.pdf'};
 const FLA={background:'assets/fl-model-verbrandingsattest.pdf'};
 const BRU={background:'assets/br-solid-fuel-model.pdf'};
 
-const ink = rgb(0.086,0.094,0.114);
+const ink = () => window.PDFLib.rgb(0.086,0.094,0.114);
 
 const MAPS=LEGACY_MAPS;
 
@@ -70,7 +72,7 @@ function draw(page,key,text,x,yTop,size,font,audit,maxLines,widths={},styles={})
   audit.warnings.push(...boundsWarnings(page.getWidth(),page.getHeight(),x,yTop,width,lines.length*lineH)
     .map(w=>`${key}: ${w}`));
   for(let i=0;i<lines.length;i++){
-    const opts={x,y:page.getHeight()-(yTop+i*lineH)-size*0.9,size,font,color:ink};
+    const opts={x,y:page.getHeight()-(yTop+i*lineH)-size*0.9,size,font,color:ink()};
     try{ page.drawText(lines[i],opts); }
     catch(e){
       try{ page.drawText(lines[i].replace(/[^\x20-\x7E]/g,'?'),opts); }
@@ -97,7 +99,7 @@ async function brOptionMap(){
   }
   return BR_OPTIONS;
 }
-const RED=rgb(0.698,0.227,0.169);
+const RED=() => window.PDFLib.rgb(0.698,0.227,0.169);
 // A solid mark strictly inside the printed box. Checkmark strokes used to
 // overrun small glyph boxes and cross neighbouring labels, so the mark is a
 // clipped, inset fill instead. Word-style options get a short underline.
@@ -105,13 +107,13 @@ function tick(page,box){
   const [x0,y0,x1,y1]=box, type=box[4];
   const pageH=page.getHeight(); // real page geometry (portrait or landscape annex)
   if(type==='word'){
-    page.drawRectangle({x:x0,y:toPdfY(pageH,y1)-1.5,width:Math.max(4,x1-x0),height:2,color:RED});
+    page.drawRectangle({x:x0,y:toPdfY(pageH,y1)-1.5,width:Math.max(4,x1-x0),height:2,color:RED()});
     return;
   }
   const inset=Math.min(1.2,Math.max(0.4,(x1-x0)*0.15));
   const w=Math.max(1,(x1-x0)-2*inset);
   const h=Math.max(1,(y1-y0)-2*inset);
-  page.drawRectangle({x:x0+inset,y:toPdfY(pageH,y1)+inset,width:w,height:h,color:RED});
+  page.drawRectangle({x:x0+inset,y:toPdfY(pageH,y1)+inset,width:w,height:h,color:RED()});
 }
 // Tick printed boxes. Explicit per-model selections (Flanders 3/4-way fields)
 // take precedence; otherwise find the nearest same-row OUI/NON pair.

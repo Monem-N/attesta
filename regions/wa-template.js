@@ -11,10 +11,16 @@
 // ticked with a red fill + check.
 import {evaluateCriteria} from './wallonia-criteria.js';
 
-const {PDFDocument,rgb}=globalThis.window?.PDFLib||{};
 const W=595.32,H=841.92,RIGHT=W-42;
-const INK=rgb(0.086,0.094,0.114),SOFT=rgb(0.42,0.44,0.47),RED=rgb(0.698,0.227,0.169),
-      LINE=rgb(0.55,0.56,0.55),WHITE=rgb(1,1,1);
+// pdf-lib is loaded lazily (see app.js ensurePdfLibs), so colors and the
+// PDFDocument class are resolved when generation starts, not at module load.
+let INK,SOFT,RED,LINE,WHITE;
+function initColors(){
+  if(INK) return;
+  const {rgb}=window.PDFLib;
+  INK=rgb(0.086,0.094,0.114); SOFT=rgb(0.42,0.44,0.47); RED=rgb(0.698,0.227,0.169);
+  LINE=rgb(0.55,0.56,0.55); WHITE=rgb(1,1,1);
+}
 
 function fmtDots(v){
   const s=String(v||'');
@@ -92,7 +98,8 @@ async function masthead(doc,P,logos){
 }
 
 export async function generateWallonia(data,fontBytes,logoBytes,audit){
-  const doc=await PDFDocument.create();
+  initColors();
+  const doc=await window.PDFLib.PDFDocument.create();
   if(globalThis.window?.fontkit) doc.registerFontkit(globalThis.window.fontkit);
   const font=await doc.embedFont(fontBytes,{subset:true});
   const d=data;
@@ -315,7 +322,7 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
   try{
     const r=await fetch('assets/wa-attestation-blank.pdf');
     if(r&&r.ok){
-      const src=await PDFDocument.load(await r.arrayBuffer());
+      const src=await window.PDFLib.PDFDocument.load(await r.arrayBuffer());
       const copied=await doc.copyPages(src,[4,5,6,7,8]);
       copied.forEach(p=>doc.addPage(p));
     }

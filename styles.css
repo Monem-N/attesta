@@ -31,6 +31,11 @@ input::placeholder{color:var(--soft);opacity:1}
 .head-region{display:flex;align-items:center;gap:12px}
 .change-region{border:0;background:transparent;color:var(--red);font-size:13px;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:8px;min-height:24px;display:inline-flex;align-items:center}
 .change-region[hidden],.foot button[hidden]{display:none}
+.lang-switch{display:inline-flex;border:1px solid var(--line)}
+.lang-switch[hidden]{display:none}
+.lang-switch button{border:0;background:transparent;color:var(--soft);font-family:var(--mono);font-size:10px;letter-spacing:.08em;padding:4px 7px;min-height:24px;cursor:pointer}
+.lang-switch button+button{border-left:1px solid var(--line)}
+.lang-switch button[aria-pressed=true]{background:var(--red);color:var(--paper)}
 .progress{display:flex;gap:3px;padding:0 20px 8px}
 .progress i{height:3px;flex:1;background:var(--line)}
 .progress i.done{background:var(--ink)}

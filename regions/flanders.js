@@ -1,9 +1,14 @@
-// Flanders — model-keuringsrapport / model-verbrandingsattest / model-reinigingsattest (Dutch)
+// Flanders — model-keuringsrapport / model-verbrandingsattest / model-reinigingsattest
+// Bilingual wizard labels (nl/fr). Stored DATA VALUES stay canonical Dutch:
+// the official Flemish PDFs and every rule below match those strings.
 import {fmt} from './wallonia.js';
-const F = (key,label,type='text',extra={}) => ({key,label,type,...extra});
-const req = f => ({...f,required:true});
-const whenKeuring = d => /Keuringsrapport/i.test(d.document||'');
-const whenNotKeuring = d => !whenKeuring(d);
+
+const B=(nl,fr)=>({nl,fr});
+const O=(v,nl,fr=nl)=>({v,l:B(nl,fr)});
+const F=(key,label,type='text',extra={})=>({key,label,type,...extra});
+const req=f=>({...f,required:true});
+const whenKeuring=d=>/Keuringsrapport/i.test(d.document||'');
+const whenNotKeuring=d=>!whenKeuring(d);
 const addMonths=(date,months)=>{
   const d=new Date(date); const day=d.getDate();
   d.setDate(1); d.setMonth(d.getMonth()+months);
@@ -17,9 +22,11 @@ const addYears=(date,years)=>{
   return d;
 };
 
+const yesNo=()=>[O('OK','OK'),O('Niet OK','Niet OK','Pas OK')];
+
 export const flanders = {
   id: 'flanders',
-  label: 'Vlaanderen',
+  label: B('Vlaanderen','Flandre'),
   rule: '#b23a2b',
   lang: 'nl',
   output: 'pdf',
@@ -42,77 +49,88 @@ export const flanders = {
   },
 
   steps: [
-    {title:'Interventie',hint:'Aard en datum van de keuring of het onderhoud.',fields:[
-      req(F('intervention','Type interventie','select',{options:['Periodiek onderhoud','Keuring eerste ingebruikname','Controle na ingreep verbrandingsdeel']})),
-      req(F('controlDate','Datum uitvoering','date')),
-      F('attestNumber','Volgnummer attest (bedrijfsintern)'),
-      req(F('document','Document','select',{options:['Verbrandingsattest + reinigingsattest','Keuringsrapport + verbrandingsattest']})),
+    {title:B('Interventie','Intervention'),hint:B('Aard en datum van de keuring of het onderhoud.','Nature et date du contrôle ou de l’entretien.'),fields:[
+      req(F('intervention',B('Type interventie','Type d’intervention'),'select',{options:[
+        O('Periodiek onderhoud','Periodiek onderhoud','Entretien périodique'),
+        O('Keuring eerste ingebruikname','Keuring eerste ingebruikname','Contrôle de première mise en service'),
+        O('Controle na ingreep verbrandingsdeel','Controle na ingreep verbrandingsdeel','Contrôle après intervention sur le corps de combustion')]})),
+      req(F('controlDate',B('Datum uitvoering','Date d’exécution'),'date')),
+      F('attestNumber',B('Volgnummer attest (bedrijfsintern)','Numéro d’attestation (interne entreprise)')),
+      req(F('document',B('Document','Document'),'select',{options:[
+        O('Verbrandingsattest + reinigingsattest','Verbrandingsattest + reinigingsattest','Attestation de combustion + attestation de nettoyage'),
+        O('Keuringsrapport + verbrandingsattest','Keuringsrapport + verbrandingsattest','Rapport de contrôle + attestation de combustion')]})),
     ]},
-    {title:'Technicus',hint:'Erkende technicus — erkenningsnummer GV, TV of VA+.',fields:[
-      req(F('techCategory','Erkenning','select',{options:[
-        'Erkend technicus gasvormige brandstof (GV)',
-        'Erkend technicus vloeibare brandstof (TV)',
-        'Erkend verwarmingsaannemer (VA+)',
-        'Geschoold vakman (vaste brandstof)']})),
-      req(F('techName','Naam en voornaam')),
-      F('techAgrement','Erkenningsnummer (GV##### / TV##### / VA+#####)'),
-      req(F('company','Firma')),
-      req(F('bce','Ondernemingsnummer')),
-      F('techPhone','Tél / e-mail'),
-      F('workDuration','Arbeidsduur van — tot'),
+    {title:B('Technicus','Technicien'),hint:B('Erkende technicus — erkenningsnummer GV, TV of VA+.','Technicien agréé — numéro d’agrément GV, TV ou VA+.'),fields:[
+      req(F('techCategory',B('Erkenning','Agrément'),'select',{options:[
+        O('Erkend technicus gasvormige brandstof (GV)','Erkend technicus gasvormige brandstof (GV)','Technicien agréé combustible gazeux (GV)'),
+        O('Erkend technicus vloeibare brandstof (TV)','Erkend technicus vloeibare brandstof (TV)','Technicien agréé combustible liquide (TV)'),
+        O('Erkend verwarmingsaannemer (VA+)','Erkend verwarmingsaannemer (VA+)','Entreprise de chauffage agréée (VA+)'),
+        O('Geschoold vakman (vaste brandstof)','Geschoold vakman (vaste brandstof)','Technicien qualifié (combustible solide)')]})),
+      req(F('techName',B('Naam en voornaam','Nom et prénom'))),
+      F('techAgrement',B('Erkenningsnummer (GV##### / TV##### / VA+#####)','Numéro d’agrément (GV##### / TV##### / VA+#####)')),
+      req(F('company',B('Firma','Entreprise'))),
+      req(F('bce',B('Ondernemingsnummer','Numéro d’entreprise'))),
+      F('techPhone',B('Telefoon / e-mail','Téléphone / e-mail')),
+      F('workDuration',B('Arbeidsduur van — tot','Durée du travail de — à')),
     ]},
-    {title:'Klant',hint:'Klant en adres van het stooktoestel indien verschillend.',fields:[
-      req(F('clientName','Voornaam en achternaam')),
-      req(F('clientStreet','Straat en nummer')),
-      req(F('clientCity','Postnummer en gemeente')),
-      F('clientPhone','Telefoon / e-mail'),
-      F('applianceLocation','Adres stooktoestel indien verschillend'),
+    {title:B('Klant','Client'),hint:B('Klant en adres van het stooktoestel indien verschillend.','Client et adresse du générateur si différente.'),fields:[
+      req(F('clientName',B('Voornaam en achternaam','Prénom et nom'))),
+      req(F('clientStreet',B('Straat en nummer','Rue et numéro'))),
+      req(F('clientCity',B('Postnummer en gemeente','Code postal et localité'))),
+      F('clientPhone',B('Telefoon / e-mail','Téléphone / e-mail')),
+      F('applianceLocation',B('Adres stooktoestel indien verschillend','Adresse du générateur si différente')),
     ]},
-    {title:'Stooktoestel',hint:'Kenmerken van het toestel.',fields:[
-      req(F('fuel','Brandstof','select',{options:['Gasvormig','Vloeibaar','Vast']})),
-      req(F('powerKw','Nominaal vermogen (kW)','number')),
-      F('central','Centraal toestel','select',{options:['Ja','Nee']}),
-      F('type','Type','select',{options:['B','C']}),
-      F('condensation','Condensatie','select',{options:['Ja','Nee']}),
-      F('year','Bouwjaar','number'),
-      F('make','Merk'), F('model','Model'), F('serial','Serienummer'),
-      F('unitOrPulsed','Brander','select',{options:['unit','air pulsed']}),
+    {title:B('Stooktoestel','Générateur'),hint:B('Kenmerken van het toestel.','Caractéristiques de l’appareil.'),fields:[
+      req(F('fuel',B('Brandstof','Combustible'),'select',{options:[
+        O('Gasvormig','Gasvormig','Gazeux'),
+        O('Vloeibaar','Vloeibaar','Liquide'),
+        O('Vast','Vast','Solide')]})),
+      req(F('powerKw',B('Nominaal vermogen (kW)','Puissance nominale (kW)'),'number')),
+      F('central',B('Centraal toestel','Appareil central'),'select',{options:[O('Ja','Ja','Oui'),O('Nee','Nee','Non')]}),
+      F('type',B('Type','Type'),'select',{options:[O('B','B'),O('C','C')]}),
+      F('condensation',B('Condensatie','Condensation'),'select',{options:[O('Ja','Ja','Oui'),O('Nee','Nee','Non')]}),
+      F('year',B('Bouwjaar','Année de construction'),'number'),
+      F('make',B('Merk','Marque')), F('model',B('Model','Modèle')), F('serial',B('Serienummer','Numéro de série')),
+      F('unitOrPulsed',B('Brander','Brûleur'),'select',{options:[O('unit','unit'),O('air pulsed','air pulsed','air pulsé')]}),
     ]},
-    {title:'Metingen',hint:'Proef I (initieel) en Proef II (eindmeting).',measure:true,fields:[
-      {key:'o2',label:'Zuurstof (O₂)',type:'measure',unit:'%',max:4.4,lower:true,pair:true},
-      {key:'co2',label:'Koolstofdioxide (CO₂)',type:'measure',unit:'%',min:12,pair:true},
-      {key:'co',label:'Koolstofmonoxide (CO)',type:'measure',unit:'mg/kWh',max:150,lower:true,pair:true},
-      {key:'flueTemp',label:'Rookgastemperatuur',type:'measure',unit:'°C',max:200,lower:true,pair:true},
-      {key:'netTemp',label:'Nettotemperatuur',type:'measure',unit:'°C',pair:true},
-      {key:'efficiency',label:'Verbrandingsrendement (Hi)',type:'measure',unit:'%',min:90,pair:true},
-      F('smoke','Rookindex Bacharach (stookolie)','number'),
-      F('draft','Druk rookgasafvoerkanaal (Pa)','number'),
+    {title:B('Metingen','Mesures'),hint:B('Proef I (initieel) en Proef II (eindmeting).','Essai I (initial) et essai II (mesure finale).'),measure:true,fields:[
+      {key:'o2',label:B('Zuurstof (O₂)','Teneur en O₂'),type:'measure',unit:'%',max:4.4,lower:true,pair:true},
+      {key:'co2',label:B('Koolstofdioxide (CO₂)','Teneur en CO₂'),type:'measure',unit:'%',min:12,pair:true},
+      {key:'co',label:B('Koolstofmonoxide (CO)','Teneur en CO'),type:'measure',unit:'mg/kWh',max:150,lower:true,pair:true},
+      {key:'flueTemp',label:B('Rookgastemperatuur','Température des gaz de combustion'),type:'measure',unit:'°C',max:200,lower:true,pair:true},
+      {key:'netTemp',label:B('Nettotemperatuur','Température nette'),type:'measure',unit:'°C',pair:true},
+      {key:'efficiency',label:B('Verbrandingsrendement (Hi)','Rendement de combustion (Hi)'),type:'measure',unit:'%',min:90,pair:true},
+      F('smoke',B('Rookindex Bacharach (stookolie)','Indice de fumée Bacharach (mazout)'),'number'),
+      F('draft',B('Druk rookgasafvoerkanaal (Pa)','Pression du conduit de fumée (Pa)'),'number'),
     ]},
-    {title:'Beoordeling',hint:'Conformiteit, gebreken en VEKA-registratie.',fields:[
-      req(F('conformity','Eindbeoordeling','select',{
-        options:['Goed en veilig','Niet goed','Niet veilig'],when:whenNotKeuring})),
+    {title:B('Beoordeling','Évaluation'),hint:B('Conformiteit, gebreken en VEKA-registratie.','Conformité, défauts et enregistrement VEKA.'),fields:[
+      req(F('conformity',B('Eindbeoordeling','Évaluation finale'),'select',{
+        options:[
+          O('Goed en veilig','Goed en veilig','Bon et sûr'),
+          O('Niet goed','Niet goed','Pas bon'),
+          O('Niet veilig','Niet veilig','Pas sûr')],when:whenNotKeuring})),
       ...['keuringInstructions','keuringBurner','keuringKetel','keuringVentilation',
         'keuringHydraulic','keuringElectrical'].map(key=>F(key,({
-          keuringInstructions:'Gebruikers- en onderhoudsinstructies',
-          keuringBurner:'Ingeregeld vermogen',
-          keuringKetel:'Ketel — mantel',
-          keuringVentilation:'Ventilatie stookplaats',
-          keuringHydraulic:'Hydraulische installatie — lekken',
-          keuringElectrical:'Elektrische installatie — zekering',
-        })[key],'select',{options:['OK','Niet OK'],when:whenKeuring})),
+          keuringInstructions:B('Gebruikers- en onderhoudsinstructies','Instructions d’utilisation et d’entretien'),
+          keuringBurner:B('Ingeregeld vermogen','Puissance réglée'),
+          keuringKetel:B('Ketel — mantel','Chaudière — enveloppe'),
+          keuringVentilation:B('Ventilatie stookplaats','Ventilation du local de chauffe'),
+          keuringHydraulic:B('Hydraulische installatie — lekken','Installation hydraulique — fuites'),
+          keuringElectrical:B('Elektrische installatie — zekering','Installation électrique — fusible'),
+        })[key],'select',{options:yesNo(),when:whenKeuring})),
       ...['conformStooktoestel','conformRookgas','conformStookplaats','conformVerbranding'].map(key=>
         req(F(key,({
-          conformStooktoestel:'Stooktoestel conform',
-          conformRookgas:'Rookgasafvoerkanaal conform',
-          conformStookplaats:'Stookplaats conform',
-          conformVerbranding:'Verbrandingscontrole',
-        })[key],'select',{options:['OK','Niet OK'],when:whenKeuring}))),
-      F('defects','Gebreken en maatregelen','textarea'),
-      F('remarks','Andere opmerkingen','textarea'),
-      req(F('vekaRef','VEKA registratiereferentie')),
-      req(F('vekaDate','Datum registratie VEKA','date')),
+          conformStooktoestel:B('Stooktoestel conform','Générateur conforme'),
+          conformRookgas:B('Rookgasafvoerkanaal conform','Conduit de fumée conforme'),
+          conformStookplaats:B('Stookplaats conform','Local de chauffe conforme'),
+          conformVerbranding:B('Verbrandingscontrole','Contrôle de la combustion'),
+        })[key],'select',{options:yesNo(),when:whenKeuring}))),
+      F('defects',B('Gebreken en maatregelen','Défauts et mesures'),'textarea'),
+      F('remarks',B('Andere opmerkingen','Autres remarques'),'textarea'),
+      req(F('vekaRef',B('VEKA registratiereferentie','Référence d’enregistrement VEKA'))),
+      req(F('vekaDate',B('Datum registratie VEKA','Date d’enregistrement VEKA'),'date')),
     ]},
   ]
 };
 
-export {fmt};
+export {fmt, B, O, yesNo};

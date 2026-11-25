@@ -8,6 +8,7 @@ import {openBrusselsPrint} from './print-brussels.js';
 import {saveAttachmentBytes,loadAttachmentBytes,clearAttachmentBytes} from './attachments.js';
 import {limitsForField} from './regions/wallonia-criteria.js';
 import {diagHelperHTML,wireDiagHelper} from './regions/diag-helper.js';
+import {resolved,optionValue,optionLabel,optionValues} from './lang.js';
 
 const REGIONS = {wallonia,flanders,brussels};
 const KEY = 'attesta.draft.v1';
@@ -59,7 +60,14 @@ const T = {
     attachReloadWarning:'Les fichiers ne sont pas conservés dans un brouillon rechargé. Resélectionnez les tickets avant de télécharger.',
     flDocChoice:'Document à télécharger', flDocBoth:'Les deux documents',
     auditSummary:'Champs écrits', auditWarnings:'Avertissements de mise en page',
-    saved:'Brouillon enregistré'},
+    saved:'Brouillon enregistré',
+    glossary:[
+      ['AWAC','Agence wallonne de l’air et du climat.'],
+      ['BCE','Numéro d’entreprise (Banque-Carrefour des Entreprises).'],
+      ['Bacharach','Indice de fumée (échelle 0–9).'],
+      ['GI / GII','Catégories d’agrément du technicien (gaz / air pulsé).'],
+      ['VEKA','Melding obligatoire en Flandre (melding.veka.vlaanderen.be).'],
+      ['Art. 13 §2','Base légale wallonne du contrôle.']]},
   nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'Afdrukken / opslaan als PDF',changeRegion:'Regio wijzigen',progress:'Voortgang',
     chooseTitle:'Attesta',chooseHint:'Kies de regio van deze interventie.',
     chooseHead:'Eén wizard. Drie regio’s.',
@@ -105,9 +113,20 @@ const T = {
     attachReloadWarning:'Bestanden worden niet bewaard in een herladen concept. Selecteer de meetbewijzen opnieuw vóór het downloaden.',
     flDocChoice:'Te downloaden document', flDocBoth:'Beide documenten',
     auditSummary:'Velden geschreven', auditWarnings:'Layoutwaarschuwingen',
-    saved:'Concept opgeslagen'}
+    saved:'Concept opgeslagen',
+    glossary:[
+      ['AWAC','Waalse agentschap voor lucht en klimaat.'],
+      ['BCE','Ondernemingsnummer (Banque-Carrefour des Entreprises).'],
+      ['Bacharach','Rookindex (schaal 0–9).'],
+      ['GI / GII','Erkenningscategorieën van de technicus (gas / luchtpuls).'],
+      ['VEKA','Verplichte melding in Vlaanderen (melding.veka.vlaanderen.be).'],
+      ['Art. 13 §2','Wettelijke basis van de Waalse controle.']]}
 };
-function tr(){ return T[cfg()?.lang||'fr']||T.fr; }
+// The wizard UI can be switched per job (Flanders is bilingual). Document
+// language is separate: state.lang is never read by the print/PDF path.
+function activeLang(){ return state?.lang || cfg()?.lang || 'fr'; }
+function tr(){ return T[activeLang()]||T.fr; }
+
 const ACK_KEY='attesta.acks.v1';
 let acks=loadAcks();
 function loadAcks(){ try{return JSON.parse(sessionStorage.getItem(ACK_KEY))||{};}catch(e){return {};} }
@@ -133,6 +152,8 @@ function load(){
     const region=REGIONS[s.region];
     s.step=Math.max(0,Math.min(Number(q.get('step'))||0,region?.steps.length||0));
   }
+  const lang=q.get('lang');
+  if(s.region && (lang==='fr'||lang==='nl')) s.lang=lang;
   return s;
 }
 function isDraft(value,region){
@@ -173,16 +194,26 @@ function ensurePdfLibs(){
 const fieldVisible = f => typeof f.when!=='function' || f.when(state.data);
 
 /* ---------- header + footer ---------- */
+function renderGlossary(){
+  const entries=tr().glossary||[];
+  $('glossarySummary').textContent=activeLang()==='nl'?'Woordenlijst':'Glossaire';
+  $('glossaryList').innerHTML=entries.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+}
 function renderChrome(){
+  renderGlossary();
   const c=cfg();
   $('rule').style.background = c?c.rule:'#b23a2b';
-  $('regionLabel').textContent = c?c.label:'—';
+  $('regionLabel').textContent = c?resolved(c.label,activeLang()):'—';
   const n=c?c.steps.length:0;
   $('progress').innerHTML = c ? Array.from({length:n},(_,i)=>
     `<i class="${i<state.step?'done':i===state.step?'on':''}"></i>`).join('') : '';
   $('stepCount').textContent = c ? `${Math.min(state.step+1,n)} / ${n}` : '';
-  document.documentElement.lang = c?c.lang:'fr';
+  document.documentElement.lang = activeLang();
   const t=tr();
+  const bilingual = !!c && c.id==='flanders';
+  $('langSwitch').hidden=!bilingual;
+  $('langFr').setAttribute('aria-pressed',String(activeLang()==='fr'));
+  $('langNl').setAttribute('aria-pressed',String(activeLang()==='nl'));
   $('changeRegion').hidden=!c;
   $('changeRegion').textContent = t.changeRegion;
   $('progress').setAttribute('aria-label', t.progress);
@@ -228,8 +259,10 @@ function fieldHTML(f){
   const name=` name="${f.key}"`;
   let input='';
   if(f.type==='select'){
-    input=`<select id="${id}"${name} data-k="${f.key}" ${f.required?'required':''}><option value=""></option>${f.options.map(o=>
-      `<option ${v===o?'selected':''}>${o}</option>`).join('')}</select>`;
+    input=`<select id="${id}"${name} data-k="${f.key}" ${f.required?'required':''}><option value=""></option>${f.options.map(o=>{
+      const ov=optionValue(o);
+      return `<option value="${esc(ov)}" ${v===ov?'selected':''}>${esc(optionLabel(o,activeLang()))}</option>`;
+    }).join('')}</select>`;
   } else if(f.type==='textarea'){
     input=`<textarea id="${id}"${name} data-k="${f.key}" rows="2" ${f.required?'required':''}>${esc(v)}</textarea>`;
   } else if(f.type==='file'){
@@ -241,7 +274,7 @@ function fieldHTML(f){
     input=`<input id="${id}"${name} type="${f.type==='number'?'number':f.type==='date'?'date':'text'}" data-k="${f.key}" value="${esc(v)}" ${f.required?'required':''} spellcheck="false" autocomplete="off">`;
   }
   if(bad) input=input.replace(/^<(\w+)/,`<$1 aria-invalid="true" aria-describedby="${id}-error"`);
-  return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${f.label}</label>${input}${f.hint?`<div class="fhint">${esc(f.hint)}</div>`:''}<div class="err" id="${id}-error" role="alert">${f._err||''}</div></div>`;
+  return `<div class="f ${bad} ${f.required?'req':''}"><label for="${id}">${esc(resolved(f.label,activeLang()))}</label>${input}${f.hint?`<div class="fhint">${esc(resolved(f.hint,activeLang()))}</div>`:''}<div class="err" id="${id}-error" role="alert">${f._err||''}</div></div>`;
 }
 // Wallonia thresholds come from the official category table, not from hard-coded
 // min/max on the field definition. No resolved category means no rule and no OK.
@@ -261,7 +294,7 @@ function measureHTML(f){
   if(f.pair){
     const obj=(v&&typeof v==='object')?v:{i:'',f:''};
     return `<div class="mrow paired pending">
-      <label class="ml" for="${id}-i">${f.label}<span class="thresh">${lim} ${f.unit||''}</span></label>
+      <label class="ml" for="${id}-i">${esc(resolved(f.label,activeLang()))}<span class="thresh">${lim} ${f.unit||''}</span></label>
       <div class="pair-inputs">
         <label class="sub">I <input id="${id}-i" name="${f.key}.i" data-k="${f.key}" data-sub="i" value="${esc(obj.i??'')}" inputmode="decimal"></label>
         <label class="sub">II <input id="${id}-f" name="${f.key}.f" data-k="${f.key}" data-sub="f" value="${esc(obj.f??'')}" inputmode="decimal"></label>
@@ -278,7 +311,7 @@ function measureHTML(f){
     }
   }
   return `<div class="mrow ${v===''||v==null?'pending':''} ${verdict==='bad'?'warn':''}">
-    <label class="ml" for="${id}">${f.label}<span class="thresh">${lim} ${f.unit||''}</span></label>
+    <label class="ml" for="${id}">${esc(resolved(f.label,activeLang()))}<span class="thresh">${lim} ${f.unit||''}</span></label>
     <input id="${id}" name="${f.key}" data-k="${f.key}" value="${esc(v??'')}" inputmode="decimal" ${f.required?'required':''}>
     <span class="verdict ${verdict}">${text}</span></div>`;
 }
@@ -310,8 +343,8 @@ function render(){
   const focusKey=`${state.region}:${state.step}`;
   if(isFinal){ renderFinal(); maybeFocusHeading(focusKey); return; }
   const step=c.steps[state.step];
-  $('stepTitle').textContent=step.title;
-  $('stepHint').textContent=step.hint;
+  $('stepTitle').textContent=resolved(step.title,activeLang());
+  $('stepHint').textContent=resolved(step.hint,activeLang());
   $('warning').innerHTML=warningFor();
   $('warning').hidden=!$('warning').innerHTML;
   wireAcks();
@@ -407,18 +440,19 @@ function renderRegionChoice(){
     <p>${t.chooseHint}</p>
     <div class="choices">${Object.values(REGIONS).map(r=>{
       const saved=readRegionDraft(r.id);
-      const savedLabel=isComplete(saved?.status)?t.record(r.label):t.resume(r.label);
-      return `<button type="button" class="choice red" data-region="${r.id}">${t.newIn(r.label)}</button>
+      const regionLabel=resolved(r.label,activeLang());
+      const savedLabel=isComplete(saved?.status)?t.record(regionLabel):t.resume(regionLabel);
+      return `<button type="button" class="choice red" data-region="${r.id}">${t.newIn(regionLabel)}</button>
         ${saved?`<button type="button" class="choice" data-resume="${r.id}">${savedLabel}</button>`:''}`;
     }).join('')}</div></div>`;
   $('form').querySelectorAll('[data-region]').forEach(b=>b.onclick=()=>{
       const saved=readRegionDraft(b.dataset.region);
       if(saved){
-        const label=REGIONS[b.dataset.region].label;
+        const label=resolved(REGIONS[b.dataset.region].label,activeLang());
         const kind=isComplete(saved.status)?'record':'draft';
         if(!window.confirm(tr().confirmReplace(label,kind))) return;
       }
-    state={region:b.dataset.region,step:0,data:{},status:'Draft'};
+    state={region:b.dataset.region,step:0,data:{},status:'Draft',lang:REGIONS[b.dataset.region].lang};
     lastFocusKey=null; save(); syncURL(); render();
   });
   $('form').querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>{
@@ -589,7 +623,7 @@ function validate(){
     f._err='';
     if(f.required && (state.data[f.key]===''||state.data[f.key]==null)) { f._err=t.required; ok=false; }
     if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err=t.required; ok=false; }
-    if(f.type==='select' && state.data[f.key] && f.options && !f.options.includes(state.data[f.key])) { f._err=t.invalid; ok=false; }
+    if(f.type==='select' && state.data[f.key] && f.options && !optionValues(f).includes(state.data[f.key])) { f._err=t.invalid; ok=false; }
   });
   const agrem=visible.find(f=>f.key==='techAgrement');
   if(agrem){
@@ -642,7 +676,7 @@ function validateDraft(){
       f._err='';
       if(f.required && (state.data[f.key]===''||state.data[f.key]==null)){ f._err=t.required; }
       if(f.type==='checkbox' && f.required && state.data[f.key]!==true){ f._err=t.required; }
-      if(f.type==='select' && state.data[f.key] && f.options&&!f.options.includes(state.data[f.key])){ f._err=t.invalid; }
+      if(f.type==='select' && state.data[f.key] && f.options&&!optionValues(f).includes(state.data[f.key])){ f._err=t.invalid; }
     }
   }
   const pattern=recognitionPattern();
@@ -673,6 +707,15 @@ $('changeRegion').onclick=()=>{
   syncURL();
   render();
 };
+function setLang(lang){
+  if(!state.region || (lang!=='fr' && lang!=='nl')) return;
+  state.lang=lang;
+  lastFocusKey=null;
+  save(); syncURL(); render();
+}
+$('langFr').onclick=()=>setLang('fr');
+$('langNl').onclick=()=>setLang('nl');
+
 $('next').onclick=()=>{
   const c=cfg(); if(!c) return;
   if(state.step>=c.steps.length) return;
@@ -687,9 +730,12 @@ function syncURL(){
     if(state.region){
       url.searchParams.set('region',state.region);
       url.searchParams.set('step',String(state.step));
+      if(state.lang && state.lang!==REGIONS[state.region].lang) url.searchParams.set('lang',state.lang);
+      else url.searchParams.delete('lang');
     }else{
       url.searchParams.delete('region');
       url.searchParams.delete('step');
+      url.searchParams.delete('lang');
     }
     history.replaceState(null,'',url);
   }catch(e){ /* non-fatal: URL sync is a convenience */ }
@@ -699,7 +745,8 @@ window.addEventListener('popstate',()=>{
   const region=q.get('region');
   if(region&&REGIONS[region]){
     const step=Math.max(0,Math.min(Number(q.get('step'))||0,REGIONS[region].steps.length));
-    state={region,step,data:state.region===region?state.data:{},status:state.region===region?state.status:'Draft'};
+    state={region,step,data:state.region===region?state.data:{},status:state.region===region?state.status:'Draft',
+      lang:state.region===region?state.lang:REGIONS[region].lang};
     lastFocusKey=null;
     save(); render();
   }else if(!region && state.region){

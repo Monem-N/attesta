@@ -19,6 +19,9 @@
       <div class="brand">ATTESTA</div>
       <div class="head-region">
         <div class="region" id="regionLabel">—</div>
+        <span class="lang-switch" id="langSwitch" role="group" aria-label="Language / Taal" hidden>
+          <button type="button" id="langNl" aria-pressed="true">NL</button><button type="button" id="langFr" aria-pressed="false">FR</button>
+        </span>
         <button type="button" class="change-region" id="changeRegion" hidden>Change region</button>
       </div>
     </div>
@@ -47,15 +50,8 @@
   </footer>
 </div>
 <details class="glossary">
-  <summary>Glossaire</summary>
-  <dl>
-    <dt>AWAC</dt><dd>Agence wallonne de l’air et du climat.</dd>
-    <dt>BCE</dt><dd>Numéro d’entreprise (Banque-Carrefour des Entreprises).</dd>
-    <dt>Bacharach</dt><dd>Indice de fumée (échelle 0–9).</dd>
-    <dt>GI / GII</dt><dd>Catégories d’agrément du technicien (gaz / air pulsé).</dd>
-    <dt>VEKA</dt><dd>Melding obligatoire en Flandre (melding.veka.vlaanderen.be).</dd>
-    <dt>Art. 13 §2</dt><dd>Base légale wallonne du contrôle.</dd>
-  </dl>
+  <summary id="glossarySummary">Glossaire</summary>
+  <dl id="glossaryList"></dl>
 </details>
 <script type="module" src="app.js"></script>
 </body>
