@@ -57,6 +57,9 @@ const RULES={
   diagAfter2015:[['oui',/^oui/i],['non',/^non/i]], diagTwoYears:[['oui',/^oui/i],['non',/^non/i]],
   diagDeferred:[['oui',/^oui/i],['non',/^non/i]],
   globalResult:[['non OK',/non ok/i],['OK',/^ok/i]],
+  cmpSmoke:[['non OK',/non ok/i],['OK',/^ok/i]], cmpFlueTemp:[['non OK',/non ok/i],['OK',/^ok/i]],
+  cmpCo2:[['non OK',/non ok/i],['OK',/^ok/i]], cmpO2:[['non OK',/non ok/i],['OK',/^ok/i]],
+  cmpCo:[['non OK',/non ok/i],['OK',/^ok/i]], cmpEfficiency:[['non OK',/non ok/i],['OK',/^ok/i]],
   orifices:[['non conforme',/non conforme/i],['conforme',/conforme/i],['absent',/absent/i],['dispensé',/dispens/i]],
   conformity:[['non',/^non/i],['oui',/^oui|^conforme/i]],
   regulationMode:[['auto',/auto/i],['man',/man/i]],
@@ -77,9 +80,16 @@ export function buildWalloniaHtml(state){
   return {htmlTemplate:'wallonia.html',data};
 }
 
+const BOXKEYS=new Set(['bce','techAgrement','raccordement']);
+function valueForBoxes(data,key){
+  const v=String(valueFor(data,key)??'').trim();
+  if(!v) return '';
+  return [...v].map(ch=>`<span class="bx">${ch===' '?'&nbsp;':esc(ch)}</span>`).join('');
+}
+
 export function renderWalloniaPrintHtml(state,templateHtml){
   const {data}=buildWalloniaHtml(state);
-  let html=templateHtml.replace(/\{\{(\w+)\}\}/g,(_,k)=>esc(valueFor(data,k)));
+  let html=templateHtml.replace(/\{\{(\w+)\}\}/g,(_,k)=>BOXKEYS.has(k)?valueForBoxes(data,k):esc(valueFor(data,k)));
   // The print view opens in a blank window, so relative asset URLs would
   // resolve against about:blank and break. Make them absolute to this app.
   const base=new URL('.',globalThis.location?.href||'http://localhost/');

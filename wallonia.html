@@ -110,6 +110,7 @@ table.cat td.code{font-weight:bold;white-space:nowrap}
   .sheet{font-family:'Roboto',Arial,sans-serif !important}
 
   .p-logo{position:absolute;top:4mm;right:5mm;height:8mm;width:auto}
+  .bx{display:inline-block;border:.6pt solid #333;min-width:3.6mm;height:4.6mm;text-align:center;font-size:8.5px;line-height:4.6mm;margin-right:.4mm;vertical-align:middle}
 </style></head>
 <body>
 <div class="doc-stack" id="docStack" data-ink="color">
@@ -297,56 +298,57 @@ table.cat td.code{font-weight:bold;white-space:nowrap}
       <tr>
         <th rowspan="2" style="width:27mm"></th>
         <th rowspan="2">Température<br>d'eau<br>(°C)<span class="sup">(9)</span></th>
-        <th colspan="2">Indice de fumée / de t° nette gaz<br>fumée combustion (t°gaz − t°air comb.)</th>
-        <th>Teneur<br>en CO₂</th>
-        <th>Teneur<br>en O₂</th>
-        <th>Teneur<br>en CO</th>
-        <th>Rendement<br>combustion</th>
-        <th rowspan="2">Comparaison</th>
-      </tr>
-      <tr>
-        <th>MAXIMAL<br>(Bacharach)</th>
-        <th>MAXIMAL<br>(°C)</th>
-        <th>MINIMALE<br>(%)</th>
-        <th>MAXIMALE<br>(%)</th>
-        <th>MAXIMALE<br>(mg/kWh)</th>
-        <th>MINIMAL<br>(%)</th>
+        <th>Indice de fumée<br>MAX. (Bacharach)</th>
+        <th>t° nette gaz<br>MAX. (°C)</th>
+        <th>Teneur CO₂<br>MIN. (%)</th>
+        <th>Teneur O₂<br>MAX. (%)</th>
+        <th>Teneur CO<br>MAX. (mg/kWh)</th>
+        <th>Rend. combustion<br>MIN. (%)</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td class="lbl">Performances minimales<span class="sup">(10)</span></td>
-        <td>—</td><td></td><td></td><td></td><td></td><td></td><td></td><td>—</td>
+        <td>—</td><td></td><td></td><td></td><td></td><td></td><td></td>
+      </tr>
+      <tr>
+        <td class="lbl">Valeurs mesurées</td>
+        <td>{{waterTemp}}</td><td>{{smoke}}</td><td>{{flueTemp}}</td><td>{{co2}}</td><td>{{o2}}</td><td>{{co}}</td><td>{{efficiency}}</td>
       </tr>
       <tr>
         <td class="lbl">Puissance maximale</td>
         <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-        <td class="res"><span class="cb">☐</span>OK <span class="cb">☐</span>non OK</td>
       </tr>
       <tr>
         <td class="lbl">Allure 1 / Pmin</td>
-        <td>{{waterTemp}}</td><td></td><td>{{flueTemp}}</td><td>{{co2}}</td><td>{{o2}}</td><td>{{co}}</td><td>{{efficiency}}</td>
-        <td class="res"><span class="cb" data-tick="globalResult:OK">☐</span>OK <span class="cb" data-tick="globalResult:non OK">☐</span>non OK</td>
+        <td>{{waterTemp}}</td><td>{{smoke}}</td><td>{{flueTemp}}</td><td>{{co2}}</td><td>{{o2}}</td><td>{{co}}</td><td>{{efficiency}}</td>
       </tr>
       <tr>
         <td class="lbl">Allure 2 (25 % si modulant)</td>
         <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-        <td class="res"><span class="cb">☐</span>OK <span class="cb">☐</span>non OK</td>
       </tr>
       <tr>
         <td class="lbl">Allure 3 (50 % si modulant)</td>
         <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-        <td class="res"><span class="cb">☐</span>OK <span class="cb">☐</span>non OK</td>
       </tr>
       <tr>
         <td class="lbl">Allure 4 (75 % si modulant)</td>
         <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
-        <td class="res"><span class="cb">☐</span>OK <span class="cb">☐</span>non OK</td>
+      </tr>
+      <tr>
+        <td class="lbl">Comparaison</td>
+        <td></td>
+        <td><span class="cb" data-tick="cmpSmoke:OK">☐</span>OK <span class="cb" data-tick="cmpSmoke:non OK">☐</span>non OK</td>
+        <td><span class="cb" data-tick="cmpFlueTemp:OK">☐</span>OK <span class="cb" data-tick="cmpFlueTemp:non OK">☐</span>non OK</td>
+        <td><span class="cb" data-tick="cmpCo2:OK">☐</span>OK <span class="cb" data-tick="cmpCo2:non OK">☐</span>non OK</td>
+        <td><span class="cb" data-tick="cmpO2:OK">☐</span>OK <span class="cb" data-tick="cmpO2:non OK">☐</span>non OK</td>
+        <td><span class="cb" data-tick="cmpCo:OK">☐</span>OK <span class="cb" data-tick="cmpCo:non OK">☐</span>non OK</td>
+        <td><span class="cb" data-tick="cmpEfficiency:OK">☐</span>OK <span class="cb" data-tick="cmpEfficiency:non OK">☐</span>non OK</td>
       </tr>
       <tr>
         <td class="lbl">Résultat global</td>
-        <td colspan="7" style="text-align:left;padding-left:2mm">Résultat global de l'ensemble des allures mesurées</td>
-        <td class="res"><span class="cb" data-tick="globalResult:OK">☐</span>OK <span class="cb" data-tick="globalResult:non OK">☐</span>non OK</td>
+        <td colspan="7" style="text-align:left;padding-left:2mm">Résultat global de l'ensemble des allures mesurées
+          <span class="cb" data-tick="globalResult:OK">☐</span>OK <span class="cb" data-tick="globalResult:non OK">☐</span>non OK</td>
       </tr>
     </tbody>
   </table>
