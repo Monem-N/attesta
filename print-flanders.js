@@ -1,12 +1,16 @@
 // Data-driven print view for the Flanders attestation (2 A4 pages).
 // Token injection + exclusive ticks + category-based verdicts + conditional page 2.
 import {flanders} from './regions/flanders.js';
+import {categoryFor,computeVerdicts} from './regions/flanders-criteria.js';
+import {scalarText} from './input-validation.js';
+import {signatureFor,applySignatureToDocument} from './signature.js';
+export {categoryFor,computeVerdicts};
 
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const norm = s => String(s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+const esc = s => scalarText(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => scalarText(s).trim().toLowerCase().replace(/\s+/g, ' ');
 
 export function fmtDots(v) {
-  const s = String(v ?? '');
+  const s = scalarText(v);
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if (iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
   const slash = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s); if (slash) return `${slash[1]}.${slash[2]}.${slash[3]}`;
   return s;
@@ -16,36 +20,7 @@ const toISO = d => {
   const p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
-const pair = (v, n) => (v && typeof v === 'object') ? ((n === 1 ? v.i : v.f) ?? '') : (v ?? '');
-const num = v => { const n = Number(String(v).replace(',', '.')); return Number.isFinite(n) ? n : null; };
-
-// ---- Category table (official Flanders: LP/GP/GUP/GUnP A–D) --------------
-const CATS = [
-  {code:'LP A',fuel:'vloeibaar',burner:'pulsed',from:1998,to:9999,smoke:1,net:null,co2:12,o2:4.4,co:155,eff:90},
-  {code:'LP B',fuel:'vloeibaar',burner:'pulsed',from:1988,to:1997,smoke:1,net:null,co2:11,o2:null,co:155,eff:88},
-  {code:'LP C',fuel:'vloeibaar',burner:'pulsed',from:0,to:1987,smoke:2,net:null,co2:10,o2:null,co:155,eff:85},
-  {code:'GP A',fuel:'gasvormig',burner:'pulsed',from:1998,to:9999,smoke:null,net:200,co2:8.5,o2:null,co:110,eff:90},
-  {code:'GP B',fuel:'gasvormig',burner:'pulsed',from:1988,to:1997,smoke:null,net:220,co2:7.5,o2:null,co:150,eff:88},
-  {code:'GP C',fuel:'gasvormig',burner:'pulsed',from:0,to:1987,smoke:null,net:250,co2:6.5,o2:null,co:270,eff:85},
-  {code:'GUP A',fuel:'gasvormig',burner:'unit-premix',from:2007,to:9999,smoke:null,net:180,co2:null,o2:null,co:110,eff:90},
-  {code:'GUP B',fuel:'gasvormig',burner:'unit-premix',from:1998,to:2006,smoke:null,net:180,co2:null,o2:null,co:150,eff:90},
-  {code:'GUP C',fuel:'gasvormig',burner:'unit-premix',from:1988,to:1997,smoke:null,net:200,co2:null,o2:null,co:150,eff:88},
-  {code:'GUP D',fuel:'gasvormig',burner:'unit-premix',from:0,to:1987,smoke:null,net:250,co2:null,o2:null,co:270,eff:84},
-  {code:'GUnP A',fuel:'gasvormig',burner:'unit-nonpremix',from:2007,to:9999,smoke:null,net:200,co2:null,o2:null,co:150,eff:88},
-  {code:'GUnP B',fuel:'gasvormig',burner:'unit-nonpremix',from:1998,to:2006,smoke:null,net:200,co2:null,o2:null,co:200,eff:88},
-  {code:'GUnP C',fuel:'gasvormig',burner:'unit-nonpremix',from:1988,to:1997,smoke:null,net:250,co2:null,o2:null,co:200,eff:86},
-  {code:'GUnP D',fuel:'gasvormig',burner:'unit-nonpremix',from:0,to:1987,smoke:null,net:300,co2:null,o2:null,co:300,eff:82},
-];
-
-export function categoryFor(fuel, year, unitOrPulsed) {
-  fuel = String(fuel || '').toLowerCase();
-  if (fuel === 'vast') return null;
-  const y = Number(year) || 0;
-  let burner;
-  if (fuel === 'vloeibaar') burner = 'pulsed';
-  else burner = /air|puls/i.test(unitOrPulsed || '') ? 'pulsed' : 'unit-nonpremix';
-  return CATS.find(c => c.fuel === fuel && c.burner === burner && y >= c.from && y <= c.to) || null;
-}
+const pair = (v, n) => (v && typeof v === 'object' && !Array.isArray(v)) ? (n === 1 ? v.i : v.f) : v;
 
 export function valueFor(data, key) {
   const d = data;
@@ -85,62 +60,48 @@ const RULES = {
 
 export function selectedOption(field, value) {
   if (value == null || value === '') return null;
-  const v = String(value).trim();
+  const v = scalarText(value).trim();
   if (/^(OK|Niet OK)$/i.test(v)) return v;
   const rules = RULES[field]; if (!rules) return null;
   const hit = rules.find(([, re]) => re.test(v));
   return hit ? hit[0] : null;
 }
 
-export function computeVerdicts(d) {
-  const cat = categoryFor(d.fuel, d.year, d.unitOrPulsed);
-  const lpg = (/propaan|butaan/i.test(d.gas || '') || (d.fuel === 'gasvormig' && d.gas && !/aardgas/i.test(d.gas))) ? 15 : 0;
-  const specs = cat
-    ? [['smoke', cat.smoke, 'max'], ['netTemp', cat.net, 'max'], ['co2', cat.co2, 'min'],
-       ['o2', cat.o2, 'max'], ['co', cat.co == null ? null : cat.co + lpg, 'max'], ['efficiency', cat.eff, 'min']]
-    : [];
-  const out = {};
-  for (const [k, lim, dir] of specs) {
-    if (lim == null) continue;
-    for (const n of [1, 2]) {
-      const raw = pair(d[k], n); if (raw === '' || raw == null) continue;
-      const val = num(raw); if (val === null) continue;
-      const ok = dir === 'min' ? val >= lim : val <= lim;
-      out[`v_${k}_${n}`] = ok ? 'OK' : 'Niet OK';
-    }
-  }
-  const judged = Object.values(out);
-  out.v_overall = judged.length ? (judged.every(v => v === 'OK') ? 'OK' : 'Niet OK') : null;
-  if (out.v_overall === null) delete out.v_overall;
-  return out;
-}
-
 export function buildFlandersHtml(state) {
   const data = { ...state.data };
+  // Computed dates are recalculated from a valid intervention date. Never keep
+  // dates left in a draft when the date is absent or malformed.
+  delete data.nextDueDate;
+  delete data.nextCleaning;
   if (data.controlDate) {
     try { data.nextDueDate = fmtDots(toISO(flanders.rules.nextDue(data.controlDate, data).date)); } catch (e) {}
     try { data.nextCleaning = fmtDots(toISO(flanders.rules.nextCleaning(data.controlDate, data))); } catch (e) {}
   }
+  // Computed verdicts are never persisted authority. Remove stale v_* values
+  // before merging a fresh, possibly incomplete result.
+  for(const key of Object.keys(data)) if(/^v_/.test(key)) delete data[key];
   Object.assign(data, computeVerdicts(data));
   // category + "Performances minimales" limit strings (official row 10)
   const cat = categoryFor(data.fuel, data.year, data.unitOrPulsed);
-  const lpg = (data.fuel === 'gasvormig' && data.gas && !/aardgas/i.test(data.gas)) ? 15 : 0;
+  const gasText=scalarText(data.gas);
+  const lpg = (data.fuel === 'gasvormig' && gasText && !/aardgas/i.test(gasText)) ? 15 : 0;
   data.waCategory = cat ? cat.code : '';
   data.lim_smoke = cat && cat.smoke != null ? '≤ ' + cat.smoke : '—';
-  data.lim_net = cat && cat.net != null ? '≤ ' + cat.net : '—';
+  data.lim_net = cat && cat.netTemp != null ? '≤ ' + cat.netTemp : '—';
   data.lim_co2 = cat && cat.co2 != null ? '≥ ' + cat.co2 : '—';
   data.lim_o2 = cat && cat.o2 != null ? '≤ ' + cat.o2 : '—';
   data.lim_co = cat && cat.co != null ? '≤ ' + (cat.co + lpg) : '—';
-  data.lim_eff = cat && cat.eff != null ? '≥ ' + cat.eff : '—';
+  data.lim_eff = cat && cat.efficiency != null ? '≥ ' + cat.efficiency : '—';
   return { data };
 }
 
-export function renderFlandersPrintHtml(state, templateHtml) {
+export function renderFlandersPrintHtml(state, templateHtml, signature) {
   const { data } = buildFlandersHtml(state);
   let html = templateHtml.replace(/\{\{(\w+)\}\}/g, (_, k) => esc(valueFor(data, k)));
   const base = new URL('.', globalThis.location?.href || 'http://localhost/');
   html = html.replace(/(src|href)="(assets\/[^"]+)"/g, (_, a, p) => `${a}="${new URL(p, base).href}"`);
   const doc = new DOMParser().parseFromString(html, 'text/html');
+  applySignatureToDocument(doc, signature);
   // exclusive ticks (case-insensitive)
   const winners = {};
   doc.querySelectorAll('[data-tick]').forEach(el => {
@@ -152,7 +113,7 @@ export function renderFlandersPrintHtml(state, templateHtml) {
     el.setAttribute('aria-checked', String(checked));
   });
   // conditional page 2
-  const isKeuring = /Keuringsrapport/i.test(data.document || '');
+  const isKeuring = /Keuringsrapport/i.test(scalarText(data.document));
   doc.querySelectorAll('[data-doc]').forEach(el => {
     const show = el.dataset.doc === (isKeuring ? 'keuring' : 'reiniging');
     el.style.display = show ? '' : 'none';
@@ -168,5 +129,6 @@ export async function openFlandersPrint(state) {
   try { res = await fetch(new URL('./flanders.html', import.meta.url), { headers: { Accept: 'text/html' }, cache: 'no-cache' }); }
   catch (e) { throw new Error('print-template-unavailable'); }
   if (!res.ok) throw new Error('print-template-unavailable');
-  return renderFlandersPrintHtml(state, await res.text());
+  return renderFlandersPrintHtml(state, await res.text(),
+    signatureFor(state.data.signature, { width: 600, height: 100, lineScale: 2.6 }));
 }

@@ -1,12 +1,14 @@
 // Data-driven HTML print view for the Brussels PEB attestation (4 A4 pages).
 // Added alongside the JSON/web-encoder path (does not replace it).
-import {brussels} from './regions/brussels.js';
+import {nextControlDate} from './regions/brussels.js';
+import {scalarText} from './input-validation.js';
+import {signatureFor,applySignatureToDocument} from './signature.js';
 
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const norm = s => String(s ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+const esc = s => scalarText(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => scalarText(s).trim().toLowerCase().replace(/\s+/g, ' ');
 
 export function fmtDots(v) {
-  const s = String(v ?? '');
+  const s = scalarText(v);
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if (iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
   const slash = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s); if (slash) return `${slash[1]}.${slash[2]}.${slash[3]}`;
   return s;
@@ -35,7 +37,8 @@ export function valueFor(data, key) {
     remarks: () => d.remarks || '', defects: () => d.defects || '',
     annex1mw: () => d.annex1mw ? 'OUI' : 'NON', logbook: () => d.logbook ? 'OUI' : 'NON',
     flueTemp: () => d.flueTemp ?? '', o2: () => d.o2 ?? '', co2: () => d.co2 ?? '', co: () => d.co ?? '',
-    draught: () => d.draught ?? '', annualConsumption: () => d.annualConsumption ?? '', operatingHours: () => d.operatingHours ?? '',
+    draught: () => d.draught ?? '', draughtPa: () => d.draughtPa ?? '',
+    annualConsumption: () => d.annualConsumption ?? '', operatingHours: () => d.operatingHours ?? '',
   };
   return Object.hasOwn(map, key) ? map[key]() : (d[key] ?? '');
 }
@@ -56,12 +59,12 @@ const RULES = {
   systemType: [['type2', /type 2|type2/i], ['type1', /type 1|type1/i]],
   collective: [['collectif', /collectif/i], ['individuel', /individuel/i]],
   fuel: [['gazeux', /gazeux/i], ['liquide', /liquide|mazout/i], ['solid', /solid/i]],
-  condensation: [['cond', /à condensation|^cond/i], ['pas', /pas à condensation/i]],
+  condensation: [['pas', /pas\s+à\s+condensation/i], ['cond', /^à\s+condensation|^cond/i]],
 };
 
 export function selectedOption(field, value) {
   if (value == null || value === '') return null;
-  const v = String(value).trim();
+  const v = scalarText(value).trim();
   if (/^(oui|non|conforme|non conforme)$/i.test(v)) return v.toLowerCase();
   const rules = RULES[field]; if (!rules) return null;
   const hit = rules.find(([, re]) => re.test(v));
@@ -70,18 +73,19 @@ export function selectedOption(field, value) {
 
 export function buildBrusselsHtml(state) {
   const data = { ...state.data };
-  if (data.controlDate) {
-    try { data.nextDueDate = fmtDots(toISO(brussels.rules.nextDue(data.controlDate, data).date)); } catch (e) {}
-  }
+  const deadline=nextControlDate(data);
+  if(deadline) data.nextDueDate=fmtDots(toISO(deadline));
+  else delete data.nextDueDate;
   return { data };
 }
 
-export function renderBrusselsPrintHtml(state, templateHtml) {
+export function renderBrusselsPrintHtml(state, templateHtml, signature) {
   const { data } = buildBrusselsHtml(state);
   let html = templateHtml.replace(/\{\{(\w+)\}\}/g, (_, k) => esc(valueFor(data, k)));
   const base = new URL('.', globalThis.location?.href || 'http://localhost/');
   html = html.replace(/(src|href)="(assets\/[^"]+)"/g, (_, a, p) => `${a}="${new URL(p, base).href}"`);
   const doc = new DOMParser().parseFromString(html, 'text/html');
+  applySignatureToDocument(doc, signature);
   const winners = {};
   doc.querySelectorAll('[data-tick]').forEach(el => {
     const [field, option] = el.dataset.tick.split(':');
@@ -99,5 +103,6 @@ export async function openBrusselsPrint(state) {
   try { res = await fetch(new URL('./brussels.html', import.meta.url), { headers: { Accept: 'text/html' }, cache: 'no-cache' }); }
   catch (e) { throw new Error('print-template-unavailable'); }
   if (!res.ok) throw new Error('print-template-unavailable');
-  return renderBrusselsPrintHtml(state, await res.text());
+  return renderBrusselsPrintHtml(state, await res.text(),
+    signatureFor(state.data.signature, { width: 600, height: 100, lineScale: 2.6 }));
 }

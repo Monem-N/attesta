@@ -191,6 +191,43 @@ The comparator document is `Zied.pdf` (accepted reference, in Downloads). Parity
 
 `tools/requirements.txt` declares the Python dependencies (PyMuPDF, Pillow) for the PDF gate. The gate rasterizes pages and now also detects overlapping text blocks.
 
+## Signature field (added 2026-11-26)
+
+Optional field `signature` (type `signature`) in the Wallonia, Flanders and Brussels
+wizards. Persisted value is either `{v:1,strokes:[{points:[[x,y,p],…]}]}` (x,y
+normalised to the CSS canvas box, p = stylus pressure or velocity estimate) or
+`{v:1,typed:"Name"}`. No PNG is stored in localStorage: the raster is regenerated
+on demand (`signature.js` → `signatureDataURL`).
+
+Injection points — **the HTML print path is the real user path** for Wallonia and
+Flanders; pdf-lib is used for the Brussels solid-fuel download only:
+
+| Path | Where | Anchor |
+|---|---|---|
+| Wallonia print | `wallonia.html` first `.sigbox` | above `.sigline` |
+| Flanders print | `flanders.html` first `.sign` of the visible sheet | above `.line` |
+| Brussels print | `brussels.html` first `.sign` | above `.line` |
+| Brussels solid PDF | `output.js` `embedSignature` | `[0,54,698]`, box `x54 yTop681 w180 h17` |
+| Wallonia PDF (secondary) | `wa-template.js` | `x60 yTop258 w220 h42` |
+| Flanders PDF (secondary) | `FL_MAPS` | verbranding `29/721`, keuring `25/705`, reiniging `290/668` |
+
+All PDF boxes are **À VALIDER** against a rendered page. `drawImage` uses
+bottom-left origin: `toPdfY(page.getHeight(), yTop + height)`. Both the drawn
+strokes and the typed fallback are rasterised to a transparent PNG (the typed
+name is drawn italic with the platform UI font, so no extra font is vendored);
+the export keeps the box aspect ratio and scales the ink width by the same
+factor.
+
+`WA_MAP` (official-model coordinates) and `wa-template.js` (generator coordinates)
+are two distinct systems and must never be mixed. The Flanders secondary maps
+carry known overlaps (`fl-reiniging`, `fl-keuring`) because the pdf-lib Flanders
+path is not used by the UI.
+
+The signature is **not** a qualified electronic signature (eIDAS) and the UI says
+so. Strokes are personal data: local only, never logged, never uploaded. The
+Brussels gas/liquid JSON payload excludes the signature (`output.js`
+`withoutSignature`).
+
 ## Status
 
 - [x] All 6 model files downloaded and converted

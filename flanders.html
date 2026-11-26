@@ -26,6 +26,9 @@
   .foot{position:absolute;left:13mm;right:13mm;bottom:5mm;display:flex;justify-content:space-between;font-size:7.5px;color:#777;border-top:.4pt solid #999;padding-top:1mm}
   .sign{display:flex;justify-content:space-between;margin-top:8mm;font-size:9.5px}
   .sign .line{border-bottom:.6pt solid #333;width:70mm;height:10mm}
+  .sign .sigimg{display:block;width:60mm;height:11mm;object-fit:contain}
+  .sigtyped{font-style:italic}
+  .sigimg[hidden],.sigtyped[hidden]{display:none}
   .small{font-size:8px;color:#555}
   .kgrid{width:100%}.kgrid td{border:.5pt solid #ddd;font-size:8px;padding:.7mm 1mm}
   .kgrid .ksec td{background:#eee;font-weight:700;font-size:8px}
@@ -153,7 +156,7 @@
     <tr><td class="k">Andere opmerkingen</td><td colspan="3">{{remarks}}</td></tr>
   </table>
 
-  <div class="sign"><div>Handtekening erkende technicus<div class="line"></div><span class="small">{{techName}} — {{techAgrement}}</span></div><div>Voor kennisname (klant)<div class="line"></div><span class="small">{{clientName}}</span></div></div>
+  <div class="sign"><div>Handtekening erkende technicus<img class="sigimg" alt="" hidden><span class="sigtyped" hidden></span><div class="line"></div><span class="small">{{techName}} — {{techAgrement}}</span></div><div>Voor kennisname (klant)<div class="line"></div><span class="small">{{clientName}}</span></div></div>
   <div class="foot"><span>Attest — besluit Vlaamse Regering 8 december 2006 · veiligverwarmen.be</span><span data-page-no>1 / 2</span></div>
 </div>
 
@@ -181,7 +184,7 @@
     <tr><td class="k">Andere opmerkingen</td><td>{{remarks}}</td></tr>
     <tr><td class="k">Eerstvolgende reiniging vóór</td><td class="v">{{nextCleaning}}</td><td class="k">Eerstvolgende controle kanaal vóór</td><td class="v">{{nextCleaning}}</td></tr>
   </table>
-  <div class="sign"><div>Handtekening technicus / schoorsteenveger<div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
+  <div class="sign"><div>Handtekening technicus / schoorsteenveger<img class="sigimg" alt="" hidden><span class="sigtyped" hidden></span><div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
   <div class="foot"><span>Reiniging — veiligverwarmen.be</span><span data-page-no>2 / 2</span></div>
 </div>
 
@@ -242,7 +245,7 @@
     <tr><td class="k">Gebreken / maatregelen</td><td colspan="3">{{defects}}</td></tr>
     <tr><td class="k">Eerstvolgende onderhoud vóór</td><td class="v">{{nextDueDate}}</td><td class="k">VEKA referentie</td><td class="v">{{vekaRef}}</td></tr>
   </table>
-  <div class="sign"><div>Handtekening erkende technicus<div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
+  <div class="sign"><div>Handtekening erkende technicus<img class="sigimg" alt="" hidden><span class="sigtyped" hidden></span><div class="line"></div></div><div>Voor kennisname (klant)<div class="line"></div></div></div>
   <div class="foot"><span>Keuringsrapport — veiligverwarmen.be</span><span data-page-no>2 / 2</span></div>
 </div>
 

@@ -183,6 +183,12 @@ Entirely square. Corner radius is 0 across every element — buttons, inputs, ch
 - **Style:** A ruled grid row — label on the left, numeric input right-aligned in mono, verdict in a fixed column. Top and bottom hairlines form the ledger rule.
 - **States:** Pending rows use a dashed underline; a warning row gets the inset 3px red left edge; the verdict reads OK (green), NON OK (red), or idle (soft grey).
 
+### Signature Pad
+- **Style:** a white 1px-hairline rectangle (square, 0px radius) 100% wide, max 500px, 200px tall, with a soft-grey "Sign here" invitation centred over it. Ink is near-black; the baseline is a hairline.
+- **Actions:** square 1px-outline buttons (Clear, Undo last stroke, "I cannot draw — sign by typing"), min-height 44px, same `:focus-visible` red outline as every control.
+- **Typed fallback:** a mono input on the ledger underline, rendered italic in the output at the same anchor.
+- **State:** the invitation disappears on the first stroke; errors use the shared red underline + mono error line.
+
 ### Navigation / Progress
 - **Progress rail:** A row of 3px segments — hairline for pending, ink for done, signal red for the current step — above a mono `2 / 6` count.
 - **Header:** 4px signal-red top rule, mono wordmark "ATTESTA" (0.22em tracking), red uppercase region tag.

@@ -2,11 +2,13 @@
 // Fetches the A4 HTML template, injects collected data, resolves exactly one
 // printed option per field (exclusive), and opens the browser print dialog.
 import {walloniaComputed} from './regions/wallonia-pdf.js';
+import {scalarText} from './input-validation.js';
+import {signatureFor,applySignatureToDocument} from './signature.js';
 
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>scalarText(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 export function fmtDots(v){
-  const s=String(v??'');
+  const s=scalarText(v);
   const iso=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if(iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
   const slash=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s); if(slash) return `${slash[1]}.${slash[2]}.${slash[3]}`;
   return s;
@@ -75,7 +77,7 @@ const RULES={
 // Which single option key is selected for a field value.
 export function selectedOption(field,value){
   const rules=RULES[field]; if(!rules||value==null||value==='') return null;
-  const v=String(value).toLowerCase().trim();
+  const v=scalarText(value).toLowerCase().trim();
   const hit=rules.find(([,re])=>re.test(v));
   return hit?hit[0]:null;
 }
@@ -87,12 +89,12 @@ export function buildWalloniaHtml(state){
 
 const BOXKEYS=new Set(['bce','techAgrement','raccordement']);
 function valueForBoxes(data,key){
-  const v=String(valueFor(data,key)??'').trim();
+  const v=scalarText(valueFor(data,key)).trim();
   if(!v) return '';
   return [...v].map(ch=>`<span class="bx">${ch===' '?'&nbsp;':esc(ch)}</span>`).join('');
 }
 
-export function renderWalloniaPrintHtml(state,templateHtml){
+export function renderWalloniaPrintHtml(state,templateHtml,signature){
   const {data}=buildWalloniaHtml(state);
   let html=templateHtml.replace(/\{\{(\w+)\}\}/g,(_,k)=>BOXKEYS.has(k)?valueForBoxes(data,k):esc(valueFor(data,k)));
   // The print view opens in a blank window, so relative asset URLs would
@@ -101,6 +103,7 @@ export function renderWalloniaPrintHtml(state,templateHtml){
   html=html.replace(/(src|href)="(assets\/[^"]+)"/g,(_,attr,p)=>
     `${attr}="${new URL(p,base).href}"`);
   const doc=new DOMParser().parseFromString(html,'text/html');
+  applySignatureToDocument(doc,signature);
   const winners={};
   doc.querySelectorAll('[data-tick]').forEach(el=>{
     const [field,option]=el.dataset.tick.split(':');
@@ -117,5 +120,6 @@ export async function openWalloniaPrint(state){
   try{ res=await fetch('wallonia.html'); }
   catch(e){ throw new Error('print-template-unavailable'); }
   if(!res.ok) throw new Error('print-template-unavailable');
-  return renderWalloniaPrintHtml(state,await res.text());
+  return renderWalloniaPrintHtml(state,await res.text(),
+    signatureFor(state.data.signature,{width:600,height:100,lineScale:2.6}));
 }

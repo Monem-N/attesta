@@ -51,7 +51,7 @@ The tool asks a short series of questions (wizard steps, ~6 fields max per step)
 
 ### Constraints
 - **No backend, no database, no accounts.** Static files only.
-- **Signatures are blank lines, signed on paper.** Decided 2026-11-23: Attesta prints the technician/recipient names but embeds no drawn, typed or electronic signature. The final screen tells the technician to print and sign by hand. Avoids claiming e-signature validity and adds no biometric data.
+- **Signatures: optional on-screen capture (drawn or typed), otherwise printed and signed by hand.** Superseded 2026-11-26 (was: blank lines only, decided 2026-11-23). The technician may draw with mouse/finger/stylus or type a name; the mark is embedded in the generated document. It is **not** a qualified electronic signature (eIDAS) and the UI says so. Strokes are personal data: they stay on the device (localStorage), are never logged and never sent over the network.
 - **No automatic authority submission.** VEKA API, BE encoder API — both require vendor onboarding, out of scope for Phase 1.
 - **No multi-device sync.** Data lives on one device.
 - **No push reminders.** Out of scope.

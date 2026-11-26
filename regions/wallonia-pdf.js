@@ -1,6 +1,7 @@
 // Wallonia — calibrated page-by-page layout for assets/wa-attestation-bg.pdf.
 // Page indices: 0..8; page 9 is the landscape category/performance table.
 // Coordinates are glyph-top anchors measured from the official PDF.
+import {parseNumber,scalarText} from '../input-validation.js';
 import {wallonia, fmt} from './wallonia.js';
 import {evaluateCriteria} from './wallonia-criteria.js';
 
@@ -47,6 +48,7 @@ export const WA_MAP={
   maintenanceDate:[3,380,111], diagnosticFrom:[3,160,137], diagnosticTo:[3,300,136],
   followUp:[3,43.5,54.1],
   techSignatureName:[3,37,162], recipientName:[3,305,162], recipientCapacity:[3,377,181],
+  signature:[3,37,150],
 };
 
 // Comparison row: a printed OK / non OK pair for each measurement column.
@@ -175,19 +177,19 @@ export function walloniaComputed(data){
     try{
       // Conditional dates only. A date we cannot derive from collected facts
       // stays blank on the printed attestation instead of being guessed.
-      const anchored=!!(data.commissioningDate || /première mise en service/i.test(data.intervention||''));
+      const anchored=!!(data.commissioningDate || /première mise en service/i.test(scalarText(data.intervention)));
       if(anchored){
         const due=wallonia.rules.nextDue(date,data);
         out.nextFrom=fmt(due.from); out.nextTo=fmt(due.to);
         // The in-depth diagnostic only applies above 20 kW (the page-3 grid is
         // suppressed at/below 20 kW), so its dates must be blank there too.
-        if(Number(data.powerKw)>20){
+        if((parseNumber(data.powerKw)??0)>20){
           out.diagnosticFrom=out.nextFrom; out.diagnosticTo=out.nextTo;
         }
       }
-      if(/non conforme/i.test(data.conformity||''))
+      if(/non conforme/i.test(scalarText(data.conformity)))
         out.remedyDate=fmt(wallonia.rules.nonConformity(date));
-      const interval=Number(data.maintenanceIntervalMonths);
+      const interval=parseNumber(data.maintenanceIntervalMonths);
       if(Number.isFinite(interval)&&interval>0)
         out.maintenanceDate=fmt(addMonths(date,interval));
     }catch(e){ /* invalid date: leave the printed lines blank */ }

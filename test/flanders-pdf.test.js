@@ -73,6 +73,13 @@ test('anchor functions and paired measurements resolve correctly',()=>{
   assert.equal(isPaired(FL_MAPS['fl-verbranding'].make,'Bosch'),false);
 });
 
+test('Flanders PDF helpers tolerate malformed persisted scalars',()=>{
+  const poison={toString:null};
+  assert.doesNotThrow(()=>anchorOf(FL_MAPS['fl-verbranding'].techAgrement,{techCategory:poison}));
+  assert.equal(explicitBoxes('fl-verbranding','fuel',poison,rects['fl-verbranding']['0']),null);
+  assert.equal(flTextValue('techCategory',poison),'');
+});
+
 test('long recognition labels are shortened for the printed line',()=>{
   assert.equal(flTextValue('techCategory','Erkend technicus gasvormige brandstof (GV)'),'GV');
   assert.equal(flTextValue('techCategory','Erkend technicus vloeibare brandstof (TV)'),'TV');

@@ -4,6 +4,7 @@
 // A map entry is [pageIndex, x, y]. A paired measurement entry is
 // [pageIndex, xProefI, y, xProefII] and is written from {i, f} values.
 // An entry may also be a function (data) => [pageIndex, x, y].
+import {scalarText} from '../input-validation.js';
 
 const VLA = /vloeibare|TV/i;
 const YES = ['ja', 'oui', 'yes', 'ok', 'goed en veilig', 'conforme'];
@@ -77,7 +78,7 @@ export const FL_MAPS = {
   'fl-verbranding': {
     intervention: [0, 305, 15], controlDate: [0, 368, 83], attestNumber: [0, 448, 15],
     techCategory: [0, 355, 27], techName: [0, 400, 37],
-    techAgrement: d => [0, VLA.test(d.techCategory || '') ? 478 : 380, 59],
+    techAgrement: d => [0, VLA.test(scalarText(d?.techCategory)) ? 478 : 380, 59],
     company: [0, 165, 27], bce: [0, 135, 94],
     techPhone: [0, 58, 83], workDuration: [0, 360, 94],
     clientName: [0, 120, 117], clientStreet: [0, 95, 128], clientCity: [0, 123, 140],
@@ -94,11 +95,12 @@ export const FL_MAPS = {
     nextDueDate: [0, 432, 683],
     // VEKA registration evidence — blank right column beside "Gebreken"
     vekaRef: [0, 300, 714], vekaDate: [0, 300, 728],
+    signature: [0, 29, 761],
   },
   'fl-reiniging': {
     intervention: [0, 190, 16], controlDate: [0, 360, 95], attestNumber: [0, 390, 16],
     techCategory: [0, 355, 26], techName: [0, 400, 38],
-    techAgrement: d => [0, VLA.test(d.techCategory || '') ? 453 : 388, 52],
+    techAgrement: d => [0, VLA.test(scalarText(d?.techCategory)) ? 453 : 388, 52],
     company: [0, 165, 26], bce: [0, 112, 110],
     techPhone: [0, 58, 95], workDuration: [0, 360, 110],
     clientName: [0, 120, 138], clientStreet: [0, 95, 152], clientCity: [0, 123, 166],
@@ -111,11 +113,12 @@ export const FL_MAPS = {
     nextDueDate: [0, 350, 687],
     // VEKA registration evidence — right of "Andere opmerkingen"
     vekaRef: [0, 300, 660], vekaDate: [0, 300, 674],
+    signature: [0, 290, 708],
   },
   'fl-keuring': {
     controlDate: [0, 352, 98], attestNumber: [0, 404, 14],
     techCategory: [0, 350, 27], techName: [0, 400, 37],
-    techAgrement: d => [0, VLA.test(d.techCategory || '') ? 475 : 378, 69],
+    techAgrement: d => [0, VLA.test(scalarText(d?.techCategory)) ? 475 : 378, 69],
     company: [0, 162, 27], bce: [0, 108, 108],
     techPhone: [0, 55, 94], workDuration: [0, 360, 113],
     clientName: [0, 117, 138], clientStreet: [0, 92, 149], clientCity: [0, 120, 160],
@@ -133,6 +136,7 @@ export const FL_MAPS = {
     nextDueDate: [0, 455, 583],
     // VEKA registration evidence — blank band above the signature block
     vekaRef: [0, 300, 660], vekaDate: [0, 300, 674],
+    signature: [0, 25, 737],
   },
 };
 
@@ -140,11 +144,13 @@ export const FL_MAPS = {
 // the short recognition code instead of the full select text.
 export function flTextValue(key, value){
   if(value==null) return value;
-  if(key==='techAgrement') return String(value).replace(/^(GV|TV|VA\+)\s*/i,'');
+  const text=scalarText(value);
+  if(key==='techAgrement') return text.replace(/^(GV|TV|VA\+)\s*/i,'');
   if(key!=='techCategory') return value;
-  if(/gasvormige/i.test(value)) return 'GV';
-  if(/vloeibare/i.test(value)) return 'TV';
-  if(/VA\+/i.test(value)) return 'VA+';
+  if(!text) return '';
+  if(/gasvormige/i.test(text)) return 'GV';
+  if(/vloeibare/i.test(text)) return 'TV';
+  if(/VA\+/i.test(text)) return 'VA+';
   return 'Vakman (vaste brandstof)';
 }
 
@@ -162,7 +168,7 @@ export function isPaired(anchor, value){
 export function explicitBoxes(model, key, value, rects){
   const table = BOX_SELECT[model]?.[key];
   if(!table || value == null || value === '') return null;
-  const centers = table[String(value).toLowerCase().trim()];
+  const centers = table[scalarText(value).toLowerCase().trim()];
   if(!centers) return null;
   const list = rects || [];
   const found = centers.map(([cx, cy]) => list.find(b =>

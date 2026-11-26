@@ -65,18 +65,19 @@ input::placeholder{color:var(--soft);opacity:1}
 .fields{display:grid;gap:11px;align-content:start}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .f label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-bottom:3px}
-.f input,.f select{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);
+.f input,.f select,.f textarea{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);
   padding:5px 0;font-size:14px;font-family:var(--mono);border-radius:0}
+.f textarea{resize:vertical;min-height:52px;line-height:1.4}
 .f select{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:22px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2361666e' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 2px center}
 .f select option{background:var(--paper);color:var(--ink)}
-.f input:focus,.f select:focus{border-bottom-color:var(--red);outline:none}
+.f input:focus,.f select:focus,.f textarea:focus{border-bottom-color:var(--red);outline:none}
 .f input:focus-visible,.f select:focus-visible,.f textarea:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 .f input[type=date]{font-family:var(--mono)}
 .f .fhint{font-size:10.5px;line-height:1.4;color:var(--soft);margin-top:3px}
 .f .err{font-family:var(--mono);font-size:10px;color:var(--red);margin-top:3px;min-height:12px}
-.f.bad input,.f.bad select{border-bottom-color:var(--red)}
+.f.bad input,.f.bad select,.f.bad textarea{border-bottom-color:var(--red)}
 .f.req label::after{content:' *';color:var(--red)}
 
 /* measurement rows — signature move */
@@ -91,6 +92,9 @@ input::placeholder{color:var(--soft);opacity:1}
 .verdict{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em}
 .verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)} .verdict.idle{color:var(--soft)}
 .mrow.pending input{border-bottom-style:dashed}
+.mrow.bad input{border-bottom-color:var(--bad)}
+.mrow>.err{grid-column:1/-1;font-family:var(--mono);font-size:10px;color:var(--bad);min-height:0}
+.mrow:not(.bad)>.err:empty{display:none}
 .mrow.warn{box-shadow:inset 3px 0 0 var(--red)}
 .mrow.paired{grid-template-columns:1fr}
 .mrow.paired .pair-inputs{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
@@ -150,3 +154,17 @@ input::placeholder{color:var(--soft);opacity:1}
   .final{background:rgba(255,255,255,.05)}
   .warning{background:rgba(224,108,90,.10)}
 }
+
+/* signature pad — flat, square, hairline (DESIGN.md) */
+.sig{position:relative;max-width:500px}
+.sig-canvas{display:block;width:100%;height:200px;background:#fff;border:1px solid var(--line);border-radius:0;touch-action:none}
+.sig-hint{position:absolute;left:0;right:0;top:0;height:200px;display:grid;place-items:center;color:var(--soft);font-size:12px;pointer-events:none}
+.sig-hint[hidden]{display:none}
+.sig-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.sig-btn{min-height:44px;font-size:11px}
+.sig-typed{margin-top:8px}
+.sig-typed[hidden]{display:none}
+.sig-typed-label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-bottom:3px}
+.sig-typed input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);padding:5px 0;font-family:var(--mono);font-size:14px;color:var(--ink)}
+.sig-typed input:focus{border-bottom-color:var(--red);outline:none}
+.sig-typed input:focus-visible{outline:2px solid var(--red);outline-offset:2px}

@@ -10,6 +10,9 @@ import {LEGACY_MAPS} from './regions/legacy-maps.js';
 import {binaryIndex} from './regions/checkbox-vocab.js';
 import {walloniaComputed} from './regions/wallonia-pdf.js';
 import {generateWallonia} from './regions/wa-template.js';
+import {nextControlDate} from './regions/brussels.js';
+import {scalarText,isValidDate} from './input-validation.js';
+import {signatureDataURL,containFit,isPngDataURL} from './signature.js';
 
 // Custom Unicode font so FR/NL accents (é/è/à/ï/ç/œ/ĳ) render correctly.
 // StandardFonts.Helvetica (WinAnsi) corrupts several of these.
@@ -48,6 +51,61 @@ const BRU={background:'assets/br-solid-fuel-model.pdf'};
 
 const ink = () => window.PDFLib.rgb(0.086,0.094,0.114);
 
+// Signature image boxes, PDF points, origin top-left. The image sits above the
+// printed line. Marked À VALIDER in docs/field-matrix.md.
+const SIGNATURE_BOX={
+  'br-solid':{page:0,x:54,y:681,w:180,h:17},
+  wallonia:{page:3,x:60,y:258,w:220,h:42},
+  'fl-verbranding':{page:0,x:29,y:721,w:180,h:40},
+  'fl-keuring':{page:0,x:25,y:705,w:180,h:32},
+  'fl-reiniging':{page:0,x:290,y:668,w:180,h:40},
+};
+
+// The drawn/typed signature is personal data: never ship it in the JSON that
+// the user re-keys into the Bruxelles Environnement encoder.
+function withoutSignature(data){
+  if(!data||typeof data!=='object'||Array.isArray(data)||!('signature' in data)) return data;
+  const copy={...data}; delete copy.signature; return copy;
+}
+
+function base64ToBytes(dataUrl){
+  const b64=dataUrl.slice(dataUrl.indexOf(',')+1);
+  if(typeof atob==='function'){
+    const bin=atob(b64), out=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out;
+  }
+  return Uint8Array.from(Buffer.from(b64,'base64'));
+}
+
+/**
+ * Embeds the drawn signature (transparent PNG) or the typed name (italic) at
+ * the model's anchor. `dataUrl` is injectable so Node tests can pass a fixture.
+ */
+export async function embedSignature(doc,signature,model,audit,dataUrl){
+  const box=SIGNATURE_BOX[model];
+  if(!box) return false;
+  const sig=signature&&typeof signature==='object'&&!Array.isArray(signature)?signature:null;
+  if(!sig) return false;
+  // Export at the box aspect ratio so containFit does not shrink the ink into a
+  // thin sliver (br-solid is ~10:1, the default 3:1 would render ~51 pt wide).
+  const exportWidth=600;
+  const exportHeight=Math.max(8,Math.round(exportWidth*box.h/box.w));
+  const url=dataUrl!==undefined?dataUrl:
+    signatureDataURL(sig,{width:exportWidth,height:exportHeight,lineScale:exportWidth/box.w});
+  const page=doc.getPages()[box.page];
+  if(!page){ if(audit) audit.warnings.push(`signature: page ${box.page} missing from template`); return false; }
+  // Both the drawn strokes and the typed name are rasterised (Unicode-safe).
+  if(isPngDataURL(url)){
+    const image=await doc.embedPng(base64ToBytes(url));
+    const fit=containFit(box,image.width,image.height);
+    page.drawImage(image,{x:fit.x,y:toPdfY(page.getHeight(),fit.y+fit.height),width:fit.width,height:fit.height});
+    if(audit) audit.printed.push('signature');
+    return true;
+  }
+  return false; // empty signature object: nothing to draw, no warning
+}
+
 const MAPS=LEGACY_MAPS;
 
 // Normalize typographic characters to plain equivalents. The Unicode font can
@@ -60,7 +118,7 @@ const EXTRA_LABEL={intervention:'Intervention',building:'Bâtiment',techCategory
   commissioningDate:'Mise en service',maintenanceIntervalMonths:'Entretien (mois)',
   techEmail:'Courriel technicien',clientEmail:'Courriel client'};
 function safeText(s){
-  return String(s).replace(/[\u2018\u2019\u2013\u2014\u00a0]/g,ch=>SUBST[ch]||'?');
+  return scalarText(s).replace(/[\u2018\u2019\u2013\u2014\u00a0]/g,ch=>SUBST[ch]||'?');
 }
 // Draw wrapped text at a glyph-top anchor. Returns audit information instead
 // of silently truncating or swallowing failures.
@@ -69,7 +127,7 @@ function draw(page,key,text,x,yTop,size,font,audit,maxLines,widths={},styles={})
   size=style.size||size;
   maxLines=style.maxLines||maxLines;
   const width=fieldWidth(key,page.getWidth(),x,widths);
-  const {lines,clipped}=wrapText(safeText(String(text)),s=>font.widthOfTextAtSize(s,size),width,maxLines);
+  const {lines,clipped}=wrapText(safeText(text),s=>font.widthOfTextAtSize(s,size),width,maxLines);
   const lineH=size+3;
   audit.warnings.push(...boundsWarnings(page.getWidth(),page.getHeight(),x,yTop,width,lines.length*lineH)
     .map(w=>`${key}: ${w}`));
@@ -128,7 +186,7 @@ async function markBoxes(doc,map,data,model){
     if(model==='wallonia'){
       const extra=WA_CHECKBOXES[key];
       if(extra){
-        const v=String(value).toLowerCase().trim();
+        const v=scalarText(value).toLowerCase().trim();
         const centres=extra[v];
         if(!centres) return null;
         const found=centres.map(([cx,cy])=>list.find(b=>
@@ -194,7 +252,7 @@ async function overlay(bytes, map, data, model, audit){
   if(model==='br-solid'){
     const opts=await brOptionMap();
     for(const [key,value] of Object.entries(data)){
-      const box=opts[key]?.[String(value)];
+      const box=opts[key]?.[scalarText(value)];
       if(!box||!pages[Number(box[0])]) continue;
       tick(pages[Number(box[0])],box.slice(1));
       ticked.add(key);
@@ -205,6 +263,7 @@ async function overlay(bytes, map, data, model, audit){
   const region=isFl?'flanders':model==='br-solid'?'brussels':'wallonia';
   const widths={}, styles={};
   for(const [key,anchor] of Object.entries(map)){
+    if(key==='signature') continue; // drawn/typed separately (embedSignature)
     const v=data[key];
     if(v===''||v==null||v===false){ audit.omitted.push(key); continue; }
     const resolved=anchorOf(anchor,data); const pi=resolved[0];
@@ -269,7 +328,7 @@ export async function buildAttestation(state,attachments){
   const d=state.data;
   const audit=emptyAudit();
 
-  if(state.region==='brussels' && !/solide/i.test(d.fuel||'')){
+  if(state.region==='brussels' && !/solide/i.test(scalarText(d.fuel))){
     const attachmentList=[];
     for(const [key,files] of attachments?.entries?.()||[]){
       for(const file of files){
@@ -279,7 +338,7 @@ export async function buildAttestation(state,attachments){
     const payload={ product:'Attesta', region:'brussels', mode:'manual-rekey',
       schemaVersion:1, template:'brussels-data-prep-v1',
       encoder:'https://peb-epb.brussels/att-frontoffice/pwa/index.html',
-      generatedAt:new Date().toISOString(), data:d,
+      generatedAt:new Date().toISOString(), data:withoutSignature(d),
       attachments:attachmentList, attachmentStatus:'metadata-only',
       checklist:[
         'Open the BE encoder and create a new attestation',
@@ -294,8 +353,9 @@ export async function buildAttestation(state,attachments){
 
   let src=c.background, model=state.region, map=MAPS[state.region];
   if(state.region==='flanders'){
-    if(d.document?.includes('Keuringsrapport')){ src='assets/fl-model-keuringsrapport.pdf'; model='fl-keuring'; }
-    else if(d.document?.includes('reinigingsattest')||d.document?.includes('Reinigingsattest')){ src='assets/fl-model-reinigingsattest.pdf'; model='fl-reiniging'; }
+    const document=scalarText(d.document);
+    if(document.includes('Keuringsrapport')){ src='assets/fl-model-keuringsrapport.pdf'; model='fl-keuring'; }
+    else if(/reinigingsattest/i.test(document)){ src='assets/fl-model-reinigingsattest.pdf'; model='fl-reiniging'; }
     else model='fl-verbranding';
     map=FL_MAPS[model];
   }
@@ -303,11 +363,20 @@ export async function buildAttestation(state,attachments){
 
   let data=d;
   if(state.region==='wallonia') data=walloniaComputed(d);
-  if(state.region==='flanders' && d.controlDate){
-    try{
-      const due=flandersRegion.rules.nextDue(d.controlDate,d);
-      data={...d,nextDueDate:fmtDate(due.date)};
-    }catch(e){ /* leave the printed line blank on invalid input */ }
+  if(state.region==='flanders'){
+    data={...d}; delete data.nextDueDate;
+    if(isValidDate(d.controlDate)){
+      try{
+        const due=flandersRegion.rules.nextDue(d.controlDate,d);
+        data.nextDueDate=fmtDate(due.date);
+      }catch(e){ /* leave the printed line blank on invalid input */ }
+    }
+  }
+  if(state.region==='brussels'){
+    data={...d};
+    const deadline=nextControlDate(d);
+    if(deadline) data.nextDueDate=fmtDate(deadline);
+    else delete data.nextDueDate;
   }
 
   let out, doc;
@@ -337,6 +406,7 @@ export async function buildAttestation(state,attachments){
   // The official solid-fuel model already contains the combustion annex as
   // page 4 (landscape). Appending the standalone br-1mw-annex.pdf duplicated
   // it; the measurement values are written into the existing page instead.
+  await embedSignature(doc,d.signature,model,audit);
   const primary=doc.getPages()[0];
   doc=await appendFiles(doc,attachments,audit,primary&&{w:primary.getWidth(),h:primary.getHeight()});
 

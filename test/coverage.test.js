@@ -7,8 +7,11 @@ import {LEGACY_MAPS, COMPUTED_KEYS} from '../regions/legacy-maps.js';
 import {WA_MAP, WA_COMPUTED_KEYS, WA_MAP_ONLY} from '../regions/wallonia-pdf.js';
 import {FL_MAPS} from '../regions/flanders-pdf.js';
 
-const keys=cfg=>new Set(cfg.steps.flatMap(s=>s.fields).map(f=>f.key));
-const missing=(cfg,map)=>[...keys(cfg)].filter(k=>!(k in map)&&!COMPUTED_KEYS.has(k));
+const fields=cfg=>cfg.steps.flatMap(s=>s.fields);
+const keys=cfg=>new Set(fields(cfg).map(f=>f.key));
+const missing=(cfg,map)=>fields(cfg)
+  .filter(f=>!(f.key in map)&&!COMPUTED_KEYS.has(f.key))
+  .map(f=>f.key);
 
 test('Wallonia map covers every wizard field',()=>{
   // New split street fields are rendered by wallonia-render.js, not WA_MAP.

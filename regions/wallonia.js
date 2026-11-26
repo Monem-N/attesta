@@ -1,4 +1,5 @@
 // Wallonia — Attestation de contrôle d'un générateur de chaleur (AWAC model)
+import {parseNumber,scalarText} from '../input-validation.js';
 const F = (key, label, type='text', extra={}) => ({key,label,type,...extra});
 const req = f => ({...f,required:true});
 const addMonths=(date,months)=>{
@@ -29,15 +30,15 @@ export const wallonia = {
 
   rules: {
     nextDue(date, data) {
-      const kw = Number(data.powerKw) || 0;
-      const gas = /gaz/i.test(data.fuel||'');
+      const kw = parseNumber(data.powerKw) ?? 0;
+      const gas = /gaz/i.test(scalarText(data.fuel));
       let years = 1;
       if (gas && kw <= 100) years = 3;      // AGW art.13 (law governs at exactly 100 kW)
       else if (gas && kw > 100) years = 2;
       // Art. 13 §2: the cycle is anchored to the generator's first commissioning,
       // with a three-month window after the anniversary — not to the last control.
       const anchorSource = data.commissioningDate
-        || (/première mise en service/i.test(data.intervention||'') ? date : null);
+        || (/première mise en service/i.test(scalarText(data.intervention)) ? date : null);
       const anchor = new Date(anchorSource || date);
       const control = new Date(date);
       if (Number.isNaN(anchor.getTime()) || Number.isNaN(control.getTime()))
@@ -62,7 +63,7 @@ export const wallonia = {
         note: `Contrôle à réaliser entre le ${fmt(from)} et le ${fmt(to)}${caveat}` };
     },
     nonConformity(date){ return addMonths(date,5); },
-    residentialException(data){ return /habitation|résidentiel/i.test(data.building||''); }
+    residentialException(data){ return /habitation|résidentiel/i.test(scalarText(data.building)); }
   },
 
   steps: [
@@ -74,9 +75,9 @@ export const wallonia = {
       F('attestNumber','N° attestation (facultatif)'),
       F('building','Type de bâtiment','select',{options:['Habitation','Collectif / autre']}),
       F('maintenanceIntervalMonths','Intervalle d’entretien conseillé (mois)','number',
-        {hint:'Facultatif. Sans intervalle, aucune date d’entretien n’est imprimée.'}),
+        {min:1,step:1,hint:'Facultatif. Sans intervalle, aucune date d’entretien n’est imprimée.'}),
       F('measureDate','Date de la mesure','date'),
-      F('measureTime','Heure de la mesure'),
+      F('measureTime','Heure de la mesure','time'),
       F('analyzerMake','Appareil de mesure — marque / modèle'),
       F('analyzerSerial','Appareil de mesure — n° de série'),
     ]},
@@ -85,9 +86,9 @@ export const wallonia = {
       req(F('techName','Nom et prénom')),
       F('techAgrement','N° d’agrément'),
       req(F('company','Nom entreprise')),
-      req(F('bce','N° entreprise (BCE)')),
+      req(F('bce','N° entreprise (BCE)','text',{format:'bce'})),
       F('techPhone','Téléphone'),
-      F('techEmail','Courriel'),
+      F('techEmail','Courriel','text',{format:'email'}),
     ]},
     { title:'Demandeur', hint:'Le demandeur et le lieu du générateur.', fields:[
       req(F('requester','Demandeur','select',{options:['Propriétaire','Locataire','Autre']})),
@@ -100,17 +101,17 @@ export const wallonia = {
       F('clientStreet','Rue et numéro (ancien format)'),
       req(F('clientCity','Code postal et localité')),
       F('clientPhone','Téléphone'),
-      F('clientEmail','Courriel'),
+      F('clientEmail','Courriel','text',{format:'email'}),
       F('applianceLocation','Localisation du générateur si différente'),
     ]},
     { title:'Générateur', hint:'Identification de l’appareil.', fields:[
       req(F('fuel','Combustible','select',{options:['Liquide','Gazeux','Solide']})),
       F('fuelDetail','Détail combustible','select',{options:['Gasoil','Gasoil extra','Fuel lourd','Gaz nat. G20','Gaz nat. G25','Propane','Butane','Biogaz','Pellets bois','Bûches','Plaquettes','Céréales','Charbon']}),
-      req(F('powerKw','Puissance nominale utile (kW)','number')),
-      F('genCount','Nb de générateurs','number'),
+      req(F('powerKw','Puissance nominale utile (kW)','number',{min:0.01})),
+      F('genCount','Nb de générateurs','number',{min:1,step:1}),
       F('raccordement','Raccordement','select',{options:['B','C']}),
       F('condensation','À condensation','select',{options:['oui','non']}),
-      F('year','Année de construction','number'),
+      F('year','Année de construction','number',{min:1900,max:new Date().getFullYear()+1,step:1}),
       F('make','Marque'), F('model','Type'), F('serial','N° série'),
       F('raccordementDetail','Détail raccordement (ex. C 53)'),
     ]},
@@ -131,12 +132,12 @@ export const wallonia = {
       F('orifices','Orifices de mesure','select',{options:['Dispensé','Présent et conforme','Présent et non conforme','Absent et techniquement non réalisable']}),
       // Limits are NOT stored on the field: they depend on the official category
       // (fuel / burner / premix / year) and are resolved by wallonia-criteria.js.
-      {key:'smoke',label:'Indice de fumée (Bacharach)',type:'measure',unit:''},
+      {key:'smoke',label:'Indice de fumée (Bacharach)',type:'measure',unit:'',physicalMin:0,physicalMax:9},
       {key:'flueTemp',label:'Température des gaz de combustion',type:'measure',unit:'°C'},
-      {key:'o2',label:'Teneur en O₂',type:'measure',unit:'%'},
-      {key:'co2',label:'Teneur en CO₂',type:'measure',unit:'%'},
-      {key:'co',label:'Teneur en CO',type:'measure',unit:'mg/kWh'},
-      {key:'efficiency',label:'Rendement combustion',type:'measure',unit:'%'},
+      {key:'o2',label:'Teneur en O₂',type:'measure',unit:'%',physicalMin:0,physicalMax:100},
+      {key:'co2',label:'Teneur en CO₂',type:'measure',unit:'%',physicalMin:0,physicalMax:100},
+      {key:'co',label:'Teneur en CO',type:'measure',unit:'mg/kWh',physicalMin:0},
+      {key:'efficiency',label:'Rendement combustion',type:'measure',unit:'%',physicalMin:0,physicalMax:100},
       {key:'waterTemp',label:'Température de l’eau',type:'measure',unit:'°C'},
       // The comparison row is the technician's own judgement. The computed
       // verdict is offered as a default, but these fields are authoritative.
@@ -150,12 +151,12 @@ export const wallonia = {
     ]},
     { title:'Compléments mesure', hint:'Ppressions, allures supplémentaires, gicleur, combustible solide.', fields:[
       F('chimneyPressure','Pression cheminée (type B)','number'),
-      F('pumpPressure','Pression pompe (bar)','number'),
+      F('pumpPressure','Pression pompe (bar)','number',{min:0}),
       F('load2','Allure 2 — valeurs','text',{hint:'Facultatif, brûleurs multiples/modulants. Ex. : CO₂ 11 / O₂ 4 / CO 100 / rendement 91'}),
       F('load3','Allure 3 — valeurs','text'),
       F('nozzleMake','Gicleur — marque & type'),
-      F('nozzleFlow','Gicleur — débit (gal/h)'),
-      F('nozzleAngle','Gicleur — angle (degré)'),
+      F('nozzleFlow','Gicleur — débit (gal/h)','number',{min:0}),
+      F('nozzleAngle','Gicleur — angle (degré)','number',{min:0,max:360}),
       F('solidSmoke','Fumée très brève (solide)','select',{options:['OUI','NON']}),
       F('solidFlue','Évacuation correcte (solide)','select',{options:['OUI','NON']}),
       F('solidResult','Résultat global (solide)','select',{options:['OK','non OK']}),
@@ -182,6 +183,8 @@ export const wallonia = {
       F('techSignatureName','Attestation établie par (nom)'),
       F('recipientName','Attestation reçue par (nom)'),
       F('recipientCapacity','En qualité de'),
+      F('signature','Signature du technicien','signature',
+        {hint:'Facultatif. Tracez à la souris, au doigt ou au stylet, ou signez en tapant votre nom.'}),
     ]},
   ]
 };

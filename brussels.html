@@ -27,6 +27,9 @@
   .small{font-size:8px;color:#555}
   .sign{display:flex;justify-content:space-between;margin-top:6mm;font-size:9px}
   .sign .line{border-bottom:.6pt solid #333;width:80mm;height:9mm}
+  .sign .sigimg{display:block;width:60mm;height:10mm;object-fit:contain}
+  .sigtyped{font-style:italic}
+  .sigimg[hidden],.sigtyped[hidden]{display:none}
   .foot{position:absolute;left:11mm;right:11mm;bottom:4mm;display:flex;justify-content:space-between;font-size:7.5px;color:#777}
 </style></head>
 <body>
@@ -88,7 +91,7 @@
     <tr><td class="k">prénom/nom</td><td class="v">{{techName}}</td><td class="k">n° agrément</td><td class="v">{{techAgrement}}</td></tr>
     <tr><td class="k">tél / e-mail</td><td class="v">{{techPhone}}</td><td></td><td></td></tr>
   </table>
-  <div class="sign"><div>Signature professionnel<div class="line"></div></div><div>Signature propriétaire / déclarant<div class="line"></div></div></div>
+  <div class="sign"><div>Signature professionnel<img class="sigimg" alt="" hidden><span class="sigtyped" hidden></span><div class="line"></div></div><div>Signature propriétaire / déclarant<div class="line"></div></div></div>
   <div class="foot"><span>Attestation de contrôle périodique PEB — Bruxelles Environnement</span><span>Page 1 sur 4</span></div>
 </div>
 
@@ -144,8 +147,8 @@
     <tr><td class="l">Température départ eau</td><td>°C</td><td class="v">{{flueTemp}}</td><td>—</td></tr>
     <tr><td class="l">O₂</td><td>%</td><td class="v">{{o2}}</td><td>—</td></tr>
     <tr><td class="l">CO₂</td><td>%</td><td class="v">{{co2}}</td><td>—</td></tr>
-    <tr><td class="l">CO</td><td>mg/kWh</td><td class="v">{{co}}</td><td>—</td></tr>
-    <tr><td class="l">Dépression conduit</td><td>Pa</td><td class="v">{{draught}}</td><td>—</td></tr>
+    <tr><td class="l">CO</td><td>mg CO/m³ à 13% O₂</td><td class="v">{{co}}</td><td>—</td></tr>
+    <tr><td class="l">Dépression conduit</td><td>Pa</td><td class="v">{{draughtPa}}</td><td>—</td></tr>
   </table>
   <div class="small" style="margin-top:2mm">Consommation annuelle : {{annualConsumption}} · Temps de fonctionnement : {{operatingHours}} h/an</div>
   <div class="foot"><span>Attestation PEB — Bruxelles</span><span>Page 4 sur 4</span></div>

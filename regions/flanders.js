@@ -2,12 +2,13 @@
 // Bilingual wizard labels (nl/fr). Stored DATA VALUES stay canonical Dutch:
 // the official Flemish PDFs and every rule below match those strings.
 import {fmt} from './wallonia.js';
+import {scalarText} from '../input-validation.js';
 
 const B=(nl,fr)=>({nl,fr});
 const O=(v,nl,fr=nl)=>({v,l:B(nl,fr)});
 const F=(key,label,type='text',extra={})=>({key,label,type,...extra});
 const req=f=>({...f,required:true});
-const whenKeuring=d=>/Keuringsrapport/i.test(d.document||'');
+const whenKeuring=d=>/Keuringsrapport/i.test(scalarText(d.document));
 const whenNotKeuring=d=>!whenKeuring(d);
 const addMonths=(date,months)=>{
   const d=new Date(date); const day=d.getDate();
@@ -36,8 +37,8 @@ export const flanders = {
 
   rules: {
     nextDue(date,data){
-      const d=new Date(date); const kw=Number(data.powerKw)||0;
-      const gas=/gas/i.test(data.fuel||'');
+      const d=new Date(date);
+      const gas=/gas/i.test(scalarText(data.fuel));
       const due=addYears(d,gas?2:1);
       return {date:due, from:due, to:due, years:gas?2:1, note:gas?'2-jaarlijks':'Jaarlijks', conflict:false};
     },
@@ -69,7 +70,7 @@ export const flanders = {
       req(F('techName',B('Naam en voornaam','Nom et prénom'))),
       F('techAgrement',B('Erkenningsnummer (GV##### / TV##### / VA+#####)','Numéro d’agrément (GV##### / TV##### / VA+#####)')),
       req(F('company',B('Firma','Entreprise'))),
-      req(F('bce',B('Ondernemingsnummer','Numéro d’entreprise'))),
+      req(F('bce',B('Ondernemingsnummer','Numéro d’entreprise'),'text',{format:'bce'})),
       F('techPhone',B('Telefoon / e-mail','Téléphone / e-mail')),
       F('workDuration',B('Arbeidsduur van — tot','Durée du travail de — à')),
     ]},
@@ -85,22 +86,23 @@ export const flanders = {
         O('Gasvormig','Gasvormig','Gazeux'),
         O('Vloeibaar','Vloeibaar','Liquide'),
         O('Vast','Vast','Solide')]})),
-      req(F('powerKw',B('Nominaal vermogen (kW)','Puissance nominale (kW)'),'number')),
+      req(F('powerKw',B('Nominaal vermogen (kW)','Puissance nominale (kW)'),'number',{min:0.01})),
       F('central',B('Centraal toestel','Appareil central'),'select',{options:[O('Ja','Ja','Oui'),O('Nee','Nee','Non')]}),
       F('type',B('Type','Type'),'select',{options:[O('B','B'),O('C','C')]}),
       F('condensation',B('Condensatie','Condensation'),'select',{options:[O('Ja','Ja','Oui'),O('Nee','Nee','Non')]}),
-      F('year',B('Bouwjaar','Année de construction'),'number'),
+      F('year',B('Bouwjaar','Année de construction'),'number',{min:1900,max:new Date().getFullYear()+1,step:1}),
       F('make',B('Merk','Marque')), F('model',B('Model','Modèle')), F('serial',B('Serienummer','Numéro de série')),
-      F('unitOrPulsed',B('Brander','Brûleur'),'select',{options:[O('unit','unit'),O('air pulsed','air pulsed','air pulsé')]}),
+      F('unitOrPulsed',B('Brander','Brûleur'),'select',{options:[
+        O('unit','unit'),O('unit premix','unit premix','unit prémélange'),O('unit non-premix','unit non-premix','unit non prémélangé'),O('air pulsed','air pulsed','air pulsé')]}),
     ]},
     {title:B('Metingen','Mesures'),hint:B('Proef I (initieel) en Proef II (eindmeting).','Essai I (initial) et essai II (mesure finale).'),measure:true,fields:[
-      {key:'o2',label:B('Zuurstof (O₂)','Teneur en O₂'),type:'measure',unit:'%',max:4.4,lower:true,pair:true},
-      {key:'co2',label:B('Koolstofdioxide (CO₂)','Teneur en CO₂'),type:'measure',unit:'%',min:12,pair:true},
-      {key:'co',label:B('Koolstofmonoxide (CO)','Teneur en CO'),type:'measure',unit:'mg/kWh',max:150,lower:true,pair:true},
-      {key:'flueTemp',label:B('Rookgastemperatuur','Température des gaz de combustion'),type:'measure',unit:'°C',max:200,lower:true,pair:true},
-      {key:'netTemp',label:B('Nettotemperatuur','Température nette'),type:'measure',unit:'°C',pair:true},
-      {key:'efficiency',label:B('Verbrandingsrendement (Hi)','Rendement de combustion (Hi)'),type:'measure',unit:'%',min:90,pair:true},
-      F('smoke',B('Rookindex Bacharach (stookolie)','Indice de fumée Bacharach (mazout)'),'number'),
+      {key:'o2',label:B('Zuurstof (O₂)','Teneur en O₂'),type:'measure',unit:'%',max:4.4,lower:true,physicalMin:0,physicalMax:100,pair:true},
+      {key:'co2',label:B('Koolstofdioxide (CO₂)','Teneur en CO₂'),type:'measure',unit:'%',min:12,physicalMin:0,physicalMax:100,pair:true},
+      {key:'co',label:B('Koolstofmonoxide (CO)','Teneur en CO'),type:'measure',unit:'mg/kWh',max:150,lower:true,physicalMin:0,pair:true},
+      {key:'flueTemp',label:B('Rookgastemperatuur','Température des gaz de combustion'),type:'measure',unit:'°C',max:200,lower:true,physicalMax:2000,pair:true},
+      {key:'netTemp',label:B('Nettotemperatuur','Température nette'),type:'measure',unit:'°C',physicalMax:2000,pair:true},
+      {key:'efficiency',label:B('Verbrandingsrendement (Hi)','Rendement de combustion (Hi)'),type:'measure',unit:'%',min:90,physicalMin:0,physicalMax:100,pair:true},
+      F('smoke',B('Rookindex Bacharach (stookolie)','Indice de fumée Bacharach (mazout)'),'measure',{physicalMin:0,physicalMax:9}),
       F('draft',B('Druk rookgasafvoerkanaal (Pa)','Pression du conduit de fumée (Pa)'),'number'),
     ]},
     {title:B('Beoordeling','Évaluation'),hint:B('Conformiteit, gebreken en VEKA-registratie.','Conformité, défauts et enregistrement VEKA.'),fields:[
@@ -129,6 +131,9 @@ export const flanders = {
       F('remarks',B('Andere opmerkingen','Autres remarques'),'textarea'),
       req(F('vekaRef',B('VEKA registratiereferentie','Référence d’enregistrement VEKA'))),
       req(F('vekaDate',B('Datum registratie VEKA','Date d’enregistrement VEKA'),'date')),
+      F('signature',B('Handtekening erkende technicus','Signature du technicien agréé'),'signature',
+        {hint:B('Facultatief. Teken met muis, vinger of stylus, of onderteken door uw naam te typen.',
+          'Facultatif. Tracez à la souris, au doigt ou au stylet, ou signez en tapant votre nom.')}),
     ]},
   ]
 };

@@ -32,7 +32,7 @@ A recognized/agréé heating technician, on-site at the end of a boiler control,
 - Full-viewport (`100dvh`), flex column; sticky progress bar top; fixed Back/Next bottom; the content area scrolls internally only when a step is long.
 - 2-column grid on tablet, 1-column on phone; large tap targets; high contrast for glare.
 - Region selected first; downstream steps show/hide by config; inline validation on recognition numbers; computed next-due shown on result step.
-- Signatures: **blank lines in PDF, signed on paper** (no on-screen capture).
+- Signatures: **optional on-screen capture** (drawn or typed name) embedded in the printed/PDF output; blank printed lines remain when no signature is given. Superseded 2026-11-26 (was: blank lines only).
 
 ## 7. Constraints and open decisions
 - Static HTML/CSS/JS + vendored pdf-lib; PWA (manifest + service worker); localStorage only.

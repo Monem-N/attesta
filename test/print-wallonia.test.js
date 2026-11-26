@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {selectedOption,valueFor,fmtDots} from '../print-wallonia.js';
+import {selectedOption,valueFor,fmtDots,buildWalloniaHtml} from '../print-wallonia.js';
 
 test('exclusive option resolution: GII does not tick GI/L',()=>{
   assert.equal(selectedOption('techCategory','Technicien agréé GII'),'gii');
@@ -25,6 +25,12 @@ test('anchored fuel/burner options resolve exactly',()=>{
   assert.equal(selectedOption('unitOrPulsed','air pulsé'),'air pulsé');
   assert.equal(selectedOption('premix','non-premix'),'non-premix');
   assert.equal(selectedOption('raccordement','B'),'b');
+});
+
+test('Wallonia print tolerates malformed persisted scalars',()=>{
+  const poison={toString:null};
+  assert.equal(selectedOption('fuelDetail',poison),null);
+  assert.doesNotThrow(()=>buildWalloniaHtml({region:'wallonia',data:{fuel:poison,fuelDetail:poison,unitOrPulsed:poison,premix:poison}}));
 });
 
 test('date formatting accepts both ISO and slash',()=>{

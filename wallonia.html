@@ -86,6 +86,9 @@ table.perf .res{white-space:nowrap;font-size:calc(var(--fs) * .78)}
 .sig{display:grid;grid-template-columns:1fr 1fr;gap:8mm;margin-top:4mm}
 .sigbox{border:var(--rw) solid var(--rule);padding:2.4mm;min-height:32mm}
 .sigline{border-bottom:0.6pt dotted #555;height:9mm;margin-top:2mm}
+.sigimg{display:block;width:56mm;height:12mm;object-fit:contain;margin:0 0 1mm}
+.sigtyped{font-style:italic}
+.sigimg[hidden],.sigtyped[hidden]{display:none}
 
 .flow{display:block;margin:0 auto;width:auto;max-width:100%}
 .flow text{font-family:Arial,"Liberation Sans",Helvetica,sans-serif}
@@ -522,6 +525,8 @@ table.cat td.code{font-weight:bold;white-space:nowrap}
     <div class="sigbox">
       <div class="h3" style="margin-top:0">Attestation de contrôle établie <b>par</b></div>
       <span class="fill xl">{{techName}}</span>
+      <img class="sigimg" alt="" hidden>
+      <span class="sigtyped" hidden></span>
       <div class="sigline"></div>
       <p class="xs ctr" style="margin-top:1.4mm;margin-bottom:0">(signature du technicien)</p>
     </div>

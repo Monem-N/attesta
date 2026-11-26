@@ -29,12 +29,14 @@ export const LEGACY_MAPS={
   brussels:{
     // page 1 — act, parties, declaration, requirements
     intervention:[0,300,80], controlDate:[0,130,90], attestNumber:[0,470,90], motif:[0,130,80],
+    nextDueDate:[0,164,323],
     ownerType:[0,130,141], clientName:[0,420,141], clientStreet:[0,370,172], clientCity:[0,370,182],
     contactName:[0,130,193], contactPhone:[0,130,213],
     pebUnitRef:[0,140,162], floor:[0,110,151], buildingName:[0,140,172],
     applianceLocation:[0,130,131],
     company:[0,160,609], techName:[0,370,681], techAgrement:[0,400,671],
     techCategory:[0,306,650], tickets:[2,60,235],
+    signature:[0,54,698],
     bce:[0,140,671], techPhone:[0,130,650],
     conformity:[0,300,286], stopProtocol:[0,400,303], derogation:[0,400,313],
     coAmbient:[0,400,392], safety:[0,400,413], flueState:[0,400,433],
@@ -51,6 +53,7 @@ export const LEGACY_MAPS={
     annex1mw:[3,220,133], logbook:[2,400,127],
     // page 4 (landscape, already part of the official model) — combustion table
     o2:[3,520,367], co2:[3,520,387], co:[3,520,407], flueTemp:[3,520,427],
+    draughtPa:[3,520,258],
   }
 };
 
