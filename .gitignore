@@ -1,2 +1,6 @@
 # Impeccable working artifacts (decision page, reviews, surface briefs)
 .impeccable/
+
+# Local agent plans and generated review output
+.kilo/
+out/

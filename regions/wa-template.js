@@ -10,6 +10,7 @@
 // measured from the official form. Checkboxes are drawn at fixed positions and
 // ticked with a red fill + check.
 import {evaluateCriteria} from './wallonia-criteria.js';
+import {parseNumber,scalarText} from '../input-validation.js';
 
 const W=595.32,H=841.92,RIGHT=W-42;
 // pdf-lib is loaded lazily (see app.js ensurePdfLibs), so colors and the
@@ -23,20 +24,21 @@ function initColors(){
 }
 
 function fmtDots(v){
-  const s=String(v||'');
+  const s=scalarText(v);
   const iso=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if(iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
   const slash=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
   if(slash) return `${slash[1]}.${slash[2]}.${slash[3]}`;
   return s;
 }
-function has(v,re){ return v!=null&&v!==''&&re.test(String(v)); }
+function has(v,re){ return v!=null&&v!==''&&re.test(scalarText(v)); }
 
 function page(doc,font){
   const p=doc.addPage([W,H]);
   const T=(s,x,y,size=9,color=INK,maxW)=>{
     if(s==null||s==='') return;
-    const v=String(s);
+    const v=scalarText(s);
+    if(!v) return;
     if(maxW&&font.widthOfTextAtSize(v,size)>maxW){
       // clip to the cell: wrap to at most 2 lines, never push other elements
       const words=v.split(/\s+/); let line='',lines=[];
@@ -67,7 +69,6 @@ function page(doc,font){
 function optRow(P,label,y,items,selected,labelX=60,startX=120){
   P.T(label,labelX,y,8.5,SOFT,startX-labelX-4);
   let x=startX;
-  const s=String(selected||'').toLowerCase();
   for(const [text,re] of items){
     const hit=has(selected,re);
     P.opt(x,y-1,text,hit);
@@ -77,7 +78,6 @@ function optRow(P,label,y,items,selected,labelX=60,startX=120){
 }
 // explicit option list: each item has its own box x
 function opts(P,y,items,selected){
-  const s=String(selected||'').toLowerCase();
   for(const [text,re,bx,labelDx] of items){
     const hit=has(selected,re);
     P.box(bx,y-1,hit);
@@ -225,7 +225,7 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
   P.T('ATTENTION : les tickets sur lesquels figurent les résultats des mesures, mentionnant l’heure et la date, doivent être agrafés.',60,ay+52,8,SOFT,480);
   P.T('Dérogation : transmission électronique via un protocole fermé non modifiable par l’opérateur.',60,ay+64,8,SOFT,480);
   P.T('Informations techniques complémentaires',60,ay+90,10,RED); P.line(60,ay+100,535,RED,1);
-  P.field(ay+118,'Date – heure mesure',`${fmtDots(d.measureDate)} ${d.measureTime||''}`,160,120,60);
+  P.field(ay+118,'Date – heure mesure',`${fmtDots(d.measureDate)} ${scalarText(d.measureTime)}`,160,120,60);
   P.field(ay+136,'Pression cheminée (Pa)',d.chimneyPressure,430,80,60);
   P.field(ay+154,'Pression pompe (bar)',d.pumpPressure,470,60,60);
   P.T('Gicleur :',60,ay+176,8.5,INK); P.T('Marque & type :',95,ay+176,8.5,SOFT,60); P.T(d.nozzleMake||'',150,ay+176,8.5,INK,110);
@@ -236,13 +236,13 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
   P.T('L’installation n’émet-elle que très brièvement de la fumée ?',60,ay+234,8.5,INK,290); P.box(348,ay+233,has(d.solidSmoke,/oui/i)); P.T('OUI',360,ay+234,8.5,INK); P.box(399,ay+233,has(d.solidSmoke,/non/i)); P.T('NON',411,ay+234,8.5,INK);
   P.T('L’évacuation des gaz s’effectue-t-elle correctement ?',60,ay+252,8.5,INK,290); P.box(348,ay+251,has(d.solidFlue,/oui/i)); P.T('OUI',360,ay+252,8.5,INK); P.box(399,ay+251,has(d.solidFlue,/non/i)); P.T('NON',411,ay+252,8.5,INK);
   P.T('Déclaration de conformité vis-à-vis de l’acte de contrôle',60,ay+282,9,RED,480);
-  P.box(65,ay+300,/^oui|conforme/i.test(d.conformity||'')); P.T('OUI',77,ay+300,8.5,INK); P.box(116,ay+300,/^non/i.test(d.conformity||'')); P.T('NON',128,ay+300,8.5,INK);
+  P.box(65,ay+300,/^oui|conforme/i.test(scalarText(d.conformity))); P.T('OUI',77,ay+300,8.5,INK); P.box(116,ay+300,/^non/i.test(scalarText(d.conformity))); P.T('NON',128,ay+300,8.5,INK);
   P.T('En cas de non conformité -> Causes et actions :',60,ay+322,8.5,INK,300); P.T(d.defects||'',200,ay+322,8.5,INK,330);
 
   /* ===================== PAGE 3 ===================== */
   P=page(doc,font); await masthead(doc,P,logoBytes);
   P.T('Réalisation d’un diagnostic approfondi (si Pnom > 20 kW)',60,109,12,INK,480); P.line(60,122,535,INK,1);
-  if(Number(d.powerKw)>20){
+  if((parseNumber(d.powerKw)??0)>20){
     const diag=[
       ['A. Un rapport de diagnostic approfondi est-il présent ?','diagReport','Si OUI → Passer au point B.  Si NON → Passer au point C.'],
       ['B. Modification du système ou des exigences depuis le rapport ?','diagModified','Si OUI → Passer au point D.  Si NON → Installation en ordre jusqu’au prochain contrôle. Sortie du tableau.'],
@@ -298,7 +298,7 @@ export async function generateWallonia(data,fontBytes,logoBytes,audit){
   P.T('(signature du technicien)',60,340,8,SOFT);
   P.T('Attestation reçue par',301,300,9,SOFT);
   P.T(d.recipientName||d.clientName||'',301,322,9,INK,220); P.line(301,326,535);
-  P.T(d.recipientCapacity?`en qualité de ${d.recipientCapacity}`:'',301,340,8,SOFT,220);
+  P.T(d.recipientCapacity?`en qualité de ${scalarText(d.recipientCapacity)}`:'',301,340,8,SOFT,220);
   const notice=[
     'ATTENTION : En cas de constatation d’un danger pour les utilisateurs du générateur contrôlé ou pour toute autre',
     'personne, le technicien agréé est tenu de prévenir l’utilisateur et le propriétaire ; écrit signé si présents,',

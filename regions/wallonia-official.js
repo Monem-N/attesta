@@ -6,6 +6,7 @@
 // Coordinate note: [page, x, yTop] where yTop is the glyph-top in PDF points,
 // matching the reference's text baseline layout (origin top-left, A4 595x842).
 import {evaluateCriteria} from './wallonia-criteria.js';
+import {scalarText} from '../input-validation.js';
 
 const RED = [0.698, 0.227, 0.169];
 
@@ -136,13 +137,14 @@ const WA_EXTRA_TEXT = {
 
 function matches(value, re) {
   if (value == null || value === '') return false;
-  if (re.v) return re.v.test(String(value));
+  if (re.v) return re.v.test(scalarText(value));
   return false;
 }
 
 export function fmtDots(v) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || ''));
-  return m ? `${m[3]}.${m[2]}.${m[1]}` : String(v ?? '');
+  const text = scalarText(v);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : text;
 }
 
 export async function overlayWallonia(templateBytes, data, fontBytes, audit) {
@@ -156,13 +158,14 @@ export async function overlayWallonia(templateBytes, data, fontBytes, audit) {
   const d = data;
 
   const drawText = (page, str, x, yTop, size = 9, color = ink) => {
-    if (str === '' || str == null) return;
+    const value = scalarText(str);
+    if (!value) return;
     const y = page.getHeight() - yTop - size * 0.9;
     const opts = { x, y, size, font, color };
-    try { page.drawText(String(str), opts); }
+    try { page.drawText(value, opts); }
     catch (e) {
-      try { page.drawText(String(str).replace(/[^\x20-\x7E]/g, '?'), opts); }
-      catch (e2) { if (audit) audit.omitted.push(String(str).slice(0, 20)); }
+      try { page.drawText(value.replace(/[^\x20-\x7E]/g, '?'), opts); }
+      catch (e2) { if (audit) audit.omitted.push(value.slice(0, 20)); }
     }
   };
   const drawTick = (page, x, yTop) => {

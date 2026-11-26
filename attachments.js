@@ -3,6 +3,12 @@
 // only holds the draft's file names, which is why reloaded drafts previously
 // warned about missing tickets.
 const DB='attesta-attachments', STORE='files', VERSION=1;
+const DEFAULT_SCOPE='default';
+const scopePrefix=scope=>`${scope||DEFAULT_SCOPE}:`;
+const storageKey=(scope,key)=>`${scopePrefix(scope)}${key}`;
+// Before scopes existed, keys were stored bare (for example `tickets`). They
+// cannot be assigned safely to a region, but an explicit clear must remove them.
+const isLegacyKey=key=>typeof key==='string' && !key.includes(':');
 let dbPromise=null;
 
 function open(){
@@ -32,24 +38,33 @@ function tx(mode,fn){
   }));
 }
 
-export async function saveAttachmentBytes(map){
+export async function saveAttachmentBytes(map,scope=DEFAULT_SCOPE){
   await tx('readwrite',store=>{
-    // Replace the whole set so removed files do not survive a reload.
-    store.clear();
-    for(const [key,files] of map){
-      if(files&&files.length) store.put(files.map(f=>({name:f.name,type:f.type,size:f.size,blob:f})),key);
-    }
+    // Replace only this draft's set. Another regional draft may have a file
+    // with the same name, and its bytes must not be deleted or reused.
+    const prefix=scopePrefix(scope);
+    const keys=store.getAllKeys();
+    keys.onsuccess=()=>{
+      for(const key of keys.result){
+        if(typeof key==='string' && key.startsWith(prefix)) store.delete(key);
+      }
+      for(const [key,files] of map){
+        if(files&&files.length) store.put(files.map(f=>({name:f.name,type:f.type,size:f.size,blob:f})),storageKey(scope,key));
+      }
+    };
   });
 }
 
-export async function loadAttachmentBytes(){
+export async function loadAttachmentBytes(scope=DEFAULT_SCOPE){
   const stored=await tx('readonly',store=>{
     const out=new Map();
+    const prefix=scopePrefix(scope);
     const req=store.openCursor();
     req.onsuccess=()=>{
       const cursor=req.result;
       if(!cursor) return;
-      out.set(cursor.key,cursor.value||[]);
+      if(typeof cursor.key==='string' && cursor.key.startsWith(prefix))
+        out.set(cursor.key.slice(prefix.length),cursor.value||[]);
       cursor.continue();
     };
     return out;
@@ -58,6 +73,17 @@ export async function loadAttachmentBytes(){
   return stored;
 }
 
-export async function clearAttachmentBytes(){
-  await tx('readwrite',store=>store.clear());
+export async function clearAttachmentBytes(scope){
+  await tx('readwrite',store=>{
+    if(scope==null){ store.clear(); return; }
+    const prefix=scopePrefix(scope);
+    const req=store.openCursor();
+    req.onsuccess=()=>{
+      const cursor=req.result;
+      if(!cursor) return;
+      if(typeof cursor.key==='string' && (cursor.key.startsWith(prefix) || isLegacyKey(cursor.key)))
+        store.delete(cursor.key);
+      cursor.continue();
+    };
+  });
 }

@@ -1,5 +1,6 @@
 // Pure rendering helpers shared by the PDF writer. No browser globals here so
 // they can be unit-tested in Node.
+import {scalarText} from '../input-validation.js';
 
 // All official models used here are A4 portrait unless noted; the renderer
 // uses the real page size for bounds checks (see br-1mw-annex landscape).
@@ -22,8 +23,8 @@ export const WA_OUTCOME={
 export function formatScalar(value, region){
   if(value==null) return '';
   if(typeof value==='boolean') return value?TRUE_LABEL[region]:FALSE_LABEL[region];
-  if(region==='wallonia' && WA_OUTCOME[value]) return WA_OUTCOME[value];
-  const s=String(value).trim();
+  const s=scalarText(value).trim();
+  if(region==='wallonia' && WA_OUTCOME[s]) return WA_OUTCOME[s];
   // ISO dates are an internal format; official models use DD/MM/YYYY.
   const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   return m?`${m[3]}/${m[2]}/${m[1]}`:s;
@@ -36,7 +37,7 @@ export function formatValue(value, region){
 
 // Wrap to a measured width. `measure(text)` is supplied by pdf-lib's font.
 export function wrapText(text, measure, maxWidth, maxLines=3){
-  const words=String(text).split(/\s+/).filter(Boolean);
+  const words=scalarText(text).split(/\s+/).filter(Boolean);
   const lines=[]; let current='';
   for(const word of words){
     const next=current?`${current} ${word}`:word;

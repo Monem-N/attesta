@@ -13,6 +13,12 @@ test('booleans use region wording',()=>{
   assert.equal(formatScalar(false,'wallonia'),'NON');
 });
 
+test('PDF text helpers tolerate malformed persisted objects',()=>{
+  const poison={toString:null};
+  assert.equal(formatScalar(poison,'brussels'),'');
+  assert.deepEqual(wrapText(poison,s=>s.length*5,100),{lines:[],clipped:false});
+});
+
 test('wrapText wraps and reports clipping instead of truncating silently',()=>{
   const measure=s=>s.length*5;
   const wrapped=wrapText('Gebreken die niet door de onderhoudsbeurt kunnen worden weggewerkt',measure,40,3);

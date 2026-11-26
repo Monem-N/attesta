@@ -5,6 +5,7 @@
 // post-signature ATTENTION block are deliberately not reproduced.
 import {evaluateCriteria} from './wallonia-criteria.js';
 import {wrapText} from './pdf-render.js';
+import {parseNumber,scalarText} from '../input-validation.js';
 const {PDFDocument,rgb}=globalThis.window?.PDFLib||{};
 
 const W=595.32, H=841.92, M=42, RIGHT=W-M;
@@ -13,7 +14,7 @@ const ink=rgb(0.086,0.094,0.114), soft=rgb(0.38,0.40,0.43), red=rgb(0.698,0.227,
 
 function yOf(page,v){ return page.getHeight()-v; }
 function text(page,s,x,y,size,font,color=ink,maxWidth){
-  const v=String(s??'');
+  const v=scalarText(s);
   if(!v) return;
   if(maxWidth&&font.widthOfTextAtSize(v,size)>maxWidth)
     A?.warnings.push(`text overflows ${maxWidth}pt: ${v.slice(0,40)}`);
@@ -63,8 +64,8 @@ function box(page,x,y,checked,label,font,silent=false){
 // key wins, so "non conforme" beats "conforme" and "gii" beats "gi".
 function matchesOption(value,key){
   if(value==null||value===''||key==='') return false;
-  const s=String(value).toLowerCase().trim();
-  const k=String(key);
+  const s=scalarText(value).toLowerCase().trim();
+  const k=scalarText(key);
   if(k.startsWith('^')){ try{ return new RegExp(k,'i').test(s); }catch(e){ return false; } }
   const esc=k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
   return new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`).test(s);
@@ -92,7 +93,7 @@ function options(page,title,y,items,selected,font,startX=M+110){
 }
 function verdict(page,x,y,value,font,label='global'){
   if(value==null||value==='') return; // empty row stays blank (as on the approved form)
-  const v=String(value);
+  const v=scalarText(value);
   recordPrinted(`verdict:${label}:${v||'non déterminé'}`);
   const ok=/^(ok|oui|conforme)$/i.test(v), bad=/^(non ok|non conforme|niet ok)$/i.test(v);
   if(!ok&&!bad){ text(page,'non déterminé',x,y,8,font,soft); return; }
@@ -118,7 +119,7 @@ export async function renderWallonia(data,fontBytes,audit){
 
   band(p,'Technicien',y); y+=20;
   options(p,'Agrément',y,[['Technicien agréé','*',165],['L','l',45],['GI','gi',45],['GII','gii',45]],d.techCategory,font); y+=18;
-  box(p,M,y,!!/solide/i.test(d.techCategory||''),'Technicien spécialisé en combustibles solides',font); y+=18;
+  box(p,M,y,!!/solide/i.test(scalarText(d.techCategory)),'Technicien spécialisé en combustibles solides',font); y+=18;
   field(p,'Nom et prénom',M,y,90,170,d.techName,font);
   field(p,'N° d’agrément',300,y,85,130,d.techAgrement,font); y+=18;
   field(p,'Nom entreprise',M,y,90,170,d.company,font);
@@ -147,7 +148,7 @@ export async function renderWallonia(data,fontBytes,audit){
   field(p,'Nombre de générateurs',M,y,130,70,d.genCount,font);
   field(p,'Puissance utile (kW)',300,y,120,100,d.powerKw,font); y+=18;
   field(p,'Année de construction',M,y,130,70,d.year,font);
-  field(p,'Raccordement',300,y,110,110,`B (3) ${d.raccordement||''} ${d.raccordementDetail||''}`.trim(),font); y+=18;
+  field(p,'Raccordement',300,y,110,110,`B (3) ${scalarText(d.raccordement)} ${scalarText(d.raccordementDetail)}`.trim(),font); y+=18;
   field(p,'Marque',M,y,130,70,d.make,font);
   field(p,'Type',300,y,120,100,d.model||d.burnerModel||'',font); y+=18;
   field(p,'N° de série',M,y,130,70,d.serial,font); y+=18;
@@ -173,7 +174,7 @@ export async function renderWallonia(data,fontBytes,audit){
   /* ---------------- page 2 ---------------- */
   p=doc.addPage([W,H]);
   text(p,'Respect des critères de bon fonctionnement',M,30,13,font,ink);
-  text(p,`Catégorie : ${d.waCategory||'non déterminée'}`,M,46,9,font,soft,240);
+  text(p,`Catégorie : ${scalarText(d.waCategory)||'non déterminée'}`,M,46,9,font,soft,240);
   rule(p,M,54,RIGHT,ink,1);
   const evaluation=evaluateCriteria(d);
   const cols=[M,M+185,M+275,M+350];
@@ -201,7 +202,7 @@ export async function renderWallonia(data,fontBytes,audit){
   }
   for(const [label,key] of [['Allure 2','load2'],['Allure 3','load3']]){
     if(!d[key]) continue;
-    const parsed=parseLoad(String(d[key]));
+    const parsed=parseLoad(scalarText(d[key]));
     // Category context from the appliance, values from this load only.
     const ctx={fuel:d.fuel,fuelDetail:d.fuelDetail,unitOrPulsed:d.unitOrPulsed,
       year:d.year,premix:d.premix,controlDate:d.controlDate};
@@ -240,10 +241,12 @@ export async function renderWallonia(data,fontBytes,audit){
   options(p,'Fumée (solide)',yy,[['OUI','oui',90],['NON','non',90]],d.solidSmoke,font); yy+=20;
   options(p,'Évacuation (solide)',yy,[['OUI','oui',90],['NON','non',90]],d.solidFlue,font); yy+=26;
   band(p,'Déclaration de conformité',yy); yy+=24;
-  const declaration=/^non/i.test(d.conformity||'')?'NON':/^(conforme|ok)/i.test(d.conformity||'')?'OUI':d.conformity;
+  const conformity=scalarText(d.conformity);
+  const declaration=/^non/i.test(conformity)?'NON':/^(conforme|ok)/i.test(conformity)?'OUI':conformity;
   options(p,'',yy,[['OUI','oui',100],['NON','non',100]],declaration,font); yy+=24;
-  const solidSelected=/solide/i.test(d.fuel||'')||/pellets|bûches|plaquettes|céréales|charbon/i.test(d.fuelDetail||'');
-  verdict(p,M,yy,solidSelected?(d.solidResult||evaluation.globalResult):evaluation.globalResult,font); yy+=20;
+  const solidSelected=/solide/i.test(scalarText(d.fuel))||/pellets|bûches|plaquettes|céréales|charbon/i.test(scalarText(d.fuelDetail));
+  const explicitGlobal=d.globalResult==='OK'||d.globalResult==='non OK'?d.globalResult:null;
+  verdict(p,M,yy,solidSelected?(d.solidResult||explicitGlobal||evaluation.globalResult):(explicitGlobal||evaluation.globalResult),font); yy+=20;
   field(p,'Causes et actions',M,yy,100,RIGHT-142,d.defects,font);
   text(p,'2 / 4',RIGHT-28,H-24,8.5,font,soft);
 
@@ -251,7 +254,7 @@ export async function renderWallonia(data,fontBytes,audit){
   p=doc.addPage([W,H]);
   text(p,'Diagnostic approfondi (Pnom > 20 kW)',M,30,13,font,ink);
   rule(p,M,38,RIGHT,ink,1);
-  if(!(Number(d.powerKw)>20)){
+  if(!((parseNumber(d.powerKw)??0)>20)){
     text(p,'Non applicable — puissance nominale ≤ 20 kW',M,58,9,font,soft);
     text(p,'3 / 4',RIGHT-28,H-24,8.5,font,soft);
     // page 3 intentionally kept for stable numbering
@@ -316,7 +319,7 @@ export async function renderWallonia(data,fontBytes,audit){
     box(p,M,yy+4,matchesOption(d.followUp,key),label,font,true);
     text(p,label,M+16,yy,9,font,ink);
     text(p,a||'',300,yy,9,font,ink,100);
-    if(b) text(p,`entre le ${a} et le ${b}`,330,yy,9,font,ink,RIGHT-332);
+    if(b) text(p,`entre le ${scalarText(a)} et le ${scalarText(b)}`,330,yy,9,font,ink,RIGHT-332);
     rule(p,M,yy+16,RIGHT,line);
     yy+=24;
   }
@@ -328,7 +331,7 @@ export async function renderWallonia(data,fontBytes,audit){
   text(p,'Attestation reçue par',300,yy,9,font,soft);
   text(p,d.recipientName||d.clientName||'',300,yy+18,9,font,ink,RIGHT-302);
   rule(p,300,yy+22,RIGHT);
-  text(p,d.recipientCapacity?`En qualité de ${d.recipientCapacity}`:'',300,yy+30,8,font,soft,RIGHT-302);
+  text(p,d.recipientCapacity?`En qualité de ${scalarText(d.recipientCapacity)}`:'',300,yy+30,8,font,soft,RIGHT-302);
   yy+=58;
   // Mandatory danger notice and emergency contacts (AWAC model, page 9).
   const notice=[
@@ -375,9 +378,10 @@ export async function renderWallonia(data,fontBytes,audit){
 
 export function parseLoad(s){
   const out={};
-  const normalized=String(s).replace(/₂/g,'2').replace(/₁/g,'1');
+  const normalized=scalarText(s).replace(/₂/g,'2').replace(/₁/g,'1');
   const pats={co2:/\bco2\s*[=:]?\s*([\d.,]+)/i,o2:/\bo2\s*[=:]?\s*([\d.,]+)/i,
-    co:/\bco\b\s*[=:]?\s*([\d.,]+)/i,efficiency:/rendement\s*[=:]?\s*([\d.,]+)/i};
+    co:/\bco\b\s*[=:]?\s*([\d.,]+)/i,flueTemp:/\b(?:temp(?:érature)?\.?\s*(?:gaz|fumée)|tg)\s*[=:]?\s*([\d.,]+)/i,
+    efficiency:/rendement\s*[=:]?\s*([\d.,]+)/i};
   for(const [key,re] of Object.entries(pats)){
     const m=re.exec(normalized);
     if(m) out[key]=m[1].replace(',','.');
@@ -398,26 +402,27 @@ function compactLoad(v){
 // ("12 bis", "boîte 4"): the first token that starts with a digit begins the
 // number, so "Rue de la Gare 12 bis" -> ["Rue de la Gare", "12 bis"].
 function splitLegacyAddress(value){
-  const tokens=String(value||'').trim().split(/\s+/).filter(Boolean);
+  const tokens=scalarText(value).trim().split(/\s+/).filter(Boolean);
   const at=tokens.findIndex(t=>/^\d/.test(t));
   if(at<1) return [tokens.join(' '),''];
   return [tokens.slice(0,at).join(' '),tokens.slice(at).join(' ')];
 }
 export function splitLegacyAddressForTest(value){ return splitLegacyAddress(value); }
 function streetParts(d){
-  const legacy=String(d.clientStreet||'').trim();
+  const legacy=scalarText(d.clientStreet).trim();
   if(d.clientStreetName){
-    const num=String(d.clientStreetNumber||'').trim();
-    return num?[String(d.clientStreetName),num]:splitLegacyAddress(legacy)[1]
-      ?[String(d.clientStreetName),splitLegacyAddress(legacy)[1]]
-      :[String(d.clientStreetName),''];
+    const num=scalarText(d.clientStreetNumber).trim();
+    return num?[scalarText(d.clientStreetName),num]:splitLegacyAddress(legacy)[1]
+      ?[scalarText(d.clientStreetName),splitLegacyAddress(legacy)[1]]
+      :[scalarText(d.clientStreetName),''];
   }
   return splitLegacyAddress(legacy);
 }
 function fmtDate(v){
   if(!v) return '';
-  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v));
-  return m?`${m[3]}.${m[2]}.${m[1]}`:String(v);
+  const text=scalarText(v);
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(text);
+  return m?`${m[3]}.${m[2]}.${m[1]}`:text;
 }
 function limitText(rule){
   if(!rule) return '—';

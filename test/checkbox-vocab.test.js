@@ -17,6 +17,11 @@ test('non-binary values are not ticked',()=>{
     assert.equal(binaryIndex(v),null,`${v} must be written as text, not ticked`);
 });
 
+test('malformed persisted scalars are not coerced into checkbox verdicts',()=>{
+  assert.equal(binaryIndex({toString:null}),null);
+  assert.equal(normalizeBinary({toString:null}),null);
+});
+
 test('normalizer prints the region-neutral tick label',()=>{
   assert.equal(normalizeBinary('Ja'),'OUI');
   assert.equal(normalizeBinary('niet goed'),'NON');

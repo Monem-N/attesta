@@ -1,0 +1,258 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="3300" viewBox="0 0 1800 3300">
+<defs>
+  <style>
+    .bg{fill:#fff}
+    .panel{fill:#fff;stroke:#d7dee8;stroke-width:2}
+    .h1{font:700 34px Roboto,sans-serif;fill:#13243a}
+    .h2{font:700 24px Roboto,sans-serif;fill:#13243a}
+    .sub{font:400 17px Roboto,sans-serif;fill:#5c6b7d}
+    .node{fill:#fff;stroke:#26384d;stroke-width:2.4}
+    .decision{fill:#fff;stroke:#26384d;stroke-width:2.4}
+    .green{fill:#dcefd8;stroke:#4b7d45;stroke-width:2.2}
+    .yellow{fill:#fff4b8;stroke:#b69b2d;stroke-width:2.2}
+    .pink{fill:#f4c3dc;stroke:#b04c82;stroke-width:2.2}
+    .blue{fill:#c8e9f0;stroke:#3f8999;stroke-width:2.2}
+    .text{font:17px Roboto,sans-serif;fill:#17283c;text-anchor:middle}
+    .small{font:15px Roboto,sans-serif;fill:#17283c;text-anchor:middle}
+    .tiny{font:14px Roboto,sans-serif;fill:#425268}
+    .edge{fill:none;stroke:#33465c;stroke-width:2.4;marker-end:url(#arrow)}
+    .edge2{fill:none;stroke:#33465c;stroke-width:2.4}
+    .label{font:700 16px Roboto,sans-serif;fill:#26384d}
+    .note{font:15px Roboto,sans-serif;fill:#34465b}
+    .pill{font:700 14px Roboto,sans-serif;fill:#fff;text-anchor:middle}
+  </style>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#33465c"/>
+  </marker>
+</defs>
+<rect class="bg" width="1800" height="2500"/>
+<text x="90" y="70" class="h1">CONTRÔLES PÉRIODIQUES — LOGIGRAMMES</text>
+<text x="90" y="105" class="sub">Reconstitution vectorielle des logigrammes et des règles associées — document source, pages 8 à 10</text>
+
+<!-- PANEL 1 -->
+<rect class="panel" x="60" y="140" width="1680" height="1900" rx="0"/>
+<text x="100" y="195" class="h2">1. Logigramme relatif aux contrôles périodiques</text>
+<text x="100" y="225" class="sub">Décision de conformité, remise en service, mise à l’arrêt et contrôles de mise en conformité</text>
+
+<!-- top start and periodic control -->
+<rect class="node" x="110" y="285" width="180" height="62" rx="0"/>
+<text class="text" x="200" y="323">START</text>
+<path class="edge" d="M200 347 V395"/>
+<rect class="node" x="110" y="395" width="180" height="78" rx="0"/>
+<text class="text" x="200" y="427"><tspan x="200">Contrôle</tspan><tspan x="200" dy="22">périodique</tspan></text>
+<path class="edge" d="M200 473 V525"/>
+<polygon class="decision" points="200,525 340,590 200,655 60,590"/>
+<text class="text" x="200" y="584"><tspan x="200">Installation</tspan><tspan x="200" dy="22">conforme ?</tspan></text>
+
+<!-- initial yes path -->
+<path class="edge" d="M340 590 H650"/>
+<text class="label" x="475" y="570">OUI</text>
+<rect class="node" x="650" y="552" width="220" height="76" rx="0"/>
+<text class="text" x="760" y="596">Remise en service</text>
+<path class="edge" d="M870 590 H1120 V390"/>
+<rect class="green" x="1120" y="270" width="520" height="245" rx="0"/>
+<text class="text" x="1380" y="310">
+  <tspan x="1380" font-weight="700">Date du prochain contrôle</tspan>
+  <tspan x="1380" dy="30">• 3 ans si CG de P ≤ 100 kW</tspan>
+  <tspan x="1380" dy="27">• 2 ans si CG de P &gt; 100 kW</tspan>
+  <tspan x="1380" dy="27">• 1 an si CL ou CS</tspan>
+  <tspan x="1380" dy="36" font-weight="700">Période de contrôle :</tspan>
+  <tspan x="1380" dy="26">du jour de mise en service</tspan>
+  <tspan x="1380" dy="24">jusqu’à trois mois plus tard</tspan>
+</text>
+<path class="edge" d="M1380 270 V240 H1570"/>
+<rect class="node" x="1570" y="208" width="120" height="64" rx="0"/>
+<text class="text" x="1630" y="247">FIN</text>
+
+<!-- no path / first compliance repair -->
+<path class="edge" d="M200 655 V710"/>
+<text class="label" x="220" y="690">NON</text>
+<rect class="yellow" x="75" y="710" width="250" height="120" rx="0"/>
+<text class="small" x="200" y="746">
+  <tspan x="200" font-weight="700">Remise en service autorisée</tspan>
+  <tspan x="200" dy="23">et réparation ou adaptation</tspan>
+  <tspan x="200" dy="23">dans les 5 mois</tspan>
+</text>
+<path class="edge" d="M200 830 V880"/>
+<rect class="node" x="75" y="880" width="250" height="82" rx="0"/>
+<text class="text" x="200" y="915"><tspan x="200">1er contrôle de mise</tspan><tspan x="200" dy="23">en conformité</tspan></text>
+<path class="edge" d="M200 962 V1010"/>
+<polygon class="decision" points="200,1010 340,1075 200,1140 60,1075"/>
+<text class="text" x="200" y="1069"><tspan x="200">Installation</tspan><tspan x="200" dy="22">conforme ?</tspan></text>
+<!-- yes from first compliance -->
+<path class="edge" d="M340 1075 H760 V628"/>
+<text class="label" x="470" y="1055">OUI</text>
+
+<!-- no -> habitation -->
+<path class="edge" d="M200 1140 V1185"/>
+<text class="label" x="220" y="1170">NON</text>
+<polygon class="decision" points="200,1185 330,1245 200,1305 70,1245"/>
+<text class="text" x="200" y="1252">Habitation ?</text>
+
+<!-- habitation no -> shutdown -->
+<path class="edge" d="M330 1245 H490"/>
+<text class="label" x="390" y="1225">NON</text>
+<rect class="pink" x="490" y="1207" width="235" height="76" rx="0"/>
+<text class="text" x="607" y="1252">Mise à l’arrêt</text>
+
+<!-- habitation yes -> dates -->
+<path class="edge" d="M200 1305 V1350"/>
+<text class="label" x="220" y="1335">OUI</text>
+<polygon class="decision" points="200,1350 340,1410 200,1470 60,1410"/>
+<text class="small" x="200" y="1402"><tspan x="200">Du 01/09</tspan><tspan x="200" dy="20">au 30/04 ?</tspan></text>
+<path class="edge" d="M340 1410 H490 V1283"/>
+<text class="label" x="390" y="1390">NON</text>
+
+<!-- date yes -> safety -->
+<path class="edge" d="M200 1470 V1510"/>
+<text class="label" x="220" y="1497">OUI</text>
+<polygon class="decision" points="200,1510 350,1575 200,1640 50,1575"/>
+<text class="small" x="200" y="1568"><tspan x="200">Risque pour la sécurité</tspan><tspan x="200" dy="20">des personnes ?</tspan></text>
+
+<!-- safety yes -> shutdown; safety no -> temporary restart -->
+<path class="edge" d="M350 1575 H490 V1283"/>
+<text class="label" x="405" y="1555">OUI</text>
+<path class="edge" d="M200 1640 V1690"/>
+<text class="label" x="220" y="1668">NON</text>
+<rect class="blue" x="75" y="1690" width="250" height="120" rx="0"/>
+<text class="small" x="200" y="1725">
+  <tspan x="200" font-weight="700">Remise en service possible</tspan>
+  <tspan x="200" dy="22">pendant 3 mois maximum,</tspan>
+  <tspan x="200" dy="22">au plus tard jusqu’au 31 mars</tspan>
+</text>
+<path class="edge" d="M200 1810 V1855"/>
+<rect class="node" x="75" y="1855" width="250" height="82" rx="0"/>
+<text class="text" x="200" y="1890"><tspan x="200">2e contrôle de mise</tspan><tspan x="200" dy="23">en conformité</tspan></text>
+<path class="edge" d="M200 1937 V1985"/>
+<polygon class="decision" points="200,1985 340,2050 200,2115 60,2050"/>
+<text class="text" x="200" y="2044"><tspan x="200">Installation</tspan><tspan x="200" dy="22">conforme ?</tspan></text>
+<path class="edge" d="M340 2050 H760 V628"/>
+<text class="label" x="465" y="2030">OUI</text>
+<path class="edge" d="M200 2115 V2160 H490 V1283"/>
+<text class="label" x="220" y="2145">NON</text>
+
+<!-- repair / restart branch on right -->
+<rect class="node" x="790" y="1207" width="270" height="76" rx="0"/>
+<text class="text" x="925" y="1238"><tspan x="925">Réparation ou</tspan><tspan x="925" dy="22">adaptation de l’installation</tspan></text>
+<path class="edge" d="M725 1245 H790"/>
+<path class="edge" d="M925 1283 V1340"/>
+<rect class="node" x="790" y="1340" width="270" height="90" rx="0"/>
+<text class="small" x="925" y="1375"><tspan x="925">Contrôle en vue d’une</tspan><tspan x="925" dy="22">remise en fonctionnement</tspan></text>
+<path class="edge" d="M925 1430 V1480"/>
+<polygon class="decision" points="925,1480 1060,1540 925,1600 790,1540"/>
+<text class="small" x="925" y="1533"><tspan x="925">Installation</tspan><tspan x="925" dy="20">conforme ?</tspan></text>
+<path class="edge" d="M1060 1540 H1120 V590 H870"/>
+<text class="label" x="1080" y="1518">OUI</text>
+<path class="edge" d="M790 1540 H725 V1245"/>
+<text class="label" x="748" y="1520">NON</text>
+
+<!-- periodic control notes -->
+<rect x="1120" y="690" width="520" height="430" rx="0" fill="#f5f7fa" stroke="#cbd5e1" stroke-width="2"/>
+<text x="1150" y="735" class="h2">Règles de lecture — page 8</text>
+<text x="1150" y="775" class="note">
+  <tspan x="1150" font-weight="700">Premier constat de non-conformité :</tspan>
+  <tspan x="1150" dy="25">contrôle de mise en conformité dans les 5 mois</tspan>
+  <tspan x="1150" dy="25">à compter du constat.</tspan>
+  <tspan x="1150" dy="45" font-weight="700">Non-conformité après intervention :</tspan>
+  <tspan x="1150" dy="25">mise à l’arrêt normalement requise ; pas de délai</tspan>
+  <tspan x="1150" dy="25">général fixé pour l’intervention suivante.</tspan>
+  <tspan x="1150" dy="45" font-weight="700">Prolongation exceptionnelle de 3 mois :</tspan>
+  <tspan x="1150" dy="25">habitation, période du 1er septembre au 30 avril,</tspan>
+  <tspan x="1150" dy="25">absence de risque pour la sécurité et prolongation</tspan>
+  <tspan x="1150" dy="25">non déjà accordée.</tspan>
+</text>
+<text x="1150" y="1080" class="tiny">La possibilité de remise en service temporaire est limitée</text>
+<text x="1150" y="1102" class="tiny">à 3 mois et au plus tard au 31 mars.</text>
+
+<!-- PANEL 2 -->
+<rect class="panel" x="60" y="2080" width="1680" height="1140" rx="0"/>
+<text x="100" y="2140" class="h2">2. Logigramme relatif au diagnostic approfondi</text>
+<text x="100" y="2170" class="sub">Reconstitution du schéma de la page 10, avec les conditions et issues décrites dans le document</text>
+
+<rect class="node" x="770" y="2220" width="220" height="62" rx="0"/>
+<text class="text" x="880" y="2258">START</text>
+<path class="edge" d="M880 2282 V2320"/>
+<polygon class="decision" points="880,2320 1040,2390 880,2460 720,2390"/>
+<text class="small" x="880" y="2382"><tspan x="880">Diagnostic antérieur</tspan><tspan x="880" dy="20">existant ?</tspan></text>
+
+<!-- prior diagnostic yes -> modification since last diagnosis -->
+<path class="edge" d="M1040 2390 H1190"/>
+<text class="label" x="1100" y="2368">OUI</text>
+<polygon class="decision" points="1350,2320 1500,2390 1350,2460 1200,2390"/>
+<text class="small" x="1350" y="2382"><tspan x="1350">Modification depuis</tspan><tspan x="1350" dy="20">le dernier diagnostic ?</tspan></text>
+<path class="edge" d="M1500 2390 H1600 V2730 H1460"/>
+<text class="label" x="1535" y="2368">NON</text>
+
+<!-- prior diagnostic no -> modification after date -->
+<path class="edge" d="M880 2460 V2510"/>
+<text class="label" x="900" y="2490">NON</text>
+<polygon class="decision" points="880,2510 1040,2580 880,2650 720,2580"/>
+<text class="small" x="880" y="2568"><tspan x="880">Modification après</tspan><tspan x="880" dy="20">le 30/04/2015 ?</tspan></text>
+
+<!-- modification since last diagnostic yes -> 2 years? -->
+<path class="edge" d="M1350 2460 V2510"/>
+<text class="label" x="1370" y="2490">OUI</text>
+<polygon class="decision" points="1350,2510 1500,2580 1350,2650 1200,2580"/>
+<text class="small" x="1350" y="2568"><tspan x="1350">Au moins 2 ans</tspan><tspan x="1350" dy="20">depuis la modification ?</tspan></text>
+
+<!-- modification after date yes -> merge to 2 years -->
+<path class="edge" d="M1040 2580 H1120 V2580 H1200"/>
+<text class="label" x="1090" y="2558">OUI</text>
+<!-- modification after date no -> report question -->
+<path class="edge" d="M880 2650 V2700"/>
+<text class="label" x="900" y="2680">NON</text>
+<polygon class="decision" points="880,2700 1040,2770 880,2840 720,2770"/>
+<text class="small" x="880" y="2758"><tspan x="880">Diagnostic déjà</tspan><tspan x="880" dy="20">reporté ?</tspan></text>
+
+<!-- 2 year no -> wait -->
+<path class="edge" d="M1500 2580 H1580 V2660"/>
+<text class="label" x="1530" y="2558">NON</text>
+<rect class="yellow" x="1320" y="2660" width="330" height="150" rx="0"/>
+<text class="small" x="1485" y="2700">
+  <tspan x="1485" font-weight="700">Attendre le 1er contrôle</tspan>
+  <tspan x="1485" dy="22">périodique après la période</tspan>
+  <tspan x="1485" dy="22">de 2 ans pour effectuer</tspan>
+  <tspan x="1485" dy="22">le diagnostic.</tspan>
+</text>
+<path class="edge" d="M1485 2810 V2860 H1190"/>
+
+<!-- 2 years yes -> do diagnostic -->
+<path class="edge" d="M1350 2650 V2690"/>
+<text class="label" x="1370" y="2678">OUI</text>
+<rect class="pink" x="1190" y="2690" width="260" height="92" rx="0"/>
+<text class="text" x="1320" y="2728"><tspan x="1320">Effectuer un</tspan><tspan x="1320" dy="23">diagnostic approfondi</tspan></text>
+<path class="edge" d="M1320 2782 V2860 H1190"/>
+
+<!-- report yes -> do diagnostic -->
+<path class="edge" d="M1040 2770 H1190"/>
+<text class="label" x="1100" y="2748">OUI</text>
+<path class="edge" d="M1190 2770 V2860"/>
+
+<!-- report no -> perform, one postponement allowed -->
+<path class="edge" d="M880 2840 V2890"/>
+<text class="label" x="900" y="2870">NON</text>
+<rect class="blue" x="690" y="2890" width="380" height="180" rx="0"/>
+<text class="small" x="880" y="2925">
+  <tspan x="880" font-weight="700">Effectuer le diagnostic.</tspan>
+  <tspan x="880" dy="24">S’il n’est pas faisable, un seul report</tspan>
+  <tspan x="880" dy="22">est toléré ; le diagnostic devra alors</tspan>
+  <tspan x="880" dy="22">être réalisé lors du prochain contrôle</tspan>
+  <tspan x="880" dy="22">périodique.</tspan>
+  <tspan x="880" dy="26" font-weight="700">Un seul report est admis.</tspan>
+</text>
+<path class="edge" d="M1070 2980 H1190 V2860"/>
+
+<!-- final in-order box and finish -->
+<rect class="green" x="1120" y="2860" width="420" height="170" rx="0"/>
+<text class="text" x="1330" y="2905">
+  <tspan x="1330" font-weight="700">Installation déclarée en ordre</tspan>
+  <tspan x="1330" dy="25">jusqu’à la prochaine inspection</tspan>
+  <tspan x="1330" dy="25">périodique</tspan>
+</text>
+<path class="edge" d="M1330 3030 V3090 H1600"/>
+<rect class="node" x="1600" y="3058" width="110" height="64" rx="0"/>
+<text class="text" x="1655" y="3097">FIN</text>
+
+<text x="95" y="3165" class="tiny">Source : « Modèle d’attestation de contrôle d’un générateur de chaleur », Gouvernement wallon, mise à jour du 29/10/2015.</text>
+<text x="95" y="3190" class="tiny">Les intitulés, seuils et délais sont repris du document source. Les couleurs distinguent les situations décrites dans le logigramme d’origine.</text>
+</svg>

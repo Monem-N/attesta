@@ -79,6 +79,15 @@ test('a value with no printed rule never earns OK',()=>{
   assert.equal(result.globalResult,null); // nothing with a rule was measured
 });
 
+test('global OK requires a valid reading for every applicable category rule',()=>{
+  const partial=evaluateCriteria({...base,fuel:'Gazeux',co2:'12'});
+  assert.equal(partial.globalResult,null);
+  const complete=evaluateCriteria({...base,fuel:'Gazeux',flueTemp:'190',co2:'9',co:'100',efficiency:'91'});
+  assert.equal(complete.globalResult,'OK');
+  const malformed=evaluateCriteria({...base,fuel:'Gazeux',flueTemp:'190',co2:'9',co:'bad',efficiency:'91'});
+  assert.equal(malformed.globalResult,null);
+});
+
 test('global result is non OK as soon as one applicable rule fails',()=>{
   const result = evaluateCriteria({...base, fuel:'Gazeux', co2:'12', co:'200'});
   assert.equal(result.results.co2.verdict,'OK');

@@ -9,6 +9,8 @@
 // This data is pinned to the template revision. Changing it requires a new official
 // model and a new WA_TEMPLATE_VERSION.
 
+import {isValidDate,parseNumber,scalarText} from '../input-validation.js';
+
 export const WA_TEMPLATE_VERSION = '2015-10-29';
 export const WA_SOURCE = 'assets/wa-attestation-bg.pdf, page 8 (Performances minimales)';
 
@@ -45,14 +47,14 @@ const RECLASSIFY_FROM = new Date('2017-05-30T00:00:00Z');
 const MEASURE_KEYS = ['smoke','flueTemp','co2','o2','co','efficiency'];
 
 function fuelFamily(data){
-  const text = `${data.fuel||''} ${data.fuelDetail||''}`;
+  const text = `${scalarText(data.fuel)} ${scalarText(data.fuelDetail)}`;
   if(/liquide|mazout|gasoil|fuel lourd/i.test(text)) return 'liquid';
   if(/gaz|gazeux|propane|butane|biogaz/i.test(text)) return 'gas';
   return null; // solid fuel has no combustion-value table in this model
 }
 
 function burner(data){
-  const type = String(data.unitOrPulsed||'').trim();
+  const type = scalarText(data.unitOrPulsed).trim();
   if(/^unit$/i.test(type)) return 'unit';
   if(/air.?puls/i.test(type)) return 'pulsed';
   return null;
@@ -67,12 +69,12 @@ export function categoryFor(data){
   const ignition = family === 'gas' ? burner(data) : (family === 'liquid' ? 'pulsed' : null);
   if(!family || !ignition) return null;
 
-  const year = Number(data.year);
-  if(!Number.isFinite(year) || year < 1900 || year > new Date().getFullYear()+1) return null;
+  const year = parseNumber(data.year);
+  if(year===null || !Number.isInteger(year) || year < 1900 || year > new Date().getFullYear()+1) return null;
 
   let premix = null;
   if(ignition === 'unit'){
-    const value = String(data.premix||'').trim();
+    const value = scalarText(data.premix).trim();
     if(/^pr[eé]mix$/i.test(value)) premix = true;
     else if(/^non[- ]premix$/i.test(value)) premix = false;
     else return null;
@@ -85,14 +87,15 @@ export function categoryFor(data){
   if(!found) return null;
 
   let code = found.code;
-  const control = data.controlDate ? new Date(data.controlDate) : null;
+  const control = isValidDate(data.controlDate) ? new Date(data.controlDate) : null;
   if(control && !Number.isNaN(control.getTime()) && control>=RECLASSIFY_FROM && / B$/.test(code)){
     code = `${code.slice(0,-1)}A`;
   }
 
   const limits = {...found.limits};
-  const bottle = /propane/i.test(data.fuelDetail||'') ? 'P'
-    : /butane/i.test(data.fuelDetail||'') ? 'B' : '';
+  const detail=scalarText(data.fuelDetail);
+  const bottle = /propane/i.test(detail) ? 'P'
+    : /butane/i.test(detail) ? 'B' : '';
   if(bottle && limits.co) limits.co = {...limits.co, max:limits.co.max+15};
 
   return {
@@ -111,8 +114,8 @@ export function limitsForField(data){
 
 function verdictOf(value, rule){
   if(value==='' || value==null || !rule) return null;
-  const n = Number(String(value).replace(',', '.'));
-  if(!Number.isFinite(n)) return null;
+  const n = parseNumber(value);
+  if(n===null) return null;
   const ok = (rule.max!=null ? n<=rule.max : true) && (rule.min!=null ? n>=rule.min : true);
   return ok ? 'OK' : 'non OK';
 }
@@ -135,7 +138,9 @@ export function evaluateCriteria(data){
     };
   }
   const verdicts = Object.values(results).map(r=>r.verdict).filter(Boolean);
+  const applicable = Object.values(results).filter(r=>r.rule);
+  const complete = applicable.length > 0 && applicable.every(r=>r.verdict != null);
   const globalResult = verdicts.includes('non OK') ? 'non OK'
-    : verdicts.length > 0 ? 'OK' : null;
+    : complete ? 'OK' : null;
   return {category, results, globalResult};
 }

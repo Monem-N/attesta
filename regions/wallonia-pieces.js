@@ -1,4 +1,5 @@
 // Wallonia attestation — template-driven piece generator.
+import {parseNumber,scalarText} from '../input-validation.js';
 const { PDFDocument, rgb } = globalThis.window?.PDFLib || {};
 const W = 595.32;
 const H = 841.92;
@@ -14,7 +15,7 @@ let fontRef = { regular: null, bold: null };
 let A = null;
 function yOf(page, v) { return page.getHeight() - v; }
 function text(page, s, x, y, size, font, color = INK, maxWidth) {
-  const v = String(s ?? '');
+  const v = scalarText(s);
   if (!v) return;
   if (maxWidth && font && font.widthOfTextAtSize(v, size) > maxWidth && A) {
     A.warnings.push(`text overflows ${maxWidth}pt: ${v.slice(0, 40)}`);
@@ -36,7 +37,7 @@ function fieldLine(page, label, value, y, valueW, size = 8.5, labelW = 120) {
   const vx = M + labelW;
   rule(page, vx, y + 3, vx + valueW, LINE, 0.6);
   if (value === '' || value == null) return y + 14;
-  const { lines } = wrapText(String(value), (s) => fontRef.regular.widthOfTextAtSize(s, size), Math.max(20, valueW - 4), 1);
+  const { lines } = wrapText(scalarText(value), (s) => fontRef.regular.widthOfTextAtSize(s, size), Math.max(20, valueW - 4), 1);
   lines.forEach((line) => text(page, line, vx + 2, y - 0.5, size, fontRef.regular, INK));
   return y + 14;
 }
@@ -57,7 +58,7 @@ function radioOption(page, x, y, selected, size = 8.5) {
   return x + 18;
 }
 function wrapText(text, widthOf, maxWidth, maxLines) {
-  const words = String(text).split(/\s+/);
+  const words = scalarText(text).split(/\s+/).filter(Boolean);
   const lines = []; let cur = '';
   for (const w of words) {
     const trial = cur ? `${cur} ${w}` : w;
@@ -122,7 +123,7 @@ export function drawDemandeurBlock(page, d, y) {
 }
 export function drawCombustiblesBlock(page, d, y) {
   y = band(page, 'Combustibles (si multicombustible, mentionner les différents combustibles)', y);
-  const fuel = String(d.fuelDetail || '').toLowerCase();
+  const fuel = scalarText(d.fuelDetail).toLowerCase();
   const solidOpts = ['Pellets bois', 'Bûches', 'Plaquettes', 'Céréales', 'Charbon', 'Autre', 'Autre'];
   const liquidOpts = ['Gasoil', 'Gasoil extra', 'Fuel lourd', 'Propane', 'Butane', 'Biogaz', 'Autre'];
   const gasOpts = ['Gaz nat. G20', 'Gaz nat. G25', '', '', '', '', ''];
@@ -163,11 +164,11 @@ export function drawGeneratorBlock(page, d, y) {
   y += 14;
   y = fieldLine(page, 'À condensation', d.condensation === 'oui' ? 'oui' : 'non', y, 60);
   y = fieldLine(page, 'Plaque signalétique', d.plaque === 'Présente' ? 'Présent et conforme' : 'Absent', y, 120);
-  y = fieldLine(page, 'Année de construction', String(d.year || ''), y, 80);
+  y = fieldLine(page, 'Année de construction', scalarText(d.year), y, 80);
   y = fieldLine(page, 'Marque', d.make || '', y, 120);
   y = fieldLine(page, 'Type', d.burnerModel || d.model || '', y, 120);
   y = fieldLine(page, 'N° série', d.serial || '', y, 120);
-  y = fieldLine(page, 'Puissance nominale utile (kW)', String(d.powerKw || ''), y, 80);
+  y = fieldLine(page, 'Puissance nominale utile (kW)', scalarText(d.powerKw), y, 80);
   y = band(page, 'Brûleur', y, RED);
   y = fieldLine(page, '1 allure / plusieurs / modulant', d.burnerType || '1 allure', y, 200);
   y = fieldLine(page, 'Type (unit / air pulsé)', d.unitOrPulsed || 'unit', y, 150);
@@ -181,7 +182,7 @@ export function drawVentilationBlock(page, d, y) {
   y = band(page, 'Ventilation local de chauffe – Amenée d\'air comburant – Evacuation des gaz de combustion', y);
   text(page, 'Introduction de la demande initiale de permis d\'urbanisme du bâtiment contenant le local de chauffe(6):', M, y, 7.5, fontRef.regular, SOFT, RIGHT - M);
   y += 10;
-  const before = /avant/i.test(String(d.permisDate || ''));
+  const before = /avant/i.test(scalarText(d.permisDate));
   text(page, 'Avant le 29/05/2009(7)  (>', M, y, 8, fontRef.regular, SOFT, 140);
   y = checkboxRow(page, 'Respect de la norme ou du code de bonne pratique applicable au moment du placement de l\'installation', y + 8, before);
   y += 14;
@@ -229,8 +230,8 @@ export function drawMeasurementTable(page, d, y) {
   rule(page, M, y + 1, RIGHT, LINE, 0.6);
   y += 6;
   const rows = [
-    { label: 'Appareil', value: d.analyzerMake || 'BLUELYZER ST', extra: `S/N: ${d.analyzerSerial || ''}` },
-    { label: 'Puissance maximale', value: String(d.powerKw || ''), unit: 'kW' },
+    { label: 'Appareil', value: d.analyzerMake || 'BLUELYZER ST', extra: `S/N: ${scalarText(d.analyzerSerial)}` },
+    { label: 'Puissance maximale', value: scalarText(d.powerKw), unit: 'kW' },
     { label: 'Température d\'eau', value: d.waterTemp || '', unit: '°C' },
     { label: 'Indice de fumée', value: d.smoke || '', unit: '' },
     { label: 'T° gaz', value: d.flueTemp || '', unit: '°C' },
@@ -302,7 +303,7 @@ export function drawDeclarationBlock(page, d, y) {
 }
 
 export function drawDiagnosticTree(page, d, y, pnomKw) {
-  const applies = Number(pnomKw) > 20;
+  const applies = (parseNumber(pnomKw) ?? 0) > 20;
   y = band(page, 'Réalisation d\'un diagnostic approfondi dans le cadre d\'une inspection périodique (si Pnom > 20 kW)', y);
   if (!applies) { text(page, 'Diagnostic approfondi non requis (Pnom ≤ 20 kW).', M, y, 8.5, fontRef.regular, SOFT, RIGHT - M); return y + 20; }
   const diag = (label, branch, yy) => {
@@ -320,9 +321,9 @@ export function drawDiagnosticTree(page, d, y, pnomKw) {
   y = checkboxRow(page, `OUI   NON   (${checked('diagModified') ? 'OUI' : 'NON'})`, checked('diagModified'), y); y += 16;
   y = diag(page, 'C. Y a-t-il eu une modification du système de chauffage ou des exigences en matière de chauffage du bâtiment réalisée après le 30 avril 2015?', { yes: 'Passer au point D.', no: 'Passer au point E.' }, y);
   y = checkboxRow(page, `OUI   NON   (${checked('diagAfter2015') ? 'OUI' : 'NON'})`, checked('diagAfter2015'), y); y += 16;
-  y = diag(page, 'D. Y a-t-il au moins 2 ans que les modifications ont été réalisées?', { yes: 'Effectuer un diagnostic et l\'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.', no: 'Attendre le 1er contrôle périodique après ces 2 ans pour faire réaliser le diagnostic. L\'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.' }, y);
+  y = diag(page, 'D. Y a-t-il au moins 2 ans que les modifications ont été réalisées?', { yes: "Effectuer un diagnostic et l'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.", no: "Attendre le 1er contrôle périodique après ces 2 ans pour faire réaliser le diagnostic. L'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau." }, y);
   y = checkboxRow(page, `OUI   NON   (${checked('diagTwoYears') ? 'OUI' : 'NON'})`, checked('diagTwoYears'), y); y += 16;
-  y = diag(page, 'E. Le diagnostic a-t-il déjà été reporté?', { yes: 'Effectuer le diagnostic. Dans ce cas, l\'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.', no: 'Effectuer un diagnostic. Dans le cas où le diagnostic ne serait pas faisable, il est toléré de reporter une seule fois. Il devra alors être réalisé lors du prochain contrôle périodique. Sortie du tableau.' }, y);
+  y = diag(page, 'E. Le diagnostic a-t-il déjà été reporté?', { yes: "Effectuer le diagnostic. Dans ce cas, l'installation est déclarée en ordre jusqu'à la prochaine inspection périodique. Sortie du tableau.", no: "Effectuer un diagnostic. Dans le cas où le diagnostic ne serait pas faisable, il est toléré de reporter une seule fois. Il devra alors être réalisé lors du prochain contrôle périodique. Sortie du tableau." }, y);
   y = checkboxRow(page, `OUI   NON   (${checked('diagDeferred') ? 'OUI' : 'NON'})`, checked('diagDeferred'), y); y += 14;
   text(page, 'Note : un seul report est admis.', M, y, 7.5, fontRef.regular, SOFT, RIGHT - M);
   return y + 18;
@@ -360,13 +361,13 @@ export function drawFollowUpBlock(page, d, y) {
   const sel = d.followUp || 'Prochaine inspection périodique';
   followUps.forEach((f) => {
     const checked = f.key === sel;
-    const lbl = f.label.replace('{from}', d.nextFrom || '').replace('{to}', d.nextTo || '');
+    const lbl = f.label.replace('{from}', scalarText(d.nextFrom)).replace('{to}', scalarText(d.nextTo));
     y = checkboxRow(page, lbl, y, checked);
   });
   y = fieldLine(page, 'Date de mise en conformité:', d.remedyDate || '', y, 120);
   y = fieldLine(page, 'Entretien conseillé (mois):', d.maintenanceDate || '', y, 120);
   if (d.diagnosticFrom) {
-    y = fieldLine(page, 'Diagnostic approfondi entre:', `${d.diagnosticFrom} et le ${d.diagnosticTo || ''}`, y, 200);
+    y = fieldLine(page, 'Diagnostic approfondi entre:', `${scalarText(d.diagnosticFrom)} et le ${scalarText(d.diagnosticTo)}`, y, 200);
   }
   return y + 10;
 }
@@ -377,7 +378,7 @@ export function drawSignatureBlock(page, d, y) {
   text(page, '(signature du technicien)', M, y + 26, 7.5, fontRef.regular, SOFT, 120);
   text(page, 'Attestation reçue par', M + 260, y, 9, fontRef.bold, INK, 150);
   text(page, d.recipientName || 'Owale Jeanine', M + 260, y + 14, 8.5, fontRef.regular, INK, 150);
-  text(page, `En qualité de ${d.recipientCapacity || 'Rit'}`, M + 260, y + 26, 7.5, fontRef.regular, INK, 120);
+  text(page, `En qualité de ${scalarText(d.recipientCapacity)||'Rit'}`, M + 260, y + 26, 7.5, fontRef.regular, INK, 120);
   text(page, '(signature de cette personne)', M + 260, y + 36, 7.5, fontRef.regular, SOFT, 120);
   return y + 52;
 }

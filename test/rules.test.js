@@ -3,12 +3,28 @@ import assert from 'node:assert/strict';
 import {wallonia} from '../regions/wallonia.js';
 import {flanders} from '../regions/flanders.js';
 import {brussels} from '../regions/brussels.js';
+import {walloniaComputed} from '../regions/wallonia-pdf.js';
 
 test('Wallonia uses 3 years at exactly 100 kW gas',()=>{
   const result=wallonia.rules.nextDue('2026-01-31',{fuel:'Gazeux',powerKw:'100'});
   assert.equal(result.years,3);
   assert.equal(result.conflict,true);
   assert.equal(result.date.getFullYear(),2029);
+});
+
+test('Wallonia parses comma-decimal power when selecting the legal cycle',()=>{
+  const result=wallonia.rules.nextDue('2026-01-31',{fuel:'Gazeux',powerKw:'100,5'});
+  assert.equal(result.years,2);
+  assert.equal(result.conflict,false);
+  assert.equal(result.date.getFullYear(),2028);
+});
+
+test('Wallonia print preparation parses comma-decimal thresholds and intervals',()=>{
+  const out=walloniaComputed({controlDate:'2026-01-31',commissioningDate:'2020-01-31',
+    fuel:'Gazeux',powerKw:'100,5',maintenanceIntervalMonths:'6',conformity:'NON CONFORME'});
+  assert.ok(out.diagnosticFrom,'comma-decimal power is above the 20 kW diagnostic threshold');
+  assert.equal(out.maintenanceDate,'31/07/2026');
+  assert.equal(out.remedyDate,'30/06/2026');
 });
 
 test('Wallonia anchors the control window to first commissioning (art. 13 §2)',()=>{

@@ -64,11 +64,26 @@ test('solid fuel uses its own global result',async()=>{
   assert.ok(audit.printed.includes('verdict:global:OK'));
 });
 
+test('Wallonia renderer tolerates malformed persisted scalar values',async()=>{
+  const poison={toString:null};
+  const data=Object.fromEntries(['controlDate','techCategory','techName','clientName',
+    'clientStreet','clientStreetName','clientStreetNumber','clientCity','powerKw','fuel',
+    'fuelDetail','conformity','model','raccordement','raccordementDetail','defects',
+    'waCategory','followUp','techSignatureName','recipientName','recipientCapacity']
+    .map(key=>[key,poison]));
+  const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
+  const bytes=await renderWallonia(data,fontBytes,audit);
+  const doc=await globalThis.window.PDFLib.PDFDocument.load(bytes);
+  assert.equal(doc.getPageCount(),4);
+  assert.equal(audit.ticked.length,0);
+});
+
 test('parseLoad handles the documented CO₂/O₂ input without cross-capturing CO',()=>{
-  const p=parseLoad('CO₂ 11 / O₂ 4 / CO 100 / rendement 91');
+  const p=parseLoad('CO₂ 11 / O₂ 4 / CO 100 / Temp. gaz 180 / rendement 91');
   assert.equal(p.co2,'11');
   assert.equal(p.o2,'4');
   assert.equal(p.co,'100');
+  assert.equal(p.flueTemp,'180');
   assert.equal(p.efficiency,'91');
 });
 
@@ -76,7 +91,7 @@ test('additional load verdict uses the appliance category, not "non déterminé"
   const audit={printed:[],ticked:[],warnings:[],omitted:[],clipped:[]};
   await renderWallonia({controlDate:'2026-03-15',fuel:'Gazeux',fuelDetail:'Gaz nat. G20',
     unitOrPulsed:'air pulsé',year:2020,powerKw:'80',
-    load2:'CO₂ 12 / O₂ 4 / CO 100 / rendement 92'},fontBytes,audit);
+    load2:'CO₂ 12 / O₂ 4 / CO 100 / Temp. gaz 180 / rendement 92'},fontBytes,audit);
   assert.ok(audit.printed.includes('verdict:load2:OK'),
     `load verdict missing: ${JSON.stringify(audit.printed.filter(x=>x.startsWith('verdict')))}`);
 });
