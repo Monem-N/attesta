@@ -10,134 +10,20 @@ import {limitsForField} from './regions/wallonia-criteria.js';
 import {limitsForField as flandersLimits} from './regions/flanders-criteria.js';
 import {diagHelperHTML,wireDiagHelper} from './regions/diag-helper.js';
 import {resolved,optionValue,optionLabel} from './lang.js';
-import {validateWorkflow,validateEnteredFields,normalizeStep,hasOwn,parseNumber,isValidDate,attachmentsForFields,hasMissingAttachments,fieldInputType,measurementVerdict,errorAriaAttributes,scalarText} from './input-validation.js';
+import {validateWorkflow,validateEnteredFields,normalizeStep,hasOwn,parseNumber,isValidDate,attachmentsForFields,hasMissingAttachments,fieldInputType,measurementVerdict,errorAriaAttributes,scalarText,recognitionRequired} from './input-validation.js';
 import {createSignaturePad} from './signature.js';
+import {loadProfile,saveProfile,clearProfile,applyProfileToData,captureProfileFromData,profileFieldError,migrateProfile,normalizeProfile,emptyProfile,IDENTITY_KEYS,PROFILE_REGIONS} from './profile.js';
+import {T} from './i18n.js';
 
 const REGIONS = {wallonia,flanders,brussels};
 const KEY = 'attesta.draft.v1';
+const UI_KEY = 'attesta.uiLang';
 const $ = id => document.getElementById(id);
 
-const T = {
-  fr:{back:'Retour',next:'Continuer',download:'Télécharger',downloadPdf:'Imprimer / enregistrer en PDF',changeRegion:'Changer de région',progress:'Progression',
-    chooseTitle:'Attesta',chooseHint:'Choisissez la région de cette intervention.',
-    chooseHead:'Un assistant. Trois régions.',
-    chooseBody:'Attesta remplit le modèle officiel de votre région et télécharge le bon document — ou vous dit exactement quoi faire ensuite.',
-    ready:'Prêt à émettre',readyHint:'Vérifiez le résultat pour votre région.',
-    readyBody:'Le modèle officiel est rempli avec vos données. Téléchargez, signez et remettez au client.',
-    needData:'Aucune donnée. Ouvrez le module et saisissez les mesures.',
-    openEncoder:'Ouvrir l’encodeur BE',ack:'Accusé',
-    nextControl:'PROCHAIN CONTRÔLE',required:'Obligatoire',invalid:'Valeur invalide',
-    missing:'Fichier introuvable. Resélectionnez-le pour cette attestation.',
-    noThreshold:'Aucun seuil imprimé pour cette catégorie',
-    vekaConfirmed:'Enregistrement VEKA confirmé',
-    bruDataBody:'Bruxelles génère le PDF officiel. Ouvrez l’encodeur, ressaisissez les données préparées, puis téléchargez votre attestation officielle.',
-    docs:{wa:['Attestation de contrôle (modèle AWAC)','Tickets de mesure ajoutés'],
-      fl:['Verbrandingsattest','Reinigingsattest','Enregistrement VEKA effectué'],
-      brSolid:['Attestation PEB — combustibles solides'],brData:['Paquet de données pour l’encodeur BE','Liste de ressaisie manuelle']},
-    annex:'Annexe ≥ 1000 kW incluse',
-    w100:'<strong>Limite 100 kW.</strong> La loi (≤100 kW) donne 3 ans, mais la note du modèle dit 2. Attesta applique 3 ans et affiche cet avertissement.',
-    wAnchor:'<strong>Échéance provisoire.</strong> Sans date de première mise en service, Attesta calcule depuis la date du contrôle. Ajoutez cette date pour une échéance conforme à l’art. 13 §2.',
-    wGate:'<strong>Aucune attestation sans enregistrement.</strong> Saisissez la référence et la date VEKA avant le téléchargement.',
-    wBru:'<strong>Pas de PDF ici.</strong> Les attestations gaz/mazout bruxelloises sont générées par Bruxelles Environnement. Attesta prépare les données pour la saisie manuelle.',
-    wNon:'<strong>Non conforme.</strong> 5 mois pour remédier ; une exception résidentielle de 3 mois (1 sept.–30 avr.) peut s’appliquer.',
-    gen:'Génération…', startAnother:'Nouvelle attestation', statusLabel:'Statut du document',
-    statusBody:'Modèle et calques en attente de revue finale des coordonnées et de conformité légale. Vérifiez chaque champ avant un usage professionnel.',
-    previewBody:'Attesta crée un aperçu PDF à partir des données saisies. Ses positions de champs et sa conformité légale ne sont pas vérifiées ; comparez-le au modèle officiel en vigueur avant tout usage professionnel.',
-    signNote:'Les lignes de signature peuvent être signées à l’écran (tracé ou nom tapé) ou imprimées puis signées à la main. Attesta n’appose aucune signature électronique au sens eIDAS.',
-    bruHandoff:'Attesta ne peut pas émettre le PDF officiel Bruxelles gaz/mazout. Utilisez le JSON téléchargé comme aide, ressaisissez les données dans l’encodeur Bruxelles Environnement, puis téléchargez le document officiel.',
-    vekaTitle:'Référence VEKA (saisie manuelle)', vekaRecorded:'Référence et date saisis par l’utilisateur — non vérifiés', vekaRequired:'Référence et date à saisir',
-    vekaUnverified:'Attesta ne vérifie pas l’enregistrement auprès du VEKA : la registration doit être faite dans l’outil officiel.',
-    statusDraft:'Brouillon', statusPrepared:'Données préparées (envoi manuel)', statusIssued:'PDF émis',
-    statusRegistered:'Référence VEKA saisie (non vérifiée)', statusSubmitted:'Envoyé (déclaré par l’utilisateur)',
-    markSubmitted:'Marquer comme envoyé', submittedAt:'Envoyé le',
-    newIn:l=>`Nouvelle attestation — ${l}`, resume:l=>`Reprendre le brouillon ${l}`, record:l=>`Ouvrir l’enregistrement ${l}`,
-    confirmReplace:(l,k)=>`Un enregistrement (${k}) pour ${l} existe. Démarrer un nouveau le remplacera. Continuer ?`,
-    confirmChangeSaved:'Votre enregistrement complété restera sauvegardé. Changer de région ?',
-    confirmChangeDraft:'Votre brouillon sera sauvegardé pour le reprendre plus tard. Changer de région ?',
-    confirmNewJob:'Cette attestation non terminée sera sauvegardée pour la reprendre. En démarrer une autre ?',
-    vekaDownloadError:'Saisissez une référence et une date VEKA avant de télécharger.',
-    vekaChecklist:'Données à déclarer (30 jours)', vekaLink:'Ouvrir Melding Centrale Stooktoestellen',
-    vekaDeadline:'Enregistrement VEKA au plus tard', remedyDeadline:'Attestation corrective au plus tard',
-    sigHint:'Signez ici', sigClear:'Effacer', sigUndo:'Annuler le dernier trait',
-    sigTypedToggle:'Je ne peux pas dessiner — signer en tapant mon nom',
-    sigTypedLabel:'Nom (signé en tapant)',
-    sigAria:'Zone de signature manuscrite — dessinez avec la souris, le doigt ou le stylet, ou signez en tapant votre nom.',
-    pdfGenError:'La génération du PDF a échoué. Vérifiez la connexion et les fichiers de modèle officiels, puis réessayez.',
-    errFont:'La police Unicode n’a pas pu être chargée.', errTemplate:'Le modèle officiel n’a pas pu être chargé.',
-    errAnnex:'L’annexe ≥ 1000 kW n’a pas pu être chargée.', errAttachment:'Une pièce jointe n’a pas pu être traitée.',
-    attachReloadWarning:'Si un fichier ne peut pas être restauré, resélectionnez les tickets de cette attestation avant de télécharger.',
-    flDocChoice:'Document à télécharger', flDocBoth:'Les deux documents',
-    auditSummary:'Champs écrits', auditWarnings:'Avertissements de mise en page',
-    saved:'Brouillon enregistré',
-    glossary:[
-      ['AWAC','Agence wallonne de l’air et du climat.'],
-      ['BCE','Numéro d’entreprise (Banque-Carrefour des Entreprises).'],
-      ['Bacharach','Indice de fumée (échelle 0–9).'],
-      ['GI / GII','Catégories d’agrément du technicien (gaz / air pulsé).'],
-      ['VEKA','Melding obligatoire en Flandre (melding.veka.vlaanderen.be).'],
-      ['Art. 13 §2','Base légale wallonne du contrôle.']]},
-  nl:{back:'Terug',next:'Verder',download:'Downloaden',downloadPdf:'Afdrukken / opslaan als PDF',changeRegion:'Regio wijzigen',progress:'Voortgang',
-    chooseTitle:'Attesta',chooseHint:'Kies de regio van deze interventie.',
-    chooseHead:'Eén wizard. Drie regio’s.',
-    chooseBody:'Attesta vult het officiële model voor uw regio in en downloadt het juiste document — of zegt precies wat u daarna moet doen.',
-    ready:'Klaar om uit te geven',readyHint:'Controleer het resultaat voor uw regio.',
-    readyBody:'Het officiële model is met uw gegevens gevuld. Download, onderteken en geef aan de klant.',
-    needData:'Geen gegevens. Open het rooster en vul de metingen in.',
-    openEncoder:'BE-encoder openen',ack:'Bevestigd',
-    nextControl:'VOLGENDE CONTROLE',required:'Verplicht',invalid:'Ongeldige waarde',
-    missing:'Bestand niet gevonden. Selecteer het opnieuw voor deze attestatie.',
-    noThreshold:'Geen gedrukte drempel voor deze categorie',
-    vekaConfirmed:'VEKA-registratie bevestigd',
-    bruDataBody:'Brussel genereert het officiële PDF. Open de encoder, voer de voorbereide gegevens opnieuw in en download uw officiële attest.',
-    docs:{wa:['Attestation de contrôle (AWAC-model)','Meetbewijzen toegevoegd'],
-      fl:['Verbrandingsattest','Reinigingsattest','VEKA-registratie geregistreerd'],
-      brSolid:['Attestation PEB — vaste brandstof'],brData:['Gegevenspakket voor BE-encoder','Lijst voor manuele invoer']},
-    annex:'Bijlage ≥ 1000 kW inbegrepen',
-    w100:'<strong>100 kW-grens.</strong> De wet (≤100 kW) geeft 3 jaar, maar voetnoot 14 van het model zegt 2. Attesta gebruikt 3 jaar en toont deze waarschuwing.',
-    wAnchor:'<strong>Voorlopige vervaldatum.</strong> Zonder datum van eerste ingebruikname berekent Attesta vanaf de controldatum. Voeg die datum toe voor een vervaldatum volgens art. 13 §2.',
-    wGate:'<strong>Geen attest zonder registratie.</strong> Vul de VEKA-referentie en -datum in vóór het downloaden.',
-    wBru:'<strong>Geen PDF hier.</strong> Brusselse gas/olie-attesten worden door Bruxelles Environnement gegenereerd. Attesta bereidt de gegevens voor manuelle invoer voor.',
-    wNon:'<strong>Niet conform.</strong> 5 maanden om te herstellen ; één uitzondering van 3 maanden (1 sept.–30 apr.) kan gelden.',
-    gen:'Genereren…', startAnother:'Nieuwe attestatie', statusLabel:'Documentstatus',
-    statusBody:'Model en overlays wachten op de finale coördinaat- en wettelijke controle. Controleer elk veld vóór professioneel gebruik.',
-    previewBody:'Attesta maakt een PDF-voorbeeld van de ingevoerde gegevens. De veldposities en wettelijke naleving zijn niet geverifieerd; vergelijk dit met het huidige officiële model vóór professioneel gebruik.',
-    signNote:'De handtekeninglijnen kunnen op het scherm worden ondertekend (tekening of getypte naam) of afgedrukt en met de hand worden ondertekend. Attesta plaatst geen elektronische handtekening in de zin van eIDAS.',
-    sigHint:'Hier tekenen', sigClear:'Wissen', sigUndo:'Laatste lijn wissen',
-    sigTypedToggle:'Ik kan niet tekenen — onderteken door mijn naam te typen',
-    sigTypedLabel:'Naam (getypte ondertekening)',
-    sigAria:'Handtekeningveld — teken met muis, vinger of stylus, of onderteken door uw naam te typen.',
-    bruHandoff:'Attesta kan de officiële Brusselse gas/olie-PDF niet afgeven. Gebruik het gedownloade JSON als hulpmiddel, voer de gegevens opnieuw in in de BE-encoder en download daar het officiële document.',
-    vekaTitle:'VEKA-referentie (manueel ingevoerd)', vekaRecorded:'Referentie en datum door de gebruiker ingevoerd — niet geverifieerd', vekaRequired:'Referentie en datum in te voeren',
-    vekaUnverified:'Attesta controleert de registratie niet bij VEKA: de melding moet in de officiële tool gebeuren.',
-    statusDraft:'Concept', statusPrepared:'Gegevens voorbereid (manuele verzending)', statusIssued:'PDF afgegeven',
-    statusRegistered:'VEKA-referentie ingevoerd (niet geverifieerd)', statusSubmitted:'Verzonden (door gebruiker gemeld)',
-    markSubmitted:'Markeren als verzonden', submittedAt:'Verzonden op',
-    newIn:l=>`Nieuwe attestatie — ${l}`, resume:l=>`Concept hervatten ${l}`, record:l=>`Opgeslagen ${l} openen`,
-    confirmReplace:(l,k)=>`Er bestaat een opgeslagen record (${k}) voor ${l}. Een nieuwe starten vervangt het. Doorgaan?`,
-    confirmChangeSaved:'Uw voltooide record blijft opgeslagen. Regio wijzigen?',
-    confirmChangeDraft:'Uw concept wordt opgeslagen om later verder te gaan. Regio wijzigen?',
-    confirmNewJob:'Deze onvoltooide attestatie wordt opgeslagen om later verder te gaan. Een nieuwe starten?',
-    vekaDownloadError:'Voer een VEKA-referentie en -datum in vóór het downloaden.',
-    vekaChecklist:'Gegevens voor de melding (30 dagen)', vekaLink:'Melding Centrale Stooktoestellen openen',
-    vekaDeadline:'VEKA-registratie uiterlijk', remedyDeadline:'Herstelverbrandingsattest uiterlijk',
-    pdfGenError:'PDF-generatie mislukt. Controleer de verbinding en de officiële modellen en probeer opnieuw.',
-    errFont:'Het Unicode-lettertype kon niet worden geladen.', errTemplate:'Het officiële model kon niet worden geladen.',
-    errAnnex:'De bijlage ≥ 1000 kW kon niet worden geladen.', errAttachment:'Een bijlage kon niet worden verwerkt.',
-    attachReloadWarning:'Als een bestand niet kan worden hersteld, selecteer dan de meetbewijzen van deze attestatie opnieuw voordat u downloadt.',
-    flDocChoice:'Te downloaden document', flDocBoth:'Beide documenten',
-    auditSummary:'Velden geschreven', auditWarnings:'Layoutwaarschuwingen',
-    saved:'Concept opgeslagen',
-    glossary:[
-      ['AWAC','Waalse agentschap voor lucht en klimaat.'],
-      ['BCE','Ondernemingsnummer (Banque-Carrefour des Entreprises).'],
-      ['Bacharach','Rookindex (schaal 0–9).'],
-      ['GI / GII','Erkenningscategorieën van de technicus (gas / luchtpuls).'],
-      ['VEKA','Verplichte melding in Vlaanderen (melding.veka.vlaanderen.be).'],
-      ['Art. 13 §2','Wettelijke basis van de Waalse controle.']]}
-};
+function readUiLang(){ try{ const l=localStorage.getItem(UI_KEY); return l==='nl'||l==='fr'?l:null; }catch(e){ return null; } }
 // The wizard UI can be switched per job (Flanders is bilingual). Document
 // language is separate: state.lang is never read by the print/PDF path.
-function activeLang(){ return state?.lang || cfg()?.lang || 'fr'; }
+function activeLang(){ return state?.lang || cfg()?.lang || readUiLang() || 'fr'; }
 function tr(){ return T[activeLang()]||T.fr; }
 
 const ACK_KEY='attesta.acks.v1';
@@ -147,10 +33,16 @@ function saveAcks(){ sessionStorage.setItem(ACK_KEY,JSON.stringify(acks)); }
 
 import {isComplete,statusText,statusOnIssue,statusOnHandoff} from './status.js';
 
+// True only when the current job's data was just pre-filled from the profile
+// (set at the three prefill sites, cleared on resume / region-null). Drives the
+// "profile applied" chip so resumed jobs never falsely claim prefill.
+let profileApplied = false;
 let state = load();
 let validationErrors = {};
 if(state.status==='Done') state.status='Issued';
 let generating = false;
+let editingProfile = false;
+let profileDraft = emptyProfile();
 const attachmentFiles = new Map();
 let attachmentLoadVersion=0;
 function resetAttachmentFiles(){
@@ -171,13 +63,17 @@ function restoreAttachmentBytes(region){
 
 function load(){
   let s=null;
-  try{ s=JSON.parse(localStorage.getItem(KEY)); }catch(e){ console.warn('Could not restore draft',e); }
-  if(!isDraft(s)) s={region:null,step:0,data:{},status:'Draft'};
+  try{ s=migrateDraft(JSON.parse(localStorage.getItem(KEY))); }catch(e){ console.warn('Could not restore draft',e); }
+  if(!s) s={region:null,step:0,data:{},status:'Draft'};
   const q=new URLSearchParams(location.search);
   const requested=q.get('region');
   if(requested&&hasOwn(REGIONS,requested) && s.region!==requested){
-    s=readRegionDraft(requested)||{region:requested,step:0,data:{},status:'Draft'};
+    const existing=readRegionDraft(requested);
+    if(existing){ s=existing; }
+    else{ const {data,applied}=prefillFor(requested); s={region:requested,step:0,data,status:'Draft',profileApplied:applied}; }
   }
+  // Derive the chip flag from the FINAL draft (deep-link may have swapped it).
+  profileApplied=s.profileApplied===true;
   if(s.region) s.step=normalizeStep(s.step,REGIONS[s.region].steps.length);
   if(q.get('step')){
     const region=REGIONS[s.region];
@@ -192,10 +88,16 @@ function isDraft(value,region){
     typeof value.data==='object' && value.data!==null && !Array.isArray(value.data) &&
     Object.hasOwn(REGIONS,value.region) && (!region||value.region===region);
 }
+// Single entry point for reading a stored draft. Centralizes version handling so
+// future field changes migrate here (drafts are versioned by the KEY name).
+function migrateDraft(raw){
+  if(!isDraft(raw)) return null;
+  return raw;
+}
 function readRegionDraft(region){
   try{
-    const saved=JSON.parse(localStorage.getItem(`${KEY}.${region}`));
-    if(isDraft(saved,region)){
+    const saved=migrateDraft(JSON.parse(localStorage.getItem(`${KEY}.${region}`)));
+    if(saved){
       saved.step=normalizeStep(saved.step,REGIONS[region].steps.length);
       return saved;
     }
@@ -208,8 +110,11 @@ function save(){
     if(state.region) localStorage.setItem(`${KEY}.${state.region}`,JSON.stringify(state));
   }
   catch(e){ console.warn('Could not save draft',e); }
+  flashSaveStatus(tr().saved);
+}
+function flashSaveStatus(message){
   const el=$('saveStatus');
-  if(el){ el.textContent=tr().saved; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),1600); }
+  if(el){ el.textContent=message; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),1600); }
 }
 function cfg(){ return REGIONS[state.region]; }
 // pdf-lib + fontkit are heavy (~1.3 MB); load them only when a PDF is generated.
@@ -474,6 +379,7 @@ function wireSignatures(){
 function render(){
   destroySigPads();
   renderChrome();
+  if(editingProfile){ lastFocusKey=null; renderProfileEditor(); return; }
   const c=cfg();
   if(!c){ lastFocusKey=null; renderRegionChoice(); return; }
   const isFinal=state.step>=c.steps.length;
@@ -538,6 +444,7 @@ function render(){
     });
   });
   $('form').querySelectorAll('.mrow input').forEach(updateMeasure);
+  wireProfileSave();
   wireSignatures();
   maybeFocusHeading(focusKey);
 }
@@ -606,7 +513,10 @@ function renderRegionChoice(){
       const savedLabel=isComplete(saved?.status)?t.record(regionLabel):t.resume(regionLabel);
       return `<button type="button" class="choice red" data-region="${r.id}">${t.newIn(regionLabel)}</button>
         ${saved?`<button type="button" class="choice" data-resume="${r.id}">${savedLabel}</button>`:''}`;
-    }).join('')}</div></div>`;
+    }).join('')}</div>
+    <button type="button" class="btn back profile-open" id="openProfile">${esc(t.openProfile)}</button></div>`;
+  const openBtn=$('openProfile');
+  if(openBtn) openBtn.onclick=()=>{ profileDraft=sanitizeProfileCategories(loadProfile()); editingProfile=true; render(); };
   $('form').querySelectorAll('[data-region]').forEach(b=>b.onclick=()=>{
       const saved=readRegionDraft(b.dataset.region);
       if(saved){
@@ -614,15 +524,187 @@ function renderRegionChoice(){
         const kind=isComplete(saved.status)?'record':'draft';
         if(!window.confirm(tr().confirmReplace(label,kind))) return;
       }
-    state={region:b.dataset.region,step:0,data:{},status:'Draft',lang:REGIONS[b.dataset.region].lang};
+    const {data,applied}=prefillFor(b.dataset.region);
+    state={region:b.dataset.region,step:0,data,status:'Draft',lang:REGIONS[b.dataset.region].lang,profileApplied:applied};
+    profileApplied=applied;
     validationErrors={}; resetAttachmentFiles();
     lastFocusKey=null; save(); syncURL(); render();
   });
   $('form').querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>{
     state=readRegionDraft(b.dataset.resume)||{region:b.dataset.resume,step:0,data:{},status:'Draft'};
+    profileApplied=state.profileApplied===true;
     validationErrors={}; resetAttachmentFiles(); restoreAttachmentBytes(state.region);
     lastFocusKey=null; save(); syncURL(); render();
   });
+}
+// First field definition with this key across a region's steps (label/options).
+function regionField(region,key){
+  const c=REGIONS[region];
+  return c?c.steps.flatMap(s=>s.fields).find(f=>f.key===key)||null:null;
+}
+// Build the prefill data for a fresh job in `region` and whether it is non-empty.
+// Single source of truth for the three prefill sites (load deep-link, new
+// attestation, popstate region change) so the shape and "applied" rule can't drift.
+function prefillFor(region){
+  const data=applyProfileToData(sanitizeProfileCategories(loadProfile()),region);
+  return {data, applied:Object.keys(data).length>0};
+}
+// Region-aware cleanup: drop a stored techCategory that is no longer a valid
+// option for its region (shape-only normalizeProfile keeps stale strings). Pure
+// and non-destructive — returns a new profile; callers persist only on Save.
+function sanitizeProfileCategories(profile){
+  const p=profile&&typeof profile==='object'?profile:emptyProfile();
+  const recognition={};
+  for(const region of PROFILE_REGIONS){
+    const bucket=p.recognition?.[region];
+    if(!bucket) continue;
+    const copy={...bucket};
+    const field=regionField(region,'techCategory');
+    const values=(field?.options||[]).map(optionValue);
+    if(copy.techCategory && values.length && !values.includes(copy.techCategory)) delete copy.techCategory;
+    if(Object.keys(copy).length) recognition[region]=copy;
+  }
+  return {...p,recognition};
+}
+function profileInputHTML(key,scope,region){
+  const field=regionField(scope==='identity'?'wallonia':region,key)||{label:key};
+  const label=resolved(field.label,activeLang());
+  const value=(scope==='identity'?profileDraft.identity[key]:profileDraft.recognition[region]?.[key])??'';
+  const id=`pk-${scope}-${region||'all'}-${key}`;
+  const regionAttr=region?` data-pk-region="${region}"`:'';
+  const error=profileFieldError(profileDraft,scope,region,key,value);
+  const invalid=error?` aria-invalid="true" aria-describedby="${id}-error"`:'';
+  return `<div class="f ${error?'bad':''}"><label for="${id}">${esc(label)}</label>
+    <input id="${id}" type="text" data-pk="${key}" data-pk-scope="${scope}"${regionAttr} value="${esc(value)}" spellcheck="false" autocomplete="off"${invalid}>
+    <div class="err" id="${id}-error" ${error?'role="alert"':''}>${error?errorText(error):''}</div></div>`;
+}
+function profileCategoryHTML(region){
+  const field=regionField(region,'techCategory');
+  const options=field?.options||[];
+  const label=resolved(field?.label||'techCategory',activeLang());
+  const current=profileDraft.recognition[region]?.techCategory??'';
+  const id=`pk-recognition-${region}-techCategory`;
+  const opts=options.map(o=>{
+    const ov=optionValue(o);
+    return `<option value="${esc(ov)}" ${current===ov?'selected':''}>${esc(optionLabel(o,activeLang()))}</option>`;
+  }).join('');
+  const blank=!options.length||optionValue(options[0])!=='';
+  return `<div class="f"><label for="${id}">${esc(label)}</label>
+    <select id="${id}" data-pk="techCategory" data-pk-scope="recognition" data-pk-region="${region}">${blank?'<option value=""></option>':''}${opts}</select></div>`;
+}
+function renderProfileEditor(){
+  const t=tr();
+  $('stepTitle').textContent=t.profileTitle;
+  $('stepHint').textContent=t.profileHint;
+  $('warning').hidden=true;
+  const identity=IDENTITY_KEYS.map(k=>profileInputHTML(k,'identity',null)).join('');
+  const recognition=PROFILE_REGIONS.map(region=>{
+    const label=resolved(REGIONS[region].label,activeLang());
+    const bucket=profileDraft.recognition[region]||{};
+    // Agrement is only expected where the region requires recognition for the
+    // chosen category (e.g. solid-fuel categories in Flanders/Wallonia don't).
+    const needAgrement=recognitionRequired(region,{techCategory:bucket.techCategory});
+    const incomplete=!bucket.techCategory||(needAgrement&&!bucket.techAgrement);
+    const badge=incomplete?` <span class="profile-badge">${esc(t.profileIncomplete)}</span>`:'';
+    return `<div class="profile-block${incomplete?' incomplete':''}"><h3>${esc(label)}${badge}</h3>${profileCategoryHTML(region)}${profileInputHTML('techAgrement','recognition',region)}</div>`;
+  }).join('');
+  $('form').innerHTML=`<div class="profile-editor">
+    <div class="profile-block"><h3>${esc(t.profileIdentity)}</h3>${identity}</div>
+    ${recognition}
+    <div class="profile-actions">
+      <button type="button" class="btn next" id="profileSave">${esc(t.saveProfile)}</button>
+      <button type="button" class="btn back" id="profileExport">${esc(t.exportProfile)}</button>
+      <button type="button" class="btn back" id="profileImport">${esc(t.importProfile)}</button>
+      <input type="file" id="profileImportFile" accept="application/json,.json" hidden>
+      <button type="button" class="btn back" id="profileClear">${esc(t.clearProfile)}</button>
+      <button type="button" class="btn back" id="profilePurge">${esc(t.purgeAll)}</button>
+      <button type="button" class="btn back" id="profileBack">${esc(t.profileBack)}</button>
+    </div></div>`;
+  $('form').querySelectorAll('[data-pk]').forEach(el=>{
+    const ev=el.tagName==='SELECT'?'change':'input';
+    el.addEventListener(ev,()=>{
+      const scope=el.dataset.pkScope, key=el.dataset.pk, region=el.dataset.pkRegion||null;
+      if(scope==='identity') profileDraft.identity[key]=el.value;
+      else{ if(!profileDraft.recognition[region]) profileDraft.recognition[region]={}; profileDraft.recognition[region][key]=el.value; }
+      if(el.tagName!=='SELECT') refreshProfileFieldError(el);
+      // Changing a region's category re-validates its recognition number.
+      if(scope==='recognition' && key==='techCategory' && region){
+        const agr=$(`pk-recognition-${region}-techAgrement`);
+        if(agr) refreshProfileFieldError(agr);
+      }
+    });
+  });
+  $('profileSave').onclick=()=>{ saveProfile({...profileDraft,updatedAt:new Date().toISOString()}); editingProfile=false; flashSaveStatus(tr().profileSaved); render(); };
+  $('profileExport').onclick=()=>{
+    const data=normalizeProfile(profileDraft);
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    download(blob,'attesta-profile.json');
+  };
+  $('profileImport').onclick=()=>$('profileImportFile').click();
+  $('profileImportFile').onchange=async()=>{
+    const input=$('profileImportFile');
+    const file=input?.files[0];
+    if(!file) return;
+    input.value=''; // reset before render() replaces the editor DOM
+    try{
+      const parsed=JSON.parse(await file.text());
+      if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw new Error('shape');
+      profileDraft=sanitizeProfileCategories(migrateProfile(parsed));
+      render();
+      flashSaveStatus(tr().importOk);
+    }catch(e){ flashSaveStatus(tr().importInvalid); }
+  };
+  $('profileClear').onclick=()=>{ if(!window.confirm(tr().confirmClearProfile)) return; clearProfile(); profileDraft=emptyProfile(); editingProfile=false; flashSaveStatus(tr().profileCleared); render(); };
+  $('profilePurge').onclick=async()=>{
+    if(!window.confirm(tr().confirmPurge)) return;
+    try{ await clearAttachmentBytes(null); }catch(e){ console.warn('Could not clear attachment bytes',e); }
+    clearProfile();
+    try{ localStorage.removeItem(KEY); for(const r of PROFILE_REGIONS) localStorage.removeItem(`${KEY}.${r}`); }catch(e){ console.warn('Could not clear drafts',e); }
+    acks={}; saveAcks();
+    state={region:null,step:0,data:{},status:'Draft'};
+    profileApplied=false;
+    validationErrors={}; resetAttachmentFiles(); editingProfile=false; profileDraft=emptyProfile();
+    lastFocusKey=null;
+    flashSaveStatus(tr().profileCleared);
+    syncURL();
+    render();
+  };
+  $('profileBack').onclick=()=>{ editingProfile=false; render(); };
+}
+function refreshProfileFieldError(el){
+  const scope=el.dataset.pkScope, key=el.dataset.pk, region=el.dataset.pkRegion||null;
+  const error=profileFieldError(profileDraft,scope,region,key,el.value);
+  const root=el.closest('.f');
+  if(root) root.classList.toggle('bad',!!error);
+  if(error){ el.setAttribute('aria-invalid','true'); el.setAttribute('aria-describedby',`${el.id}-error`); }
+  else{ el.removeAttribute('aria-invalid'); el.removeAttribute('aria-describedby'); }
+  const msg=root?.querySelector('.err');
+  if(msg){
+    msg.textContent=error?errorText(error):'';
+    if(error) msg.setAttribute('role','alert'); else msg.removeAttribute('role');
+  }
+}
+function wireProfileSave(){
+  const c=cfg();
+  if(!c||state.step>=c.steps.length) return;
+  const step=c.steps[state.step];
+  if(!step.fields.some(f=>f.key==='techName')) return;
+  const t=tr();
+  if(profileApplied){
+    const prof=loadProfile();
+    let date='';
+    if(prof.updatedAt){ const d=new Date(prof.updatedAt); if(!Number.isNaN(d.getTime())) date=` (${t.updatedOn} ${wFmt(d)})`; }
+    $('form').insertAdjacentHTML('afterbegin',`<p class="profile-chip">${esc(t.profileApplied)}${esc(date)}</p>`);
+  }
+  const btn=document.createElement('button');
+  btn.type='button'; btn.className='btn back profile-save'; btn.id='saveProfileBtn';
+  btn.textContent=t.saveProfile;
+  btn.onclick=()=>{
+    const captured=captureProfileFromData(state.data,state.region,loadProfile());
+    captured.updatedAt=new Date().toISOString();
+    saveProfile(captured); flashSaveStatus(t.profileSaved);
+  };
+  $('form').appendChild(btn);
 }
 const VEKA_ITEMS=['Toesteltype','Locatie','Nominaal vermogen (kW)','Brandstof',
   'Brandertechniek','Bouwjaar','Type interventie','Datum uitvoering','Eindbeoordeling'];
@@ -687,6 +769,7 @@ function renderFinal(){
     if(!isComplete(state.status)&&!window.confirm(t.confirmNewJob)) return;
     const previousRegion=state.region;
     state={region:null,step:0,data:{},status:'Draft'};
+    profileApplied=false;
     validationErrors={};
     resetAttachmentFiles();
     clearAttachmentBytes(previousRegion).catch(e=>console.warn('Could not clear attachment bytes',e));
@@ -813,6 +896,7 @@ $('changeRegion').onclick=()=>{
   if(!window.confirm(prompt)) return;
   save();
   state={region:null,step:0,data:{},status:'Draft'};
+  profileApplied=false;
   validationErrors={};
   resetAttachmentFiles();
   save();
@@ -822,6 +906,9 @@ $('changeRegion').onclick=()=>{
 function setLang(lang,button){
   if(!state.region || (lang!=='fr' && lang!=='nl')) return;
   state.lang=lang;
+  // Persist the explicit choice here only — not in generic save(), which would
+  // clobber it with a region's default lang on every Wallonia/Brussels job.
+  try{ localStorage.setItem(UI_KEY,lang); }catch(e){ /* non-fatal */ }
   // Keep the toggle focused: the header buttons are not re-rendered, so the
   // step heading must not steal focus on a language-only change.
   save(); syncURL(); render();
@@ -860,8 +947,11 @@ window.addEventListener('popstate',()=>{
   if(region&&hasOwn(REGIONS,region)){
     const step=normalizeStep(q.get('step'),REGIONS[region].steps.length);
     const changingRegion=state.region!==region;
-    state={region,step,data:changingRegion?{}:state.data,status:changingRegion?'Draft':state.status,
-      lang:changingRegion?REGIONS[region].lang:state.lang};
+    const prefill=changingRegion?prefillFor(region):null;
+    state={region,step,data:prefill?prefill.data:state.data,status:changingRegion?'Draft':state.status,
+      lang:changingRegion?REGIONS[region].lang:state.lang,
+      profileApplied:changingRegion?prefill.applied:(state.profileApplied===true)};
+    profileApplied=state.profileApplied;
     validationErrors={};
     if(changingRegion) resetAttachmentFiles();
     lastFocusKey=null;
@@ -869,6 +959,7 @@ window.addEventListener('popstate',()=>{
   }else if(!region && state.region){
     save();
     state={region:null,step:0,data:{},status:'Draft'};
+    profileApplied=false;
     validationErrors={};
     resetAttachmentFiles();
     lastFocusKey=null;
@@ -876,15 +967,47 @@ window.addEventListener('popstate',()=>{
   }
 });
 window.addEventListener('keydown',e=>{
+  if(e.key==='Enter' && editingProfile && e.target.matches('input, select')){
+    e.preventDefault(); $('profileSave')?.click(); return;
+  }
   if(e.key==='Enter' && e.target.matches('input:not([type="checkbox"]), select') && !e.target.closest('.final')){
     e.preventDefault();
     $('next').click();
   }
 });
 if('serviceWorker' in navigator && location.protocol!=='file:'){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(e=>{
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(reg=>{
+    const ask=()=>showUpdatePrompt(reg);
+    if(reg.waiting) ask();
+    reg.addEventListener('updatefound',()=>{
+      const worker=reg.installing;
+      if(!worker) return;
+      worker.addEventListener('statechange',()=>{
+        if(worker.state==='installed' && navigator.serviceWorker.controller) ask();
+      });
+    });
+  }).catch(e=>{
     console.warn('Offline support could not be enabled',e);
   }));
+}
+// A waiting worker means a new version is installed but not yet active (install
+// no longer calls skipWaiting, to avoid reloading mid-job). Offer the reload.
+function showUpdatePrompt(reg){
+  if($('updateBar')) return;
+  const bar=document.createElement('div');
+  bar.id='updateBar'; bar.className='update-bar';
+  bar.innerHTML=`<span>${esc(tr().updateAvailable)}</span><button type="button" class="btn back" id="updateLater">${esc(tr().later)}</button><button type="button" class="btn next" id="updateReload">${esc(tr().reload)}</button>`;
+  // In-flow in the header: a fixed bottom bar covered the Back/Next footer.
+  document.querySelector('.head').appendChild(bar);
+  $('updateLater').onclick=()=>bar.remove();
+  $('updateReload').onclick=()=>{
+    // Only this tab should reload when the worker activates; registering the
+    // listener earlier would let another tab's update reload this job mid-way.
+    navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload(),{once:true});
+    const worker=reg.waiting;
+    if(worker) worker.postMessage({type:'SKIP_WAITING'});
+    else location.reload();
+  };
 }
 // Render immediately; then restore this draft's ticket bytes and re-render if
 // they arrive, so a slow or unavailable IndexedDB can never leave the wizard blank.

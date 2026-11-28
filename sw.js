@@ -1,6 +1,6 @@
-const CACHE='attesta-v16';
+const CACHE='attesta-v19';
 const ASSETS=[
-  './','./index.html','./styles.css','./app.js','./lang.js','./input-validation.js','./output.js','./manifest.webmanifest',
+  './','./index.html','./styles.css','./app.js','./lang.js','./input-validation.js','./output.js','./manifest.webmanifest','./profile.js','./i18n.js',
   './regions/wallonia.js','./regions/flanders.js','./regions/flanders-pdf.js','./regions/wallonia-criteria.js','./regions/flanders-criteria.js',
   './regions/pdf-render.js','./regions/wallonia-pdf.js','./regions/brussels.js',
   './print-wallonia.js','./print-flanders.js','./print-brussels.js',
@@ -16,13 +16,18 @@ const ASSETS=[
 self.addEventListener('install',e=>{
   // Bypass the HTTP cache when refreshing the offline copy. A stale module in
   // Cache Storage otherwise survives a new worker until the next cache bump.
+  // Do NOT skipWaiting here: a new version waits so the app can prompt the
+  // technician to reload rather than swapping assets mid-job.
   e.waitUntil(caches.open(CACHE).then(async cache=>{
     await Promise.all(ASSETS.map(async url=>{
       const response=await fetch(url,{cache:'reload'});
       if(!response.ok) throw new Error(`Offline asset failed: ${url}`);
       await cache.put(url,response);
     }));
-  }).then(()=>self.skipWaiting()));
+  }));
+});
+self.addEventListener('message',e=>{
+  if(e.data && e.data.type==='SKIP_WAITING') self.skipWaiting();
 });
 self.addEventListener('activate',e=>{
   e.waitUntil(caches.keys()
